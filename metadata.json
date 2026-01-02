@@ -1,0 +1,7 @@
+{
+  "name": "Meu Dindin",
+  "description": "Aplicativo de finanças pessoais com gestão de gastos, cartões de terceiros e relatórios.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
