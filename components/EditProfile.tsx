@@ -11,7 +11,8 @@ const EditProfile: React.FC = () => {
         name: "",
         email: "",
         phone: "",
-        dob: ""
+        dob: "",
+        avatar_url: null as string | null
     });
     const [loading, setLoading] = useState(true);
 
@@ -29,7 +30,7 @@ const EditProfile: React.FC = () => {
             setLoading(true);
             const { data, error } = await supabase
                 .from('profiles')
-                .select('*') // fetch all columns to see what we have
+                .select('*')
                 .eq('id', session?.user.id)
                 .single();
 
@@ -37,12 +38,7 @@ const EditProfile: React.FC = () => {
                 setFormData(prev => ({
                     ...prev,
                     name: data.full_name || "",
-                    // Assuming phone/dob might be in metadata or profiles if column exists.
-                    // Using placeholder for now if columns don't exist, or specific columns if they do.
-                    // Let's assume standard profiles usually just have full_name, avatar_url. 
-                    // We'll keep phone/dob local or as metadata for now if schema doesn't match, 
-                    // but ideally we should update schema or check what columns exist.
-                    // For now, let's just sync name.
+                    avatar_url: data.avatar_url
                 }));
             }
         } catch (error) {
@@ -57,6 +53,11 @@ const EditProfile: React.FC = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleRemovePhoto = async () => {
+        if (!window.confirm("Deseja remover sua foto de perfil?")) return;
+        setFormData(prev => ({ ...prev, avatar_url: null }));
+    };
+
     const handleSave = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         if (!session?.user) return;
@@ -67,6 +68,7 @@ const EditProfile: React.FC = () => {
             const updates = {
                 id: session.user.id,
                 full_name: formData.name,
+                avatar_url: formData.avatar_url, // Saves null if removed
                 updated_at: new Date().toISOString(),
             };
 
@@ -104,19 +106,41 @@ const EditProfile: React.FC = () => {
             <main className="flex-1 px-4 py-6">
                 <div className="flex flex-col items-center mb-8">
                     <div className="relative group cursor-pointer">
-                        <div
-                            className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-28 w-28 border-4 border-surface-light dark:border-surface-dark shadow-md"
-                            data-alt="User profile picture"
-                            style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuC1t3_M-oMF0kPEnEWv_RIeUj7y1lTKWQoNvHelsL8-t_xLOtqRwi1Iq2ot3P5VoSbi8y4FMebaRo6L_3jh11cRRp-tcQPfbRkbLVKcs9dRA4d7kE6iyYOqRouyLLjzFwSkWRZKQrwAv6iqANDkH3JN9m3XOJQcpMmoA1Bv26oFZMkuVvA-5IIyVieDoxJHQqW99rT5zstZRAuUspyvCqDWQjSOOfFxp22L-HvRdoklz-AvXZPV14ROk4W3H523Itev8oixCOo")' }}
-                        >
-                        </div>
+                        {formData.avatar_url ? (
+                            <div
+                                className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-28 w-28 border-4 border-surface-light dark:border-surface-dark shadow-md"
+                                style={{ backgroundImage: `url("${formData.avatar_url}")` }}
+                            ></div>
+                        ) : (
+                            <div className="flex items-center justify-center h-28 w-28 rounded-full bg-primary/20 border-4 border-surface-light dark:border-surface-dark shadow-md">
+                                <span className="text-primary font-bold text-4xl">
+                                    {formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}
+                                </span>
+                            </div>
+                        )}
+
                         <div className="absolute bottom-0 right-0 bg-primary hover:bg-green-400 transition-colors rounded-full p-2 border-4 border-background-light dark:border-background-dark flex items-center justify-center shadow-sm">
                             <span className="material-symbols-outlined text-[20px] text-surface-dark font-bold">photo_camera</span>
                         </div>
                     </div>
-                    <button className="mt-3 text-primary dark:text-primary font-bold text-sm hover:underline">
-                        Alterar foto
-                    </button>
+                    <div className="flex gap-4 mt-3">
+                        <button
+                            type="button"
+                            onClick={() => alert("Upload de imagem em breve!")}
+                            className="text-primary dark:text-primary font-bold text-sm hover:underline"
+                        >
+                            Alterar foto
+                        </button>
+                        {formData.avatar_url && (
+                            <button
+                                type="button"
+                                onClick={handleRemovePhoto}
+                                className="text-red-500 font-bold text-sm hover:underline"
+                            >
+                                Remover
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <form className="space-y-5" onSubmit={handleSave}>

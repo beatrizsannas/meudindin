@@ -35,6 +35,29 @@ const Settings: React.FC = () => {
     }
   };
 
+  const handleClearData = async () => {
+    if (!window.confirm("CUIDADO: Isso apagará TODOS os seus dados de transações e compras. Deseja continuar?")) return;
+
+    try {
+      setLoading(true);
+      // Delete all transactions (ID != 0)
+      const { error: tError } = await supabase.from('transactions').delete().neq('id', 0);
+
+      // Delete all purchases (UUID != empty)
+      const { error: pError } = await supabase.from('third_party_purchases').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (tError) throw tError;
+      if (pError) throw pError;
+
+      alert("Todos os dados foram apagados com sucesso!");
+    } catch (e: any) {
+      console.error(e);
+      alert("Erro ao apagar dados: " + (e.message || "Erro desconhecido"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLogout = () => {
     // Using a simple confirm and explicit navigation with replace
     if (window.confirm("Deseja realmente sair da sua conta?")) {
@@ -66,11 +89,18 @@ const Settings: React.FC = () => {
         <section className="mt-6 px-6">
           <Link to="/settings/profile" className="flex items-center gap-4 bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-card transition-colors cursor-pointer group hover:bg-gray-50 dark:hover:bg-white/5">
             <div className="relative">
-              <div
-                className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-14 w-14 border-2 border-primary shadow-sm"
-                style={{ backgroundImage: `url("${profile.avatar_url || 'https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'}")` }}
-              >
-              </div>
+              {profile.avatar_url ? (
+                <div
+                  className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-14 w-14 border-2 border-primary shadow-sm"
+                  style={{ backgroundImage: `url("${profile.avatar_url}")` }}
+                ></div>
+              ) : (
+                <div className="flex items-center justify-center h-14 w-14 rounded-full bg-primary/20 border-2 border-primary shadow-sm">
+                  <span className="text-primary font-bold text-xl">
+                    {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : 'U'}
+                  </span>
+                </div>
+              )}
               <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1 border-[3px] border-white dark:border-surface-dark flex items-center justify-center h-7 w-7 shadow-sm group-hover:scale-110 transition-transform">
                 <span className="material-symbols-outlined text-[14px] text-[#052e16] font-bold">edit</span>
               </div>
@@ -210,6 +240,16 @@ const Settings: React.FC = () => {
 
         {/* Footer Actions */}
         <div className="mx-6 mb-8 flex flex-col gap-4 relative z-20">
+          <Button
+            type="button"
+            onClick={handleClearData}
+            fullWidth
+            variant="secondary"
+            className="bg-white dark:bg-surface-dark text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-card border border-transparent hover:border-red-100 h-14 rounded-2xl flex items-center justify-center gap-3"
+            startIcon="delete_forever"
+          >
+            Apagar todos os dados
+          </Button>
           <Button
             type="button"
             onClick={handleLogout}
