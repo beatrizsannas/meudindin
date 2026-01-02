@@ -280,6 +280,7 @@ const Wallet: React.FC = () => {
                       <div className="overflow-hidden">
                         <h4 className="text-base font-bold text-[#111814] dark:text-white leading-tight truncate">{item.person_name}</h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{item.item_name}</p>
+                        <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-0.5">Total: {formatCurrency(item.amount)}</p>
                       </div>
                       <div className="text-right shrink-0 ml-2">
                         <span className="block text-primary font-bold text-lg">{formatCurrency(item.installmentValue)}</span>
