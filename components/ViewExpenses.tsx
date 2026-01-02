@@ -25,6 +25,7 @@ const ViewExpenses: React.FC = () => {
   const navigate = useNavigate();
 
   // States
+  const [selectedYear, setSelectedYear] = useState<number | 'Todos'>(new Date().getFullYear());
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(new Date().getMonth());
   const [selectedCategory, setSelectedCategory] = useState('Categoria');
   const [selectedAccount, setSelectedAccount] = useState('Conta');
@@ -60,7 +61,7 @@ const ViewExpenses: React.FC = () => {
     if (session?.user) {
       fetchTransactions();
     }
-  }, [session, selectedMonthIndex, selectedCategory, selectedAccount]);
+  }, [session, selectedYear, selectedMonthIndex, selectedCategory, selectedAccount]);
 
   const fetchCategories = async () => {
     try {
@@ -75,11 +76,6 @@ const ViewExpenses: React.FC = () => {
     try {
       setLoading(true);
 
-      // Calculate start and end date of selected month
-      const year = new Date().getFullYear(); // Assuming current year for simplicity or add year selector
-      const startDate = new Date(year, selectedMonthIndex, 1).toISOString().split('T')[0];
-      const endDate = new Date(year, selectedMonthIndex + 1, 0).toISOString().split('T')[0];
-
       let query = supabase
         .from('transactions')
         .select(`
@@ -88,19 +84,28 @@ const ViewExpenses: React.FC = () => {
         `)
         .eq('user_id', session?.user.id)
         .eq('type', 'expense')
-        .gte('date', startDate)
-        .lte('date', endDate)
         .order('date', { ascending: false });
+
+      // Year Filter
+      if (selectedYear !== 'Todos') {
+        const startDate = `${selectedYear}-01-01`;
+        const endDate = `${selectedYear}-12-31`;
+
+        // Month Filter (Only applies if a specific year is selected)
+        if (selectedMonthIndex !== -1) {
+          const startOfMonth = new Date(selectedYear, selectedMonthIndex, 1).toISOString().split('T')[0];
+          const endOfMonth = new Date(selectedYear, selectedMonthIndex + 1, 0).toISOString().split('T')[0];
+          query = query.gte('date', startOfMonth).lte('date', endOfMonth);
+        } else {
+          // Whole Year
+          query = query.gte('date', startDate).lte('date', endDate);
+        }
+      }
+      // If Year is 'Todos', we don't filter by date at all (show all history)
 
       if (selectedAccount !== 'Conta' && selectedAccount !== 'Todas') {
         query = query.eq('account', selectedAccount);
       }
-
-      // Category filter needs client-side filtering or exact ID match. 
-      // If selectedCategory is name, we can filter transaction.categories.name or filter after fetch.
-      // Database join filtering requires inner join syntax in supabase which is tricky with empty relations.
-      // Let's filter by ID if we mapped names to IDs, but here we just have names in select.
-      // We'll filter client-side for simplicity unless data is huge.
 
       const { data, error } = await query;
 
@@ -111,6 +116,7 @@ const ViewExpenses: React.FC = () => {
         categories: item.categories || { name: 'Sem Categoria' } // Handle null category
       }));
 
+      // Client-side category filtering
       if (selectedCategory !== 'Categoria' && selectedCategory !== 'Todas') {
         filteredData = filteredData.filter(t => t.categories?.name === selectedCategory);
       }
@@ -147,8 +153,14 @@ const ViewExpenses: React.FC = () => {
 
     const day = d.getDate();
     const month = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+    const year = d.getFullYear();
 
     if (isToday) return `Hoje, ${day} ${month}`;
+
+    // Show year if distinct from selected or current
+    if (selectedYear === 'Todos' || selectedYear !== year) {
+      return `${day} ${month.charAt(0).toUpperCase() + month.slice(1)} ${year}`;
+    }
     return `${day} ${month.charAt(0).toUpperCase() + month.slice(1)}`;
   };
 
@@ -187,20 +199,44 @@ const ViewExpenses: React.FC = () => {
         <div className="flex flex-col gap-4 mb-6">
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
 
-            {/* Month Filter */}
+            {/* Year Filter */}
             <div className="relative shrink-0">
               <div className="flex items-center gap-2 bg-[#111814] text-white dark:bg-white dark:text-[#111814] px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap shadow-md">
-                <span>{months[selectedMonthIndex]}</span>
+                <span>{selectedYear}</span>
                 <span className="material-symbols-outlined text-sm">expand_more</span>
               </div>
               <select
-                value={selectedMonthIndex}
-                onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
+                value={selectedYear}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedYear(val === 'Todos' ? 'Todos' : Number(val));
+                }}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none"
               >
-                {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                <option value="Todos">Todos</option>
+                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
               </select>
             </div>
+
+            {/* Month Filter */}
+            {selectedYear !== 'Todos' && (
+              <div className="relative shrink-0">
+                <div className="flex items-center gap-2 bg-surface-light dark:bg-surface-dark text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-surface-variant-dark transition-colors">
+                  <span>{selectedMonthIndex === -1 ? 'Todos os Meses' : months[selectedMonthIndex]}</span>
+                  <span className="material-symbols-outlined text-sm">expand_more</span>
+                </div>
+                <select
+                  value={selectedMonthIndex}
+                  onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none"
+                >
+                  <option value={-1}>Todos os Meses</option>
+                  {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                </select>
+              </div>
+            )}
 
             {/* Category Filter */}
             <div className="relative shrink-0">
