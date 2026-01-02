@@ -38,13 +38,18 @@ const ThirdPartyCards: React.FC = () => {
   ];
 
   useEffect(() => {
-    if (session?.user) {
-      fetchCategory();
-      fetchExpenses();
-    }
+    const init = async () => {
+      if (session?.user) {
+        const id = await fetchCategoryReturningId();
+        if (id) {
+          fetchExpenses(id);
+        }
+      }
+    };
+    init();
   }, [session]);
 
-  const fetchCategory = async () => {
+  const fetchCategoryReturningId = async () => {
     try {
       const { data, error } = await supabase
         .from('categories')
@@ -52,15 +57,36 @@ const ThirdPartyCards: React.FC = () => {
         .eq('name', 'Veículo') // Assuming Veículo exists as the main category
         .single();
 
+      if (error) {
+        // Fallback: try 'Veiculo' without accent
+        const { data: data2 } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('name', 'Veiculo')
+          .single();
+        if (data2) {
+          setCategoryId(data2.id);
+          return data2.id;
+        }
+        throw error;
+      }
+
       if (data) {
         setCategoryId(data.id);
+        return data.id;
       }
     } catch (error) {
       console.error('Error fetching category:', error);
     }
+    return null;
   };
 
-  const fetchExpenses = async () => {
+  // Kept for compatibility if used elsewhere, but init uses the returning one
+  const fetchCategory = fetchCategoryReturningId;
+
+  const fetchExpenses = async (catId: string | null = categoryId) => {
+    if (!catId) return;
+
     try {
       // split logic for month filter to optimize if needed, but client-side filter is fine for small lists
       const { data, error } = await supabase
@@ -69,11 +95,10 @@ const ThirdPartyCards: React.FC = () => {
           id,
           description,
           amount,
-          date,
-          category!inner(name)
+          date
         `)
         .eq('user_id', session?.user.id)
-        .eq('category.name', 'Veículo')
+        .eq('category_id', catId)
         .order('date', { ascending: false })
         .limit(50); // Limit to recent
 
