@@ -1,9 +1,109 @@
-import React, { useContext } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useContext, useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { MenuContext } from '../App';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
+
+interface Transaction {
+  id: number;
+  description: string;
+  amount: number;
+  date: string;
+  account: string;
+  category_id: string;
+  categories: {
+    name: string;
+  }
+}
 
 const ViewIncome: React.FC = () => {
   const { openMenu } = useContext(MenuContext);
+  const { session } = useAuth();
+  const navigate = useNavigate();
+
+  // Filter States
+  const [selectedRange, setSelectedRange] = useState('Este Mês');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Helper to map income categories to icons/colors
+  const getCategoryStyle = (catName: string = '') => {
+    const name = catName.toLowerCase();
+    if (name.includes('salário') || name.includes('emprego')) return { icon: 'work', colorClass: 'text-green-600 dark:text-green-400', bgClass: 'bg-green-100 dark:bg-green-900/20' };
+    if (name.includes('freelance') || name.includes('extra') || name.includes('projeto')) return { icon: 'laptop_mac', colorClass: 'text-teal-600 dark:text-teal-400', bgClass: 'bg-teal-100 dark:bg-teal-900/20' };
+    if (name.includes('venda') || name.includes('olx')) return { icon: 'sell', colorClass: 'text-blue-600 dark:text-blue-400', bgClass: 'bg-blue-100 dark:bg-blue-900/20' };
+    if (name.includes('investimento') || name.includes('fii') || name.includes('dividendo')) return { icon: 'trending_up', colorClass: 'text-purple-600 dark:text-purple-400', bgClass: 'bg-purple-100 dark:bg-purple-900/20' };
+
+    // Default
+    return { icon: 'attach_money', colorClass: 'text-gray-600 dark:text-gray-400', bgClass: 'bg-gray-100 dark:bg-gray-800' };
+  };
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchTransactions();
+    }
+  }, [session, selectedRange]);
+
+  const fetchTransactions = async () => {
+    try {
+      setLoading(true);
+
+      const today = new Date();
+      let startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+      let endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+
+      if (selectedRange === 'Mês Passado') {
+        startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
+        endDate = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0];
+      } else if (selectedRange === 'Últimos 3 Meses') {
+        startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().split('T')[0];
+        // End date remains end of current month
+      } else if (selectedRange === '2023') { // Example year
+        // Ideally dynamic or just ignore for simplicity in prototype
+        startDate = '2023-01-01';
+        endDate = '2023-12-31';
+      }
+
+      const { data, error } = await supabase
+        .from('transactions')
+        .select(`
+          *,
+          categories (name)
+        `)
+        .eq('user_id', session?.user.id)
+        .eq('type', 'income')
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      const mappedData = (data as any[]).map(item => ({
+        ...item,
+        categories: item.categories || { name: 'Receita' }
+      }));
+
+      setTransactions(mappedData);
+    } catch (error) {
+      console.error('Error fetching income:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalIncome = transactions.reduce((sum, t) => sum + t.amount, 0);
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr + 'T12:00:00');
+    return d.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }); // e.g., 05 Out
+  };
+
+  const handleNewIncome = () => {
+    navigate('/register', { state: { type: 'income' } });
+  };
 
   return (
     <div className="flex flex-col min-h-full bg-background-light dark:bg-background-dark font-display">
@@ -15,7 +115,7 @@ const ViewIncome: React.FC = () => {
           </Link>
           <h2 className="text-xl font-bold leading-tight tracking-tight text-[#111814] dark:text-white">Receitas</h2>
         </div>
-        <button 
+        <button
           onClick={openMenu}
           className="cursor-pointer flex items-center justify-center rounded-full size-10 hover:bg-surface-variant-light dark:hover:bg-surface-variant-dark transition-colors relative"
         >
@@ -33,17 +133,17 @@ const ViewIncome: React.FC = () => {
               <div className="flex items-center justify-between text-primary">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-lg">calendar_today</span>
-                  <p className="text-sm font-medium tracking-wide opacity-90">Total em Outubro</p>
+                  <p className="text-sm font-medium tracking-wide opacity-90">Total em {selectedRange}</p>
                 </div>
-                <span className="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">+12%</span>
+                {/* <span className="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">+12%</span> */}
               </div>
               <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-sm font-light text-gray-400">R$</span>
-                <h1 className="text-4xl font-bold tracking-tight">8.000,00</h1>
+                {/* <span className="text-sm font-light text-gray-400">R$</span> */}
+                <h1 className="text-4xl font-bold tracking-tight">{formatCurrency(totalIncome)}</h1>
               </div>
             </div>
-            <button 
-              onClick={() => alert("Nova Receita")}
+            <button
+              onClick={handleNewIncome}
               className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-[#102217] font-bold py-2.5 px-4 rounded-lg transition-colors text-sm shadow-md shadow-primary/20"
             >
               <span className="material-symbols-outlined text-xl icon-filled">add</span>
@@ -55,27 +155,22 @@ const ViewIncome: React.FC = () => {
         {/* Filters */}
         <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
           <div className="shrink-0 relative">
-            <select className="appearance-none bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full py-2 pl-4 pr-10 text-sm font-bold shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-white">
+            <select
+              value={selectedRange}
+              onChange={(e) => setSelectedRange(e.target.value)}
+              className="appearance-none bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full py-2 pl-4 pr-10 text-sm font-bold shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-white"
+            >
               <option>Este Mês</option>
               <option>Mês Passado</option>
               <option>Últimos 3 Meses</option>
-              <option>2023</option>
+              {/* <option>2023</option> */}
             </select>
             <span className="material-symbols-outlined absolute right-3 top-2.5 text-gray-500 pointer-events-none text-lg">calendar_month</span>
           </div>
-          <div className="shrink-0 relative">
-            <select className="appearance-none bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full py-2 pl-4 pr-10 text-sm font-bold shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-white">
-              <option>Todas as Fontes</option>
-              <option>Salário</option>
-              <option>Freelance</option>
-              <option>Investimentos</option>
-              <option>Vendas</option>
-            </select>
-            <span className="material-symbols-outlined absolute right-3 top-2.5 text-gray-500 pointer-events-none text-lg">filter_list</span>
-          </div>
-          <button className="shrink-0 flex items-center justify-center size-9 rounded-full bg-surface-variant-light dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          {/* Add more filters if needed */}
+          {/* <button className="shrink-0 flex items-center justify-center size-9 rounded-full bg-surface-variant-light dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
             <span className="material-symbols-outlined text-lg">sort</span>
-          </button>
+          </button> */}
         </div>
 
         {/* List */}
@@ -89,87 +184,30 @@ const ViewIncome: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-3">
-            {/* Item 1 */}
-            <div className="flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
-              <div className="flex items-center justify-center size-12 rounded-full bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 shrink-0">
-                <span className="material-symbols-outlined icon-filled">work</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-bold text-[#111814] dark:text-white truncate">Salário Mensal</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">05 Out, 09:00</p>
-              </div>
-              <div className="text-right">
-                <p className="text-base font-bold text-green-600 dark:text-green-400">+ R$ 5.000,00</p>
-                <p className="text-xs font-medium text-gray-400">Emprego Principal</p>
-              </div>
-            </div>
-
-            {/* Item 2 */}
-            <div className="flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
-              <div className="flex items-center justify-center size-12 rounded-full bg-teal-100 dark:bg-teal-900/20 text-teal-600 dark:text-teal-400 shrink-0">
-                <span className="material-symbols-outlined">laptop_mac</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-base font-bold text-[#111814] dark:text-white truncate">Projeto Web</p>
-                  <span className="bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 text-[10px] px-1.5 py-0.5 rounded font-medium">Extra</span>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">12 Out, 14:30</p>
-              </div>
-              <div className="text-right">
-                <p className="text-base font-bold text-green-600 dark:text-green-400">+ R$ 2.450,00</p>
-                <p className="text-xs font-medium text-gray-400">Freelance</p>
-              </div>
-            </div>
-
-            {/* Item 3 */}
-            <div className="flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
-              <div className="flex items-center justify-center size-12 rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 shrink-0">
-                <span className="material-symbols-outlined">sell</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-bold text-[#111814] dark:text-white truncate">Venda Monitor</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">15 Out, 18:20</p>
-              </div>
-              <div className="text-right">
-                <p className="text-base font-bold text-green-600 dark:text-green-400">+ R$ 450,00</p>
-                <p className="text-xs font-medium text-gray-400">OLX</p>
-              </div>
-            </div>
-
-            {/* Item 4 */}
-            <div className="flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
-              <div className="flex items-center justify-center size-12 rounded-full bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 shrink-0">
-                <span className="material-symbols-outlined">trending_up</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-bold text-[#111814] dark:text-white truncate">Dividendos FIIs</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">18 Out, 10:00</p>
-              </div>
-              <div className="text-right">
-                <p className="text-base font-bold text-green-600 dark:text-green-400">+ R$ 85,40</p>
-                <p className="text-xs font-medium text-gray-400">Investimentos</p>
-              </div>
-            </div>
-
-            {/* Item 5 (Pendente) */}
-            <div className="flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm opacity-60">
-              <div className="flex items-center justify-center size-12 rounded-full bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 shrink-0">
-                <span className="material-symbols-outlined">hourglass_top</span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-base font-bold text-[#111814] dark:text-white truncate">Reembolso</p>
-                  <span className="bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 text-[10px] px-1.5 py-0.5 rounded font-medium">Pendente</span>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">20 Out</p>
-              </div>
-              <div className="text-right">
-                <p className="text-base font-bold text-gray-400 dark:text-gray-500">+ R$ 14,50</p>
-                <p className="text-xs font-medium text-gray-400">Empresa</p>
-              </div>
-            </div>
-
+            {loading ? (
+              <p className="text-center text-gray-500">Carregando...</p>
+            ) : transactions.length === 0 ? (
+              <p className="text-center text-gray-500">Nenhuma receita encontrada para este período.</p>
+            ) : (
+              transactions.map(transaction => {
+                const style = getCategoryStyle(transaction.categories?.name);
+                return (
+                  <div key={transaction.id} className="flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
+                    <div className={`flex items-center justify-center size-12 rounded-full ${style.bgClass} ${style.colorClass} shrink-0`}>
+                      <span className="material-symbols-outlined icon-filled">{style.icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-bold text-[#111814] dark:text-white truncate">{transaction.description}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(transaction.date)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-base font-bold text-green-600 dark:text-green-400">+ {formatCurrency(transaction.amount)}</p>
+                      <p className="text-xs font-medium text-gray-400">{transaction.categories?.name}</p>
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
         <div className="h-6"></div>
