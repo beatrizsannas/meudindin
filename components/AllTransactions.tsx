@@ -127,7 +127,7 @@ const AllTransactions: React.FC = () => {
     };
 
     return (
-        <div className="relative flex h-full min-h-screen w-full flex-col overflow-x-hidden pb-24 max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark font-display text-[#111814] dark:text-white transition-colors duration-200">
+        <div className="flex flex-col w-full font-display text-[#111814] dark:text-white transition-colors duration-200">
             <div className="sticky top-0 z-20 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm p-4 border-b border-gray-100 dark:border-gray-800">
                 <div className="flex items-center gap-3">
                     <button
