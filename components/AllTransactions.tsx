@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
-import { MenuContext } from '../App';
 
 interface Transaction {
     id: number;
@@ -21,7 +20,6 @@ interface Transaction {
 const AllTransactions: React.FC = () => {
     const { session } = useAuth();
     const navigate = useNavigate();
-    const { openMenu } = useContext(MenuContext);
 
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
@@ -115,14 +113,6 @@ const AllTransactions: React.FC = () => {
 
     const formatCurrency = (val: number) =>
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-
-    const formatTime = (dateStr: string) => {
-        // Since our DB date is YYYY-MM-DD, we don't really have time unless we used timestampz. 
-        // For now, I'll mock it or just show date if time unavailable, but user HTML shows time.
-        // If the DB column is just 'date', we can't show time. I'll omit time or show a placeholder if requested, 
-        // but the HTML shows "14:30". I'll just skip time for now as I recall the DB schema is just 'date'.
-        return '';
-    };
 
     const handleDelete = async (id: number) => {
         if (!window.confirm("Apagar transação?")) return;

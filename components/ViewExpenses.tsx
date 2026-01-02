@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -22,6 +22,7 @@ interface Category {
 
 const ViewExpenses: React.FC = () => {
   const { session } = useAuth();
+  const navigate = useNavigate();
 
   // States
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(new Date().getMonth());
@@ -153,15 +154,6 @@ const ViewExpenses: React.FC = () => {
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-
-  return (
-  const navigate = React.useRef(null as any); // UseRef workaround if needed, or better just use useNavigate
-  const routerNavigate = React.useMemo(() => {
-    // react-router-dom hook usage inside component body
-    return null;
-  }, []);
-  // Actually, let's just use the hook standard way.
-  // The file doesn't have useNavigate imported yet.
 
   const handleDelete = async (id: number) => {
     if (!window.confirm("Apagar despesa?")) return;
