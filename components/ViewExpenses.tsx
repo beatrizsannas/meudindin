@@ -155,6 +155,27 @@ const ViewExpenses: React.FC = () => {
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   return (
+  const navigate = React.useRef(null as any); // UseRef workaround if needed, or better just use useNavigate
+  const routerNavigate = React.useMemo(() => {
+    // react-router-dom hook usage inside component body
+    return null;
+  }, []);
+  // Actually, let's just use the hook standard way.
+  // The file doesn't have useNavigate imported yet.
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Apagar despesa?")) return;
+    try {
+      const { error } = await supabase.from('transactions').delete().eq('id', id);
+      if (error) throw error;
+      setTransactions(prev => prev.filter(t => t.id !== id));
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao apagar");
+    }
+  };
+
+  return (
     <div className="flex flex-col bg-background-light dark:bg-background-dark font-display min-h-full">
       {/* Header */}
       <div className="sticky top-0 z-30 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
@@ -167,9 +188,6 @@ const ViewExpenses: React.FC = () => {
           </Link>
           <h1 className="text-lg font-bold text-[#111814] dark:text-white">Ver Despesas</h1>
         </div>
-        <button className="flex items-center justify-center rounded-full size-10 hover:bg-surface-variant-light dark:hover:bg-surface-variant-dark transition-colors">
-          <span className="material-symbols-outlined text-gray-700 dark:text-gray-200">search</span>
-        </button>
       </div>
 
       <div className="flex flex-col gap-0 pt-4 px-4 pb-24">
@@ -209,21 +227,6 @@ const ViewExpenses: React.FC = () => {
               </select>
             </div>
 
-            {/* Account Filter */}
-            <div className="relative shrink-0">
-              <div className="flex items-center gap-2 bg-surface-light dark:bg-surface-dark text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-surface-variant-dark transition-colors">
-                <span>{selectedAccount}</span>
-                <span className="material-symbols-outlined text-sm">expand_more</span>
-              </div>
-              <select
-                value={selectedAccount}
-                onChange={(e) => setSelectedAccount(e.target.value)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none"
-              >
-                {accounts.map(a => <option key={a} value={a}>{a}</option>)}
-              </select>
-            </div>
-
             <div className="w-1"></div>
           </div>
 
@@ -236,7 +239,6 @@ const ViewExpenses: React.FC = () => {
               <div className="size-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 dark:text-red-400 mb-1">
                 <span className="material-symbols-outlined">trending_down</span>
               </div>
-              {/* <span className="text-[10px] font-medium text-red-500">+5% vs set.</span> */}
             </div>
           </div>
         </div>
@@ -260,7 +262,7 @@ const ViewExpenses: React.FC = () => {
                 {groupedTransactions[dateStr].map(transaction => {
                   const style = getCategoryStyle(transaction.categories?.name);
                   return (
-                    <div key={transaction.id} className="flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
+                    <div key={transaction.id} className="relative group flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
                       <div className={`flex items-center justify-center size-12 rounded-full ${style.bgClass} ${style.colorClass} shrink-0`}>
                         <span className="material-symbols-outlined">{style.icon}</span>
                       </div>
@@ -273,6 +275,23 @@ const ViewExpenses: React.FC = () => {
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
                           {transaction.categories?.name}
                         </span>
+                      </div>
+
+                      {/* Action Buttons (Visible on hover/tap) */}
+                      <div className="absolute right-2 top-0 bottom-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-surface-light/90 dark:bg-surface-dark/90 px-2 rounded-r-xl">
+                        <Link
+                          to="/register"
+                          state={{ transaction, type: 'expense' }}
+                          className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-300"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">edit</span>
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(transaction.id)}
+                          className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
                       </div>
                     </div>
                   );

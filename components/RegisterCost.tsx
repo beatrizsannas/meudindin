@@ -16,13 +16,7 @@ const RegisterCost: React.FC = () => {
   const { session } = useAuth();
 
   const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [categoryId, setCategoryId] = useState('');
-
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [loading, setLoading] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -48,44 +42,58 @@ const RegisterCost: React.FC = () => {
 
   // Set default category when type changes or categories load
   useEffect(() => {
-    if (availableCategories.length > 0) {
-      // Keep existing selection if valid for new type, else pick first
+    // Only set default if we are NOT editing or if the current category is invalid for the type
+    // If editing, we want to keep the category from the transaction unless user changes type
+    if (availableCategories.length > 0 && !editId) {
       const isValid = availableCategories.find(c => c.id === categoryId);
       if (!isValid) {
         setCategoryId(availableCategories[0].id);
       }
     }
-  }, [transactionType, categories, categoryId]);
+  }, [transactionType, categories, categoryId, editId]);
 
-  // Check for navigation state (scanned data or type)
+  // Check for navigation state (scanned data or type or EDIT)
   useEffect(() => {
     if (location.state) {
-      if (location.state.type) {
-        const type = location.state.type as 'expense' | 'income';
-        setTransactionType(type);
+      // Handle Edit Mode
+      if (location.state.transaction) {
+        const t = location.state.transaction;
+        setEditId(t.id);
+        setAmount(t.amount.toString());
+        setDescription(t.description);
+        setDate(t.date); // Assuming date is YYYY-MM-DD
+        setTransactionType(t.type || 'expense'); // Ensure type is present in transaction object
+        setCategoryId(t.category_id);
       }
+      // Handle New Mode configuration
+      else {
+        if (location.state.type) {
+          const type = location.state.type as 'expense' | 'income';
+          setTransactionType(type);
+        }
 
-      if (location.state.scannedData) {
-        const data = location.state.scannedData;
-        if (data.amount) setAmount(data.amount.toString());
-        if (data.date) setDate(data.date);
-        if (data.description) setDescription(data.description);
+        if (location.state.scannedData) {
+          const data = location.state.scannedData;
+          if (data.amount) setAmount(data.amount.toString());
+          if (data.date) setDate(data.date);
+          if (data.description) setDescription(data.description);
 
-        // Map scanned category to database category by name
-        if (data.category && categories.length > 0) {
-          const catLower = data.category.toLowerCase();
-          // Attempt to find a matching category by name
-          const match = categories.find(c => {
-            const cName = c.name.toLowerCase();
-            if (catLower.includes('food') && cName === 'outros') return true;
-            if (catLower.includes('fuel') && cName === 'veículo') return true;
-            if (cName === catLower) return true;
-            return false;
-          });
+          // Map scanned category to database category by name
+          if (data.category && categories.length > 0) {
+            const catLower = data.category.toLowerCase();
+            // Attempt to find a matching category by name
+            const match = categories.find(c => {
+              const cName = c.name.toLowerCase();
+              if (catLower.includes('food') && cName === 'outros') return true;
+              if (catLower.includes('fuel') && cName === 'veículo') return true;
+              if (cName === catLower) return true;
+              return false;
+            });
 
-          if (match) {
-            setTransactionType(match.type as 'expense' | 'income');
-            setCategoryId(match.id);
+            if (match) {
+              setTransactionType(match.type as 'expense' | 'income');
+              setCategoryId(match.id);
+            }
           }
         }
       }
@@ -105,25 +113,41 @@ const RegisterCost: React.FC = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('transactions')
-        .insert({
-          user_id: session?.user.id,
-          description,
-          amount: parseFloat(amount), // Assuming input is standard format. If BRL currency mask used, needs cleaning.
-          type: transactionType,
-          category_id: categoryId,
-          date,
-          account: 'Conta Corrente' // Default for now
-        });
+      if (editId) {
+        // Update existing
+        const { error } = await supabase
+          .from('transactions')
+          .update({
+            description,
+            amount: parseFloat(amount),
+            type: transactionType,
+            category_id: categoryId,
+            date,
+            account: 'Conta Corrente'
+          })
+          .eq('id', editId);
+        if (error) throw error;
+      } else {
+        // Create new
+        const { error } = await supabase
+          .from('transactions')
+          .insert({
+            user_id: session?.user.id,
+            description,
+            amount: parseFloat(amount),
+            type: transactionType,
+            category_id: categoryId,
+            date,
+            account: 'Conta Corrente'
+          });
+        if (error) throw error;
+      }
 
-      if (error) throw error;
-
-      alert("Transação salva com sucesso!");
-      navigate('/');
+      alert("Salvo com sucesso!");
+      navigate(-1); // Go back to previous screen (expenses or income list)
     } catch (error) {
       console.error('Error saving transaction:', error);
-      alert("Erro ao salvar transação.");
+      alert("Erro ao salvar.");
     } finally {
       setLoading(false);
     }
@@ -134,11 +158,11 @@ const RegisterCost: React.FC = () => {
       {/* Header */}
       <header className="sticky top-0 z-20 bg-surface-light dark:bg-surface-dark shadow-sm px-4 pt-4 pb-2">
         <div className="flex items-center justify-between">
-          <Link to="/" className="flex size-12 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+          <button onClick={() => navigate(-1)} className="flex size-12 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
             <span className="material-symbols-outlined text-[#111814] dark:text-white">arrow_back</span>
-          </Link>
+          </button>
           <h2 className="text-[#111814] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">
-            Registrar {transactionType === 'expense' ? 'Despesa' : 'Receita'}
+            {editId ? 'Editar' : 'Registrar'} {transactionType === 'expense' ? 'Despesa' : 'Receita'}
           </h2>
         </div>
       </header>

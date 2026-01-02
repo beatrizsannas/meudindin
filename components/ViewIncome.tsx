@@ -105,6 +105,18 @@ const ViewIncome: React.FC = () => {
     navigate('/register', { state: { type: 'income' } });
   };
 
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Apagar receita?")) return;
+    try {
+      const { error } = await supabase.from('transactions').delete().eq('id', id);
+      if (error) throw error;
+      setTransactions(prev => prev.filter(t => t.id !== id));
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao apagar");
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-full bg-background-light dark:bg-background-dark font-display">
       {/* Header */}
@@ -167,10 +179,6 @@ const ViewIncome: React.FC = () => {
             </select>
             <span className="material-symbols-outlined absolute right-3 top-2.5 text-gray-500 pointer-events-none text-lg">calendar_month</span>
           </div>
-          {/* Add more filters if needed */}
-          {/* <button className="shrink-0 flex items-center justify-center size-9 rounded-full bg-surface-variant-light dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-            <span className="material-symbols-outlined text-lg">sort</span>
-          </button> */}
         </div>
 
         {/* List */}
@@ -192,7 +200,7 @@ const ViewIncome: React.FC = () => {
               transactions.map(transaction => {
                 const style = getCategoryStyle(transaction.categories?.name);
                 return (
-                  <div key={transaction.id} className="flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
+                  <div key={transaction.id} className="relative group flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
                     <div className={`flex items-center justify-center size-12 rounded-full ${style.bgClass} ${style.colorClass} shrink-0`}>
                       <span className="material-symbols-outlined icon-filled">{style.icon}</span>
                     </div>
@@ -203,6 +211,22 @@ const ViewIncome: React.FC = () => {
                     <div className="text-right">
                       <p className="text-base font-bold text-green-600 dark:text-green-400">+ {formatCurrency(transaction.amount)}</p>
                       <p className="text-xs font-medium text-gray-400">{transaction.categories?.name}</p>
+                    </div>
+
+                    {/* Action Buttons (Visible on hover/tap) */}
+                    <div className="absolute right-2 top-0 bottom-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-surface-light/90 dark:bg-surface-dark/90 px-2 rounded-r-xl">
+                      <button
+                        onClick={() => navigate('/register', { state: { transaction, type: 'income' } })}
+                        className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-300"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(transaction.id)}
+                        className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
                     </div>
                   </div>
                 );
