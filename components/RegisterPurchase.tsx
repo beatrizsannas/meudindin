@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 
 const RegisterPurchase: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { session } = useAuth();
 
   // State
@@ -44,6 +45,27 @@ const RegisterPurchase: React.FC = () => {
   const [paymentStart, setPaymentStart] = useState(new Date().toISOString().split('T')[0]);
   const [installments, setInstallments] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (location.state?.purchase) {
+      const p = location.state.purchase;
+      setIsEditing(true);
+      setEditId(p.id);
+      setAmount(p.amount.toString());
+      setPersonName(p.person_name);
+      setItemName(p.item_name || '');
+      // cardUsed logic: previously we didn't save it separately, maybe it's in item_name?
+      // If we don't have it, leave blank or try to extract. 
+      // For now, leave blank as we don't have a column.
+      setCardUsed('');
+
+      setDate(p.purchase_date);
+      setPaymentStart(p.start_payment_date);
+      setInstallments(p.installments_total);
+    }
+  }, [location.state]);
 
   const handleIncrement = () => {
     if (installments < 99) setInstallments(prev => prev + 1);
@@ -61,31 +83,51 @@ const RegisterPurchase: React.FC = () => {
       return;
     }
 
-    const finalItemName = itemName || `Compra no ${cardUsed || 'Cartão'}`;
-    const totalAmount = parseFloat(amount);
+    const finalItemName = itemName || `Compra no ${cardUsed || 'Cartão'} `;
+    const totalAmount = parseFloat(amount.toString().replace(',', '.')); // ensure clean float
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from('third_party_purchases')
-        .insert({
-          user_id: session?.user.id,
-          person_name: personName,
-          item_name: finalItemName, // Use input or fallback
-          amount: totalAmount,
-          installments_total: installments,
-          installments_paid: 0,
-          purchase_date: date,
-          start_payment_date: paymentStart,
-          is_paid: false
-          // Note: If we want to save 'cardUsed', we need a column or put it in description. 
-          // For now, I'll append it to item_name if item_name is empty, or ignore if no column.
-          // I will assume the current schema doesn't have `card_used`.
-        });
+      if (isEditing && editId) {
+        const { error } = await supabase
+          .from('third_party_purchases')
+          .update({
+            person_name: personName,
+            item_name: finalItemName,
+            amount: totalAmount,
+            installments_total: installments,
+            purchase_date: date,
+            start_payment_date: paymentStart,
+            // We usually don't reset installments_paid on simple edit unless requested,
+            // but if total installments change, we might need logic.
+            // For simplicity, we just update the basic fields.
+          })
+          .eq('id', editId);
 
-      if (error) throw error;
+        if (error) throw error;
+        alert("Compra atualizada com sucesso!");
+      } else {
+        const { error } = await supabase
+          .from('third_party_purchases')
+          .insert({
+            user_id: session?.user.id,
+            person_name: personName,
+            item_name: finalItemName, // Use input or fallback
+            amount: totalAmount,
+            installments_total: installments,
+            installments_paid: 0,
+            purchase_date: date,
+            start_payment_date: paymentStart,
+            is_paid: false
+            // Note: If we want to save 'cardUsed', we need a column or put it in description. 
+            // For now, I'll append it to item_name if item_name is empty, or ignore if no column.
+            // I will assume the current schema doesn't have `card_used`.
+          });
 
-      alert("Compra registrada com sucesso!");
+        if (error) throw error;
+        alert("Compra registrada com sucesso!");
+      }
+
       navigate('/wallet');
     } catch (error) {
       console.error('Error saving purchase:', error);
@@ -103,7 +145,9 @@ const RegisterPurchase: React.FC = () => {
             <Link to="/wallet" className="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
               <span className="material-symbols-outlined text-[#111814] dark:text-white text-[24px]">arrow_back</span>
             </Link>
-            <h1 className="text-lg font-bold leading-tight tracking-tight flex-1 text-center text-[#111814] dark:text-white">Registrar Compra</h1>
+            <h1 className="text-lg font-bold leading-tight tracking-tight flex-1 text-center text-[#111814] dark:text-white">
+              {isEditing ? 'Editar Compra' : 'Registrar Compra'}
+            </h1>
             <div className="size-10"></div>
           </div>
         </header>
@@ -198,7 +242,7 @@ const RegisterPurchase: React.FC = () => {
 
             <div className="space-y-1.5">
               <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Quantidade de Parcelas</label>
-              <div className="bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 rounded-xl p-1.5 flex items-center shadow-sm">
+              <div className="bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 rounded-xl p-1.5 flex items-center justify-between shadow-sm px-2">
                 <button
                   className="w-12 h-10 flex items-center justify-center rounded-lg bg-gray-50 dark:bg-white/5 text-[#111814] dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 active:scale-95 transition-all"
                   type="button"
@@ -206,16 +250,18 @@ const RegisterPurchase: React.FC = () => {
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>remove</span>
                 </button>
-                <div className="flex-1 px-4 text-center">
+                <div className="flex-1 px-4 flex items-center justify-center gap-2">
                   <input
-                    className="w-full bg-transparent border-0 text-center font-bold text-lg text-[#111814] dark:text-white focus:ring-0 p-0 pointer-events-none"
+                    className="w-auto max-w-[3rem] bg-transparent border-0 text-center font-bold text-lg text-[#111814] dark:text-white focus:ring-0 p-0 pointer-events-none"
                     max="99"
                     min="1"
                     type="number"
                     value={installments}
                     readOnly
                   />
-                  <span className="text-[10px] text-gray-500 font-medium uppercase tracking-wider block -mt-1">Vez</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wide">
+                    {installments === 1 ? 'Vez' : 'Vezes'}
+                  </span>
                 </div>
                 <button
                   className="w-12 h-10 flex items-center justify-center rounded-lg bg-primary text-[#102217] shadow-sm hover:brightness-110 active:scale-95 transition-all"

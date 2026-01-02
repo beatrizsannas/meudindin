@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { MenuContext } from '../App';
 import Button from './Button';
 import { supabase } from '../lib/supabaseClient';
@@ -14,13 +14,14 @@ interface Purchase {
   installments_paid: number;
   start_payment_date: string;
   is_paid: boolean;
+  purchase_date: string; // Needed for edit
   avatar_url?: string; // Add avatar support if DB allows, otherwise use initials
 }
 
 const Wallet: React.FC = () => {
   const { openMenu } = useContext(MenuContext);
   const { session } = useAuth();
-  const navigate = React.useRef(null); // Just for consistent hook usage if needed later
+  const navigate = useNavigate();
 
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -124,6 +125,10 @@ const Wallet: React.FC = () => {
       console.error(e);
       alert("Erro ao apagar");
     }
+  };
+
+  const handleEdit = (purchase: Purchase) => {
+    navigate('/wallet/register', { state: { purchase } });
   };
 
   const getInstallmentDetails = (purchase: Purchase) => {
@@ -323,7 +328,7 @@ const Wallet: React.FC = () => {
 
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => { /* Edit logic if needed */ }}
+                        onClick={() => handleEdit(item)}
                         className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-[#111814] dark:hover:text-white transition-colors"
                       >
                         <span className="material-symbols-outlined text-[18px]">edit</span>
