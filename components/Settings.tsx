@@ -40,11 +40,11 @@ const Settings: React.FC = () => {
 
     try {
       setLoading(true);
-      // Delete all transactions (ID != 0)
-      const { error: tError } = await supabase.from('transactions').delete().neq('id', 0);
+      // Delete all transactions for the user
+      const { error: tError } = await supabase.from('transactions').delete().eq('user_id', session?.user.id);
 
-      // Delete all purchases (UUID != empty)
-      const { error: pError } = await supabase.from('third_party_purchases').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // Delete all purchases for the user
+      const { error: pError } = await supabase.from('third_party_purchases').delete().eq('user_id', session?.user.id);
 
       if (tError) throw tError;
       if (pError) throw pError;

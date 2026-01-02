@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from './Button';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 
 interface SideMenuProps {
   isOpen: boolean;
@@ -10,11 +12,36 @@ interface SideMenuProps {
 const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { session } = useAuth();
+  const [profile, setProfile] = useState<{ full_name: string | null, avatar_url: string | null }>({ full_name: '', avatar_url: null });
+
+  useEffect(() => {
+    if (session?.user && isOpen) {
+      fetchProfile();
+    }
+  }, [session, isOpen]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', session?.user.id)
+        .single();
+
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const handleLogout = () => {
     if (window.confirm("Deseja realmente sair da sua conta?")) {
       localStorage.removeItem('isAuthenticated');
       onClose();
+      supabase.auth.signOut();
       navigate('/login');
     }
   };
@@ -47,10 +74,20 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div
-                className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-primary/20"
-                style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80")' }}
-              ></div>
+              <div className="relative">
+                {profile.avatar_url ? (
+                  <div
+                    className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 ring-2 ring-primary/20"
+                    style={{ backgroundImage: `url("${profile.avatar_url}")` }}
+                  ></div>
+                ) : (
+                  <div className="flex items-center justify-center size-10 rounded-full bg-primary ring-2 ring-white dark:ring-surface-dark shadow-sm">
+                    <span className="text-white dark:text-[#102217] font-bold text-sm">
+                      {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : 'U'}
+                    </span>
+                  </div>
+                )}
+              </div>
               <div>
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Meu Dindin</p>
                 <h2 className="text-lg font-bold text-[#111814] dark:text-white">Menu</h2>
@@ -74,8 +111,8 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
                   key={item.path}
                   to={item.path!}
                   className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-colors ${isActive(item.path!)
-                      ? 'bg-surface-variant-light dark:bg-surface-variant-dark text-gray-900 dark:text-white'
-                      : 'hover:bg-surface-variant-light dark:hover:bg-surface-variant-dark text-gray-700 dark:text-gray-200'
+                    ? 'bg-surface-variant-light dark:bg-surface-variant-dark text-gray-900 dark:text-white'
+                    : 'hover:bg-surface-variant-light dark:hover:bg-surface-variant-dark text-gray-700 dark:text-gray-200'
                     }`}
                   onClick={onClose}
                 >
