@@ -167,7 +167,7 @@ const Wallet: React.FC = () => {
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   return (
-    <div className="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto overflow-x-hidden shadow-2xl bg-background-light dark:bg-background-dark font-display text-[#111814] dark:text-white transition-colors duration-200">
+    <div className="flex flex-col min-h-full">
 
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pt-6 pb-2">
@@ -182,7 +182,7 @@ const Wallet: React.FC = () => {
         </div>
       </header>
 
-      <main className="flex-1 px-4 py-4 space-y-6 pb-28">
+      <main className="flex-1 px-4 py-4 space-y-6">
         {/* Filters */}
         <section className="flex gap-3">
           <div className="relative flex-1 group">
