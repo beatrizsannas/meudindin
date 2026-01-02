@@ -1,14 +1,46 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from './Button';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
+  const { session } = useAuth();
+  const [profile, setProfile] = useState<{ full_name: string | null, avatar_url: string | null }>({ full_name: '', avatar_url: null });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchProfile();
+    }
+  }, [session]);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('full_name, avatar_url')
+        .eq('id', session?.user.id)
+        .single();
+
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     // Using a simple confirm and explicit navigation with replace
     if (window.confirm("Deseja realmente sair da sua conta?")) {
       localStorage.removeItem('isAuthenticated');
+      // Sign out from Supabase as well
+      supabase.auth.signOut();
       navigate('/login', { replace: true });
     }
   };
@@ -36,7 +68,7 @@ const Settings: React.FC = () => {
             <div className="relative">
               <div
                 className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-14 w-14 border-2 border-primary shadow-sm"
-                style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80")' }}
+                style={{ backgroundImage: `url("${profile.avatar_url || 'https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80'}")` }}
               >
               </div>
               <div className="absolute -bottom-1 -right-1 bg-primary rounded-full p-1 border-[3px] border-white dark:border-surface-dark flex items-center justify-center h-7 w-7 shadow-sm group-hover:scale-110 transition-transform">
@@ -44,8 +76,12 @@ const Settings: React.FC = () => {
               </div>
             </div>
             <div className="flex flex-col justify-center flex-1">
-              <p className="text-gray-900 dark:text-white text-lg font-bold leading-tight">Maria Silva</p>
-              <p className="text-gray-400 dark:text-gray-500 text-xs font-medium">maria.silva@email.com</p>
+              <p className="text-gray-900 dark:text-white text-lg font-bold leading-tight">
+                {profile.full_name || 'Usuário'}
+              </p>
+              <p className="text-gray-400 dark:text-gray-500 text-xs font-medium">
+                {session?.user.email || 'email@exemplo.com'}
+              </p>
             </div>
             <div className="text-gray-300 dark:text-gray-600 group-hover:text-gray-500 transition-colors">
               <span className="material-symbols-outlined">chevron_right</span>
