@@ -176,7 +176,7 @@ const Wallet: React.FC = () => {
             <span className="material-symbols-outlined text-[#111814] dark:text-white text-[24px]">arrow_back</span>
           </Link>
           <h1 className="text-lg font-bold leading-tight tracking-tight flex-1 text-center">Compra de Terceiros</h1>
-          <Link to="/register-purchase" className="flex size-10 items-center justify-center rounded-full bg-primary text-[#102217] shadow-lg hover:brightness-110 transition-all">
+          <Link to="/wallet/register" className="flex size-10 items-center justify-center rounded-full bg-primary text-[#102217] shadow-lg hover:brightness-110 transition-all">
             <span className="material-symbols-outlined text-[24px]">add</span>
           </Link>
         </div>

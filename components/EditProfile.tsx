@@ -38,7 +38,9 @@ const EditProfile: React.FC = () => {
                 setFormData(prev => ({
                     ...prev,
                     name: data.full_name || "",
-                    avatar_url: data.avatar_url
+                    avatar_url: data.avatar_url,
+                    phone: data.phone || "",
+                    dob: data.dob || ""
                 }));
             }
         } catch (error) {
@@ -69,6 +71,8 @@ const EditProfile: React.FC = () => {
                 id: session.user.id,
                 full_name: formData.name,
                 avatar_url: formData.avatar_url, // Saves null if removed
+                phone: formData.phone,
+                dob: formData.dob || null, // Handle empty string for date
                 updated_at: new Date().toISOString(),
             };
 
