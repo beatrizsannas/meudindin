@@ -264,7 +264,7 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold leading-tight text-[#111814] dark:text-white">Transações Recentes</h3>
-            <button onClick={() => alert("Histórico completo")} className="text-sm font-bold text-primary hover:text-primary-dark transition-colors">Ver tudo</button>
+            <Link to="/all-transactions" className="text-sm font-bold text-primary hover:text-primary-dark transition-colors">Ver tudo</Link>
           </div>
 
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
