@@ -133,6 +133,32 @@ const Dashboard: React.FC = () => {
     setBalance(totalIncome - totalExpense);
   };
 
+  const handleClearData = async () => {
+    if (!window.confirm("CUIDADO: Isso apagará TODOS os seus dados de transações e compras. Deseja continuar?")) return;
+
+    try {
+      setLoading(true);
+      // Delete all transactions (ID != 0)
+      const { error: tError } = await supabase.from('transactions').delete().neq('id', 0);
+
+      // Delete all purchases (UUID != empty)
+      const { error: pError } = await supabase.from('third_party_purchases').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+
+      if (tError) throw tError;
+      if (pError) throw pError;
+
+      alert("Todos os dados foram apagados com sucesso!");
+      // Refresh
+      fetchTransactions();
+      fetchUserProfile();
+    } catch (e: any) {
+      console.error(e);
+      alert("Erro ao apagar dados: " + (e.message || "Erro desconhecido"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleNotification = () => {
     alert("Você tem 0 novas notificações.");
   };
@@ -175,13 +201,22 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        <button
-          onClick={handleNotification}
-          className="relative p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-        >
-          <span className="material-symbols-outlined text-[#111814] dark:text-white text-[28px] icon-filled">notifications</span>
-          {/* <span className="absolute top-2 right-2.5 size-2.5 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark"></span> */}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleClearData}
+            title="Apagar todos os dados"
+            className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/10 text-red-500 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[24px]">delete_forever</span>
+          </button>
+          <button
+            onClick={handleNotification}
+            className="relative p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[#111814] dark:text-white text-[28px] icon-filled">notifications</span>
+            {/* <span className="absolute top-2 right-2.5 size-2.5 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark"></span> */}
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-6 px-6">
