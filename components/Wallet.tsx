@@ -1,269 +1,265 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { MenuContext } from '../App';
+import Button from './Button';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 
 interface Purchase {
-  id: number;
-  name: string;
-  item: string; // e.g. "iPhone 14 Pro", "Compra"
-  date: string;
-  fullDate: string; // for display in list
+  id: string;
+  person_name: string;
+  item_name: string;
   amount: number;
-  installmentsCurrent: number;
-  installmentsTotal: number;
-  startDate: string;
-  avatar: string;
-  isPaid: boolean;
-  avatarColor?: string; // class for bg color if no image
-  initials?: string;
+  installments_total: number;
+  installments_paid: number;
+  start_payment_date: string;
+  is_paid: boolean;
+  avatar?: string; // Optional if we want to add avatars later
 }
 
 const Wallet: React.FC = () => {
-  // Initial Mock Data state
-  const [purchases, setPurchases] = useState<Purchase[]>([
-    {
-      id: 1,
-      name: 'Carlos Silva',
-      item: 'iPhone 14 Pro',
-      date: '12/10/2023',
-      fullDate: 'Compra: 12/10/2023',
-      amount: 450.00,
-      installmentsCurrent: 3,
-      installmentsTotal: 10,
-      startDate: 'Nov/23',
-      avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80',
-      isPaid: false
-    },
-    {
-      id: 2,
-      name: 'Mariana Costa',
-      item: 'Notebook Dell',
-      date: '05/11/2023',
-      fullDate: 'Compra: 05/11/2023',
-      amount: 1200.00,
-      installmentsCurrent: 12,
-      installmentsTotal: 12,
-      startDate: 'Dez/23',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80',
-      isPaid: true
-    },
-    {
-      id: 3,
-      name: 'João Pedro',
-      item: 'Jantar Outback',
-      date: '15/01/2024',
-      fullDate: 'Compra: 15/01/2024',
-      amount: 89.90,
-      installmentsCurrent: 1,
-      installmentsTotal: 1,
-      startDate: 'Fev/24',
-      avatar: '',
-      initials: 'JP',
-      avatarColor: 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 ring-indigo-200 dark:ring-indigo-800',
-      isPaid: false
+  const { openMenu } = useContext(MenuContext);
+  const { session } = useAuth();
+
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchPurchases();
     }
-  ]);
+  }, [session]);
 
-  const handleTogglePaid = (id: number) => {
-    setPurchases(prev => prev.map(p => 
-      p.id === id ? { ...p, isPaid: !p.isPaid } : p
-    ));
-  };
+  const fetchPurchases = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('third_party_purchases')
+        .select('*');
 
-  const handleEdit = (name: string) => {
-    alert(`Editar registro de: ${name}`);
-  };
-
-  const handleDelete = (name: string) => {
-    if (window.confirm(`Tem certeza que deseja excluir o registro de ${name}?`)) {
-      alert("Registro excluído (simulação).");
+      if (error) throw error;
+      if (data) {
+        setPurchases(data);
+      }
+    } catch (error) {
+      console.error('Error fetching purchases:', error);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleMarkAsPaid = async (id: string, currentPaidCount: number, total: number) => {
+    // Logic: Increment installments_paid. If it reaches total, is_paid = true.
+    const newPaidCount = currentPaidCount + 1;
+    const isFullyPaid = newPaidCount >= total;
+
+    if (newPaidCount > total) return; // Already fully paid
+
+    try {
+      const { error } = await supabase
+        .from('third_party_purchases')
+        .update({
+          installments_paid: newPaidCount,
+          is_paid: isFullyPaid
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Update local state
+      setPurchases(prev => prev.map(p =>
+        p.id === id
+          ? { ...p, installments_paid: newPaidCount, is_paid: isFullyPaid }
+          : p
+      ));
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+      alert('Erro ao atualizar status.');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Tem certeza que deseja apagar este registro?")) return;
+
+    try {
+      const { error } = await supabase
+        .from('third_party_purchases')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setPurchases(prev => prev.filter(p => p.id !== id));
+    } catch (error) {
+      console.error('Error deleting purchase:', error);
+      alert('Erro ao apagar.');
+    }
+  };
+
+
+  const months = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+
+  // Helper to calculate installment details for the selected month
+  const getInstallmentDetails = (purchase: Purchase) => {
+    // Calculate month difference: (SelectedYear - StartYear) * 12 + (SelectedMonth - StartMonth)
+    const [y, m] = purchase.start_payment_date.split('-');
+    const startYear = parseInt(y);
+    const startMonth = parseInt(m) - 1; // 0-indexed
+
+    const diffMonths = (selectedYear - startYear) * 12 + (selectedMonth - startMonth);
+    const installmentNumber = diffMonths + 1; // 1st installment is at diff 0
+
+    const isValid = installmentNumber >= 1 && installmentNumber <= purchase.installments_total;
+
+    // Check if this specific installment is paid
+    const isPaid = installmentNumber <= purchase.installments_paid;
+
+    const installmentValue = purchase.amount / purchase.installments_total;
+
+    return { isValid, installmentNumber, isPaid, installmentValue };
+  };
+
+  // Filter purchases that have an active installment in this month
+  const activePurchases = purchases.map(p => {
+    const details = getInstallmentDetails(p);
+    return { ...p, ...details };
+  }).filter(p => p.isValid);
+
+  const totalReceivable = activePurchases
+    .filter(p => !p.isPaid)
+    .reduce((sum, p) => sum + p.installmentValue, 0);
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   return (
-    <div className="flex flex-col h-full bg-background-light dark:bg-background-dark">
+    <div className="flex flex-col bg-background-light dark:bg-background-dark min-h-full">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pt-6 pb-4 shadow-sm transition-all">
-        <div className="flex items-center justify-between mb-2">
-          <Link to="/" className="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
-            <span className="material-symbols-outlined text-[#111814] dark:text-white text-2xl">arrow_back</span>
-          </Link>
-          <h1 className="text-lg font-bold leading-tight tracking-tight flex-1 text-center text-[#111814] dark:text-white">Cartão de Terceiros</h1>
-          <Link to="/wallet/register" className="flex size-10 items-center justify-center rounded-full bg-primary text-[#102217] shadow-lg hover:brightness-110 transition-all hover:scale-105 active:scale-95">
-            <span className="material-symbols-outlined text-2xl">add</span>
-          </Link>
+      <div className="sticky top-0 z-20 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={openMenu}
+            className="p-1 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[#111814] dark:text-white text-3xl">menu</span>
+          </button>
+          <h2 className="text-xl font-extrabold leading-tight text-[#111814] dark:text-white">Carteiras</h2>
         </div>
-      </header>
+        <Link to="/register-purchase" className="p-2 -mr-2 text-primary hover:bg-primary/10 rounded-full transition-colors">
+          <span className="material-symbols-outlined text-3xl">add_circle</span>
+        </Link>
+      </div>
 
-      <main className="flex-1 px-4 py-4 space-y-6 pb-32">
-        {/* Date Selectors */}
-        <section className="flex gap-3">
-            <div className="relative flex-1 group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="material-symbols-outlined text-gray-400 text-[20px]">calendar_month</span>
-                </div>
-                <select className="w-full h-12 pl-10 pr-10 bg-white dark:bg-surface-dark text-[#111814] dark:text-white rounded-xl border-none focus:ring-2 focus:ring-primary/50 appearance-none bg-none text-sm font-bold shadow-sm cursor-pointer transition-all">
-                    <option>Janeiro</option>
-                    <option>Fevereiro</option>
-                    <option>Março</option>
-                    <option>Abril</option>
-                    <option>Maio</option>
-                    <option>Junho</option>
-                    <option>Julho</option>
-                    <option>Agosto</option>
-                    <option>Setembro</option>
-                    <option>Outubro</option>
-                    <option>Novembro</option>
-                    <option selected>Dezembro</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-[24px]">arrow_drop_down</span>
-                </div>
-            </div>
-            <div className="relative w-36 group">
-                <select className="w-full h-12 pl-4 pr-10 bg-white dark:bg-surface-dark text-[#111814] dark:text-white rounded-xl border-none focus:ring-2 focus:ring-primary/50 appearance-none bg-none text-sm font-bold shadow-sm cursor-pointer transition-all">
-                    <option>2023</option>
-                    <option>2024</option>
-                    <option selected>2025</option>
-                    <option>2026</option>
-                </select>
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                    <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-[24px]">arrow_drop_down</span>
-                </div>
-            </div>
-        </section>
-
-        {/* Total Receivable Stats - Wrapped in Link */}
-        <section>
-          <Link to="/wallet/details">
-            <div className="w-full bg-[#111814] dark:bg-surface-dark rounded-2xl p-5 shadow-lg relative overflow-hidden group cursor-pointer hover:scale-[1.02] transition-transform duration-300">
-              <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-all duration-500"></div>
-              <div className="relative z-10 flex justify-between items-end">
-                <div className="flex flex-col gap-1">
-                  <span className="text-gray-400 text-sm font-medium">Total a Receber</span>
-                  <h2 className="text-3xl font-extrabold text-white tracking-tight">R$ 1.250,00</h2>
-                </div>
-                <div className="bg-primary/20 p-2 rounded-lg border border-white/5">
-                  <span className="material-symbols-outlined text-primary text-[28px] icon-filled">account_balance_wallet</span>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </section>
-
-        {/* Search Bar */}
-        <section>
-          <div className="group flex w-full items-center rounded-xl bg-white dark:bg-surface-dark border border-transparent focus-within:border-primary/50 shadow-sm transition-all h-12">
-            <div className="pl-4 flex items-center justify-center text-gray-400">
-              <span className="material-symbols-outlined text-[22px]">search</span>
-            </div>
-            <input 
-              className="w-full bg-transparent border-none text-base text-[#111814] dark:text-white placeholder:text-gray-400 focus:ring-0 px-3 h-full rounded-xl outline-none" 
-              placeholder="Buscar por nome..." 
-              type="text" 
-            />
+      <div className="px-6 flex flex-col gap-6 pb-28">
+        {/* Filter */}
+        <div className="flex items-center justify-between bg-white dark:bg-surface-dark p-2 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm">
+          <button
+            onClick={() => {
+              if (selectedMonth === 0) {
+                setSelectedMonth(11);
+                setSelectedYear(y => y - 1);
+              } else {
+                setSelectedMonth(m => m - 1);
+              }
+            }}
+            className="size-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 transition-colors"
+          >
+            <span className="material-symbols-outlined">chevron_left</span>
+          </button>
+          <div className="flex flex-col items-center">
+            <span className="text-sm font-bold text-[#111814] dark:text-white">{months[selectedMonth]}</span>
+            <span className="text-xs text-gray-500 font-medium">{selectedYear}</span>
           </div>
-        </section>
+          <button
+            onClick={() => {
+              if (selectedMonth === 11) {
+                setSelectedMonth(0);
+                setSelectedYear(y => y + 1);
+              } else {
+                setSelectedMonth(m => m + 1);
+              }
+            }}
+            className="size-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 transition-colors"
+          >
+            <span className="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
 
-        {/* Purchases List */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-base font-bold text-[#111814] dark:text-white">Compras Recentes</h3>
-            <Link to="/wallet/all" className="text-xs font-bold text-primary cursor-pointer hover:underline">Ver todas</Link>
-          </div>
+        {/* Total Card */}
+        <div className="bg-gradient-to-br from-[#102217] to-[#1c3326] dark:from-[#1c3326] dark:to-[#102217] rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 size-32 bg-primary/10 rounded-full blur-2xl -mr-8 -mt-8"></div>
+          <p className="text-sm font-medium text-primary mb-1">Total a Receber ({months[selectedMonth]})</p>
+          <h1 className="text-3xl font-bold tracking-tight">{formatCurrency(totalReceivable)}</h1>
+        </div>
 
-          {purchases.map((item) => (
-            <article key={item.id} className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden">
-              <div className="flex gap-4 mb-3">
-                <div className="relative shrink-0">
-                  {item.avatar ? (
-                    <div 
-                      className="size-14 rounded-full bg-cover bg-center ring-2 ring-primary/20" 
-                      style={{backgroundImage: `url('${item.avatar}')`}}
-                    ></div>
-                  ) : (
-                    <div className={`flex items-center justify-center size-14 rounded-full font-bold text-xl ring-2 ${item.avatarColor}`}>
-                      {item.initials}
+        {/* List */}
+        <div className="flex flex-col gap-4">
+          <h3 className="text-lg font-bold text-[#111814] dark:text-white">Compras Parceladas</h3>
+
+          {loading ? (
+            <div className="text-center py-8 text-gray-400 text-sm">Carregando...</div>
+          ) : activePurchases.length === 0 ? (
+            <div className="text-center py-8 text-gray-400 text-sm">Nenhuma parcela para este mês.</div>
+          ) : (
+            activePurchases.map((purchase) => (
+              <div key={purchase.id} className={`bg-white dark:bg-surface-dark p-4 rounded-2xl border ${purchase.isPaid ? 'border-green-100 dark:border-green-900/30' : 'border-gray-100 dark:border-white/5'} shadow-card transition-all relative overflow-hidden group`}>
+                {purchase.isPaid && (
+                  <div className="absolute top-0 right-0 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 text-[10px] font-bold px-2 py-1 rounded-bl-xl">
+                    PAGO
+                  </div>
+                )}
+
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex gap-4">
+                    <div className={`size-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0 ${purchase.isPaid ? 'bg-green-100 dark:bg-green-900/30 text-green-600' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300'}`}>
+                      {purchase.person_name.charAt(0).toUpperCase()}
                     </div>
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col justify-center">
-                  <div className="flex justify-between items-start w-full">
                     <div>
-                      <h4 className="text-base font-bold text-[#111814] dark:text-white leading-tight">{item.name}</h4>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.fullDate}</p>
+                      <h4 className="font-bold text-[#111814] dark:text-white leading-tight">{purchase.person_name}</h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">{purchase.item_name}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[10px] font-bold bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">
+                          {purchase.installmentNumber} / {purchase.installments_total}
+                        </span>
+                        <span className="text-xs font-medium text-gray-400">
+                          {new Date(purchase.start_payment_date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right flex flex-col items-end gap-1">
-                      <span className={`block font-bold text-lg ${item.isPaid ? 'text-primary' : 'text-primary'}`}>
-                        R$ {item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                      {item.isPaid ? (
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Pago</span>
-                      ) : (
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded">Pendente</span>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="font-bold text-[#111814] dark:text-white">{formatCurrency(purchase.installmentValue)}</span>
+
+                    <div className="flex gap-2 mt-1">
+                      <button
+                        onClick={() => handleDelete(purchase.id)}
+                        className="size-8 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-900/10 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                        title="Apagar"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                      {!purchase.isPaid && (
+                        <button
+                          onClick={() => handleMarkAsPaid(purchase.id, purchase.installments_paid, purchase.installments_total)}
+                          className="size-8 flex items-center justify-center rounded-full bg-green-50 dark:bg-green-900/10 text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                          title="Marcar como Pago"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">check</span>
+                        </button>
                       )}
                     </div>
                   </div>
                 </div>
               </div>
-
-              {/* Installment & Actions Container */}
-              <div className="bg-background-light dark:bg-black/20 rounded-xl p-3 flex flex-col gap-2">
-                <div className="flex justify-between items-end text-sm">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Parcelas ({item.installmentsCurrent}/{item.installmentsTotal})</span>
-                    <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary rounded-full transition-all duration-500" 
-                        style={{width: `${(item.installmentsCurrent / item.installmentsTotal) * 100}%`}}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-medium text-[#111814] dark:text-gray-200">Início: {item.startDate}</span>
-                  </div>
-                </div>
-
-                <div className="h-px w-full bg-gray-200 dark:bg-white/10 my-1"></div>
-
-                <div className="flex items-center justify-between gap-3 mt-1">
-                  <label className="flex items-center gap-2 cursor-pointer group/check">
-                    <div className="relative flex items-center">
-                      <input 
-                        type="checkbox" 
-                        checked={item.isPaid} 
-                        onChange={() => handleTogglePaid(item.id)}
-                        className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 checked:bg-primary checked:border-primary transition-all"
-                      />
-                      <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" style={{fontSize: '14px'}}>check</span>
-                    </div>
-                    <span className={`text-xs font-semibold transition-colors select-none ${item.isPaid ? 'text-primary' : 'text-gray-500 group-hover/check:text-primary'}`}>
-                      {item.isPaid ? 'Pago' : 'Marcar como Pago'}
-                    </span>
-                  </label>
-                  
-                  <div className="flex items-center gap-3">
-                    <button 
-                      onClick={() => handleEdit(item.name)}
-                      className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-[#111814] dark:hover:text-white transition-colors"
-                    >
-                      <span className="material-symbols-outlined" style={{fontSize: '18px'}}>edit</span>
-                      Editar
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(item.name)}
-                      className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
-                    >
-                      <span className="material-symbols-outlined" style={{fontSize: '18px'}}>delete</span>
-                      Excluir
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </article>
-          ))}
-
-        </section>
-      </main>
+            ))
+          )}
+        </div>
+      </div>
     </div>
   );
 };

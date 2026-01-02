@@ -1,221 +1,198 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { MenuContext } from '../App';
+import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../contexts/AuthContext';
 
-const VehicleScreen: React.FC = () => {
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState<'fuel' | 'maintenance'>('fuel');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [description, setDescription] = useState('');
-  
-  // Filter States
-  const [selectedMonth, setSelectedMonth] = useState('Outubro');
-  const [selectedYear, setSelectedYear] = useState('2023');
+interface Transaction {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  type: string; // deduced from description
+  dateObj: Date;
+}
 
-  // Mock Data
-  const expenses = [
-    { id: 1, title: 'Abastecimento Shell', date: '12 Out, 2023', amount: 250.00, type: 'fuel', month: 'Outubro', year: '2023' },
-    { id: 2, title: 'Troca de Óleo', date: '05 Out, 2023', amount: 180.00, type: 'maintenance', month: 'Outubro', year: '2023' },
-    { id: 3, title: 'Gasolina Aditivada', date: '28 Set, 2023', amount: 50.00, type: 'fuel', month: 'Setembro', year: '2023' },
-    { id: 4, title: 'Alinhamento e Balanceamento', date: '15 Ago, 2023', amount: 120.00, type: 'maintenance', month: 'Agosto', year: '2023' },
-  ];
+const ThirdPartyCards: React.FC = () => {
+  const { openMenu } = useContext(MenuContext);
+  const { session } = useAuth();
 
-  const handleSave = () => {
-    alert("Despesa salva com sucesso!");
-    setAmount('');
-    setDescription('');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [expenses, setExpenses] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchVehicleExpenses();
+    }
+  }, [session]);
+
+  const fetchVehicleExpenses = async () => {
+    try {
+      setLoading(true);
+      // Fetch transactions where category name is 'Veículo'
+      // Supabase query with inner join filter
+      const { data, error } = await supabase
+        .from('transactions')
+        .select(`
+          id,
+          description,
+          amount,
+          date,
+          category!inner(name)
+        `)
+        .eq('user_id', session?.user.id)
+        .eq('category.name', 'Veículo')
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+
+      if (data) {
+        const mappedData: Transaction[] = data.map((t: any) => {
+          const desc = t.description.toLowerCase();
+          let type = 'maintenance';
+          if (desc.includes('abastecimento') || desc.includes('gas') || desc.includes('fuel') || desc.includes('posto')) {
+            type = 'fuel';
+          }
+          return {
+            id: t.id,
+            description: t.description,
+            amount: Number(t.amount),
+            date: new Date(t.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }),
+            dateObj: new Date(t.date),
+            type
+          };
+        });
+        setExpenses(mappedData);
+      }
+    } catch (error) {
+      console.error('Error fetching vehicle expenses:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Filter Logic
-  const filteredExpenses = expenses.filter(item => {
-    const yearMatch = item.year === selectedYear;
-    const monthMatch = selectedMonth === 'Todas' ? true : item.month === selectedMonth;
-    return yearMatch && monthMatch;
-  });
-
-  const totalSpent = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0);
-
   const months = [
-    "Todas", "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", 
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
   ];
 
+  const filteredExpenses = expenses.filter(e => {
+    const d = e.dateObj;
+    return d.getMonth() === selectedMonth && d.getFullYear() === selectedYear;
+  });
+
+  const totalAmount = filteredExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+
+  // Stats Logic (Deduced)
+  const fuelTotal = filteredExpenses.filter(e => e.type === 'fuel').reduce((acc, curr) => acc + curr.amount, 0);
+  const maintenanceTotal = filteredExpenses.filter(e => e.type === 'maintenance').reduce((acc, curr) => acc + curr.amount, 0);
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
   return (
-    <div className="flex flex-col bg-background-light dark:bg-background-dark font-display group/design-root transition-colors duration-200 min-h-full">
+    <div className="flex flex-col bg-background-light dark:bg-background-dark min-h-full">
       {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center bg-surface-light dark:bg-surface-dark p-4 pb-2 justify-between border-b border-gray-100 dark:border-white/5 shadow-sm">
-        <Link to="/" className="text-[#111814] dark:text-white flex size-12 shrink-0 items-center justify-center cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors">
-          <span className="material-symbols-outlined">arrow_back_ios_new</span>
+      <div className="sticky top-0 z-20 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={openMenu}
+            className="p-1 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+          >
+            <span className="material-symbols-outlined text-[#111814] dark:text-white text-3xl">menu</span>
+          </button>
+          <h2 className="text-xl font-extrabold leading-tight text-[#111814] dark:text-white">Veículo</h2>
+        </div>
+        <Link to="/register" state={{ type: 'expense' }} className="p-2 -mr-2 text-primary hover:bg-primary/10 rounded-full transition-colors">
+          <span className="material-symbols-outlined text-3xl">add_circle</span>
         </Link>
-        <h2 className="text-[#111814] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">
-          Registrar Custos
-        </h2>
       </div>
 
-      <main className="flex flex-col px-4 py-6 gap-6 max-w-md mx-auto w-full pb-32">
-        
-        {/* Amount Input - Height 20 (80px) */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[#111814] dark:text-white text-sm font-bold ml-1">Valor da Despesa</label>
-          <div className="flex w-full items-center rounded-2xl bg-surface-light dark:bg-surface-dark shadow-sm border border-transparent focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all overflow-hidden h-20">
-            <div className="pl-5 pr-2 text-primary font-bold text-2xl flex items-center justify-center">R$</div>
-            <input 
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="flex-1 bg-transparent border-none text-[#111814] dark:text-white text-3xl font-extrabold focus:ring-0 placeholder:text-gray-300 dark:placeholder:text-gray-600 h-full w-full outline-none leading-none" 
-              inputMode="decimal" 
-              placeholder="0,00" 
-              type="number"
-            />
+      <div className="px-6 flex flex-col gap-6 pb-28">
+        {/* Navigation/Filter */}
+        <div className="flex items-center justify-between bg-white dark:bg-surface-dark p-2 rounded-xl border border-gray-200 dark:border-white/5 shadow-sm">
+          <button
+            onClick={() => {
+              if (selectedMonth === 0) {
+                setSelectedMonth(11);
+                setSelectedYear(y => y - 1);
+              } else {
+                setSelectedMonth(m => m - 1);
+              }
+            }}
+            className="size-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 transition-colors"
+          >
+            <span className="material-symbols-outlined">chevron_left</span>
+          </button>
+          <div className="flex flex-col items-center">
+            <span className="text-sm font-bold text-[#111814] dark:text-white">{months[selectedMonth]}</span>
+            <span className="text-xs text-gray-500 font-medium">{selectedYear}</span>
+          </div>
+          <button
+            onClick={() => {
+              if (selectedMonth === 11) {
+                setSelectedMonth(0);
+                setSelectedYear(y => y + 1);
+              } else {
+                setSelectedMonth(m => m + 1);
+              }
+            }}
+            className="size-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-500 transition-colors"
+          >
+            <span className="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+
+        {/* Cards (Fuel / Maintenance) */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-orange-100 dark:border-orange-900/30">
+            <div className="size-10 rounded-full bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-500 mb-2">
+              <span className="material-symbols-outlined">local_gas_station</span>
+            </div>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Combustível</p>
+            <p className="text-lg font-bold text-[#111814] dark:text-white">{formatCurrency(fuelTotal)}</p>
+          </div>
+          <div className="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-blue-100 dark:border-blue-900/30">
+            <div className="size-10 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-blue-500 mb-2">
+              <span className="material-symbols-outlined">car_repair</span>
+            </div>
+            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Manutenção</p>
+            <p className="text-lg font-bold text-[#111814] dark:text-white">{formatCurrency(maintenanceTotal)}</p>
           </div>
         </div>
 
-        {/* Category Selector - Custom Styling mimicking the HTML provided */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[#111814] dark:text-white text-sm font-bold ml-1">Categoria</label>
-          <div className="flex p-1 bg-gray-200 dark:bg-white/5 rounded-xl">
-            <label className="flex-1 cursor-pointer" onClick={() => setCategory('fuel')}>
-              <div className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all ${
-                category === 'fuel' 
-                ? 'bg-surface-light dark:bg-surface-dark text-[#111814] dark:text-primary shadow-sm' 
-                : 'text-text-secondary dark:text-gray-400 hover:text-gray-600'
-              }`}>
-                <span className="material-symbols-outlined text-[20px]">local_gas_station</span>
-                <span>Combustível</span>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-bold text-[#111814] dark:text-white">Histórico</h3>
+            <span className="text-sm font-bold text-gray-500">Total: {formatCurrency(totalAmount)}</span>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-8 text-gray-400 text-sm">Carregando...</div>
+          ) : filteredExpenses.length === 0 ? (
+            <div className="text-center py-8 text-gray-400 text-sm">Nenhum registro encontrado.</div>
+          ) : (
+            filteredExpenses.map((expense) => (
+              <div key={expense.id} className="flex items-center bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-white/5">
+                <div className={`size-12 rounded-full flex items-center justify-center shrink-0 ${expense.type === 'fuel' ? 'bg-orange-50 text-orange-500' : 'bg-blue-50 text-blue-500'}`}>
+                  <span className="material-symbols-outlined icon-filled">
+                    {expense.type === 'fuel' ? 'local_gas_station' : 'car_repair'}
+                  </span>
+                </div>
+                <div className="ml-4 flex-1">
+                  <h4 className="font-bold text-[#111814] dark:text-white">{expense.description}</h4>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{expense.date}</p>
+                </div>
+                <span className="font-bold text-[#111814] dark:text-white">{formatCurrency(expense.amount)}</span>
               </div>
-            </label>
-            <label className="flex-1 cursor-pointer" onClick={() => setCategory('maintenance')}>
-              <div className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all ${
-                category === 'maintenance' 
-                ? 'bg-surface-light dark:bg-surface-dark text-[#111814] dark:text-primary shadow-sm' 
-                : 'text-text-secondary dark:text-gray-400 hover:text-gray-600'
-              }`}>
-                <span className="material-symbols-outlined text-[20px]">build</span>
-                <span>Manutenção</span>
-              </div>
-            </label>
-          </div>
+            ))
+          )}
         </div>
-
-        {/* Date and Description Inputs - Height 14 (56px) */}
-        <div className="grid grid-cols-1 gap-4">
-          <label className="flex flex-col gap-2">
-            <span className="text-[#111814] dark:text-white text-sm font-bold ml-1">Data</span>
-            <div className="relative flex items-center">
-              <input 
-                type="date" 
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full h-14 bg-surface-light dark:bg-surface-dark text-[#111814] dark:text-white border-none rounded-xl focus:ring-2 focus:ring-primary/50 px-4 font-medium appearance-none"
-                style={{colorScheme: 'light dark'}}
-              />
-              <span className="absolute right-4 text-text-secondary pointer-events-none material-symbols-outlined">calendar_today</span>
-            </div>
-          </label>
-          <label className="flex flex-col gap-2">
-            <span className="text-[#111814] dark:text-white text-sm font-bold ml-1">Descrição</span>
-            <input 
-              type="text" 
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ex: Gasolina Posto Ipiranga"
-              className="w-full h-14 bg-surface-light dark:bg-surface-dark text-[#111814] dark:text-white placeholder:text-text-secondary/50 border-none rounded-xl focus:ring-2 focus:ring-primary/50 px-4 font-medium"
-            />
-          </label>
-        </div>
-
-        {/* Save Button - Pill Shaped (rounded-full) */}
-        <button 
-          onClick={handleSave}
-          className="w-full h-14 mt-4 bg-primary hover:bg-primary-dark active:scale-[0.98] text-[#052e16] font-bold text-lg rounded-full shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
-        >
-          <span className="material-symbols-outlined text-2xl icon-filled">save</span>
-          Salvar Despesa
-        </button>
-
-        <div className="h-px w-full bg-gray-200 dark:bg-white/10 mt-2"></div>
-
-        {/* History Filter - Height 12 (48px) */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[#111814] dark:text-white text-sm font-bold ml-1">Filtrar Histórico</label>
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <select 
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                className="w-full h-12 appearance-none bg-surface-light dark:bg-surface-dark border-none rounded-xl pl-4 pr-10 text-[#111814] dark:text-white font-bold text-sm focus:ring-2 focus:ring-primary/50 shadow-sm outline-none bg-none cursor-pointer"
-              >
-                <option value="Todas">Todas as despesas</option>
-                {months.slice(1).map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">expand_more</span>
-            </div>
-            <div className="relative w-32">
-              <select 
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                className="w-full h-12 appearance-none bg-surface-light dark:bg-surface-dark border-none rounded-xl pl-4 pr-10 text-[#111814] dark:text-white font-bold text-sm focus:ring-2 focus:ring-primary/50 shadow-sm outline-none bg-none cursor-pointer"
-              >
-                <option>2023</option>
-                <option>2024</option>
-              </select>
-              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">expand_more</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Summary Card with Left Border */}
-        <div className="flex flex-col items-center justify-center p-6 rounded-2xl bg-surface-light dark:bg-surface-dark shadow-md border-l-4 border-l-primary border-y border-r border-gray-100 dark:border-white/5 relative">
-            <div className="flex items-center gap-2 mb-1">
-                <span className="material-symbols-outlined text-text-secondary text-sm">payments</span>
-                <span className="text-text-secondary text-xs font-bold uppercase tracking-wider">Valor Total Gasto</span>
-            </div>
-            <span className="text-4xl font-extrabold text-[#111814] dark:text-white tracking-tight">
-              R$ {totalSpent.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </span>
-            <div className="mt-2 text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                {selectedMonth === 'Todas' ? `Histórico de ${selectedYear}` : `Referente a ${selectedMonth}/${selectedYear}`}
-            </div>
-        </div>
-
-        {/* Recent List */}
-        <div className="mt-2">
-            <div className="flex items-center justify-between mb-4 px-1">
-                <h3 className="text-[#111814] dark:text-white text-lg font-bold">Últimos Gastos</h3>
-                <button onClick={() => alert("Ver lista completa")} className="text-sm text-primary font-bold hover:underline">Ver tudo</button>
-            </div>
-            
-            <div className="flex flex-col gap-3">
-              {filteredExpenses.length === 0 ? (
-                <div className="text-center py-6 text-gray-400 text-sm">Nenhuma despesa encontrada.</div>
-              ) : (
-                filteredExpenses.map((expense) => (
-                  <div key={expense.id} className="flex items-center p-3 bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-white/5">
-                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
-                      expense.type === 'fuel' 
-                        ? 'bg-primary/10 text-primary-dark dark:text-primary' 
-                        : 'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400'
-                    }`}>
-                        <span className="material-symbols-outlined">
-                          {expense.type === 'fuel' ? 'local_gas_station' : 'build'}
-                        </span>
-                    </div>
-                    <div className="ml-4 flex flex-col flex-1">
-                        <p className="text-[#111814] dark:text-white text-base font-bold truncate">{expense.title}</p>
-                        <p className="text-text-secondary text-xs font-medium">{expense.date}</p>
-                    </div>
-                    <p className="text-[#111814] dark:text-white text-base font-bold whitespace-nowrap">
-                      - R$ {expense.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-        </div>
-        
-        <div className="h-8 w-full"></div> 
-      </main>
+      </div>
     </div>
   );
 };
 
-export default VehicleScreen;
+export default ThirdPartyCards;

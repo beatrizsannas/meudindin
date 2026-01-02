@@ -115,7 +115,7 @@ const App: React.FC = () => {
           <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden max-w-md mx-auto bg-background-light dark:bg-background-dark">
 
             {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide w-full relative">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide w-full relative pb-28">
               <Routes>
                 {/* Public Auth Routes */}
                 <Route path="/login" element={<Login />} />
