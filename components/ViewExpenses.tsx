@@ -263,12 +263,20 @@ const ViewExpenses: React.FC = () => {
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total de saídas</p>
               <h2 className="text-2xl font-bold text-[#111814] dark:text-white">{formatCurrency(totalAmount)}</h2>
             </div>
-            <div className="flex flex-col items-end">
-              <div className="size-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 dark:text-red-400 mb-1">
+            <div className="flex flex-col items-end gap-2">
+              <div className="size-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 dark:text-red-400">
                 <span className="material-symbols-outlined">trending_down</span>
               </div>
             </div>
           </div>
+
+          <button
+            onClick={() => navigate('/register', { state: { type: 'expense' } })}
+            className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl transition-colors text-sm shadow-md shadow-red-500/20"
+          >
+            <span className="material-symbols-outlined text-xl icon-filled">add</span>
+            <span>Nova Despesa</span>
+          </button>
         </div>
 
         {/* Transactions Groups */}

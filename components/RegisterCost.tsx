@@ -18,6 +18,14 @@ const RegisterCost: React.FC = () => {
   const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
   const [editId, setEditId] = useState<string | null>(null);
 
+  // Missing state variables restored
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     fetchCategories();
   }, []);
