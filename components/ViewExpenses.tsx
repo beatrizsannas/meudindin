@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface Transaction {
   id: number;
@@ -23,6 +24,7 @@ interface Category {
 const ViewExpenses: React.FC = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   // States
   const [selectedYear, setSelectedYear] = useState<number | 'Todos'>(new Date().getFullYear());
@@ -173,9 +175,10 @@ const ViewExpenses: React.FC = () => {
       const { error } = await supabase.from('transactions').delete().eq('id', id);
       if (error) throw error;
       setTransactions(prev => prev.filter(t => t.id !== id));
+      showToast("Despesa apagada com sucesso!", "success");
     } catch (error) {
       console.error(error);
-      alert("Erro ao apagar");
+      showToast("Erro ao apagar despesa!", "error");
     }
   };
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { MenuContext } from '../App';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface Transaction {
   id: number;
@@ -20,6 +21,7 @@ const ViewIncome: React.FC = () => {
   const { openMenu } = useContext(MenuContext);
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   // Filter States
   const [selectedRange, setSelectedRange] = useState('Este Mês');
@@ -111,9 +113,10 @@ const ViewIncome: React.FC = () => {
       const { error } = await supabase.from('transactions').delete().eq('id', id);
       if (error) throw error;
       setTransactions(prev => prev.filter(t => t.id !== id));
+      showToast("Receita apagada com sucesso!", "success");
     } catch (error) {
       console.error(error);
-      alert("Erro ao apagar");
+      showToast("Erro ao apagar receita!", "error");
     }
   };
 

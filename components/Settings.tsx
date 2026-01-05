@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import Button from './Button';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import { useToast } from '../contexts/ToastContext';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { showToast } = useToast();
   const [profile, setProfile] = useState<{ full_name: string | null, avatar_url: string | null }>({ full_name: '', avatar_url: null });
   const [loading, setLoading] = useState(true);
 
@@ -73,16 +75,11 @@ const Settings: React.FC = () => {
       const { error: tError } = await supabase.from('transactions').delete().eq('user_id', session?.user.id);
       // Delete all purchases for the user
       const { error: pError } = await supabase.from('third_party_purchases').delete().eq('user_id', session?.user.id);
-      // Delete categories? Usually we keep them or reset to default. 
-      // User said "All data of transactions and purchases".
-      // Let's stick to transactions and purchases for now to be safe, 
-      // or custom categories too if requested? 
-      // Previous logic was: transactions + third_party_purchases.
 
       if (tError) throw tError;
       if (pError) throw pError;
 
-      alert("Todos os dados foram apagados com sucesso!");
+      showToast("Todos os dados foram apagados com sucesso!", "success");
       setIsDeleteModalOpen(false);
 
     } catch (e: any) {
@@ -102,7 +99,7 @@ const Settings: React.FC = () => {
   };
 
   const handleAction = (message: string) => {
-    alert(message);
+    showToast(message, "info");
   };
 
   return (

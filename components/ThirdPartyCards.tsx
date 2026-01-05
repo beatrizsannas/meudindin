@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 // Types
 interface Transaction {
@@ -16,6 +17,7 @@ interface Transaction {
 const ThirdPartyCards: React.FC = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { showToast } = useToast();
 
   // Form State
   const [amount, setAmount] = useState('');
@@ -81,9 +83,6 @@ const ThirdPartyCards: React.FC = () => {
     return null;
   };
 
-  // Kept for compatibility if used elsewhere, but init uses the returning one
-  const fetchCategory = fetchCategoryReturningId;
-
   const fetchExpenses = async (catId: string | null = categoryId) => {
     if (!catId) return;
 
@@ -130,7 +129,7 @@ const ThirdPartyCards: React.FC = () => {
 
   const handleSave = async () => {
     if (!amount || !description || !categoryId) {
-      alert("Por favor, preencha o valor e descrição.");
+      showToast("Por favor, preencha o valor e descrição.", "warning");
       return;
     }
 
@@ -163,7 +162,7 @@ const ThirdPartyCards: React.FC = () => {
 
       if (error) throw error;
 
-      alert("Despesa salva com sucesso!");
+      showToast("Despesa salva com sucesso!", "success");
       // Reset form
       setAmount('');
       setDescription('');
@@ -172,7 +171,7 @@ const ThirdPartyCards: React.FC = () => {
 
     } catch (error: any) {
       console.error("Error saving:", error);
-      alert("Erro ao salvar: " + error.message);
+      showToast("Erro ao salvar compra: " + error.message, "error");
     } finally {
       setLoading(false);
     }

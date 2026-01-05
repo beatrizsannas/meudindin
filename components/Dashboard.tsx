@@ -4,6 +4,7 @@ import { MenuContext } from '../App';
 import Button from './Button';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 // Define styles mapping for dynamic rendering
 const colorStyles: Record<string, { bg: string, text: string }> = {
@@ -21,6 +22,7 @@ interface Transaction {
   type: 'income' | 'expense';
   date: string;
   account: string;
+  category_id: string;
   category: {
     name: string;
     icon: string;
@@ -33,6 +35,7 @@ const Dashboard: React.FC = () => {
   const { openMenu } = useContext(MenuContext);
   const navigate = useNavigate();
   const { session } = useAuth();
+  const { showToast } = useToast();
 
   const [userName, setUserName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -82,6 +85,7 @@ const Dashboard: React.FC = () => {
           type,
           date,
           account,
+          category_id,
           category:categories (
             name,
             icon,
@@ -95,13 +99,15 @@ const Dashboard: React.FC = () => {
       if (error) throw error;
 
       if (data) {
+        // Keep date raw for passing to Edit screen, format only for display
         const mappedTransactions: Transaction[] = data.map((t: any) => ({
           id: t.id,
           description: t.description,
           amount: t.amount,
           type: t.type,
-          date: new Date(t.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }), // Format date locally
+          date: t.date, // Keep raw YYYY-MM-DD
           account: t.account,
+          category_id: t.category_id,
           category: t.category
         }));
         setTransactions(mappedTransactions);
@@ -140,7 +146,7 @@ const Dashboard: React.FC = () => {
   };
 
   const handleNotification = () => {
-    alert("Você tem 0 novas notificações.");
+    showToast("Você tem 0 novas notificações.", "info");
   };
 
   const handleTransactionClick = (transaction: Transaction) => {
@@ -171,13 +177,13 @@ const Dashboard: React.FC = () => {
 
         // Update local state
         setTransactions(prev => prev.filter(t => t.id !== selectedTransaction.id));
-        calculateTotals(transactions.filter(t => t.id !== selectedTransaction.id)); // Re-calc approach needed
-        // Ideally re-fetch totals but for prototyp they might not sync well without full re-fetch
+        calculateTotals(transactions.filter(t => t.id !== selectedTransaction.id));
         fetchTransactions();
         handleCloseModal();
+        showToast("Transação excluída com sucesso!", "success");
       } catch (error) {
         console.error('Error deleting:', error);
-        alert('Erro ao excluir transação.');
+        showToast('Erro ao excluir transação.', "error");
       }
     }
   };
@@ -358,14 +364,16 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-[#111814] dark:text-white truncate">{item.description}</p>
+                        <p className="text-sm font-bold text-[#111814] dark:text-white break-words leading-tight">{item.description}</p>
                         {item.category?.name && item.category.name !== 'Outros' && (
                           <span className={`bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wide`}>
                             {item.category.name}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-400 font-medium mt-0.5">{item.date}</p>
+                      <p className="text-xs text-gray-400 font-medium mt-0.5">
+                        {new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className={`text-sm font-bold ${item.type === 'income' ? 'text-primary dark:text-primary' : 'text-[#111814] dark:text-white'}`}>
@@ -414,8 +422,8 @@ const Dashboard: React.FC = () => {
               </h2>
 
               <span className={`px-3 py-1 rounded-full ${selectedTransaction.type === 'expense'
-                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                  : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
                 } text-xs font-bold uppercase tracking-wide mb-4`}>
                 {selectedTransaction.type === 'expense' ? 'Despesa' : 'Receita'}
               </span>
@@ -427,7 +435,9 @@ const Dashboard: React.FC = () => {
               <div className="w-full flex flex-col gap-4">
                 <div className="flex justify-between items-center p-3 rounded-xl bg-surface-variant-light dark:bg-surface-variant-dark/50">
                   <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Data</span>
-                  <span className="text-sm font-bold text-[#111814] dark:text-white">{selectedTransaction.date}</span>
+                  <span className="text-sm font-bold text-[#111814] dark:text-white">
+                    {new Date(selectedTransaction.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'numeric', year: 'numeric' })}
+                  </span>
                 </div>
 
                 <div className="flex justify-between items-center p-3 rounded-xl bg-surface-variant-light dark:bg-surface-variant-dark/50">

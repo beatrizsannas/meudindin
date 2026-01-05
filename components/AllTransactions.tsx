@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface Transaction {
     id: number;
@@ -20,6 +21,7 @@ interface Transaction {
 const AllTransactions: React.FC = () => {
     const { session } = useAuth();
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
@@ -120,9 +122,10 @@ const AllTransactions: React.FC = () => {
             const { error } = await supabase.from('transactions').delete().eq('id', id);
             if (error) throw error;
             setTransactions(prev => prev.filter(t => t.id !== id));
+            showToast("Transação apagada com sucesso!", "success");
         } catch (err) {
             console.error(err);
-            alert("Erro ao apagar");
+            showToast("Erro ao apagar", "error");
         }
     };
 

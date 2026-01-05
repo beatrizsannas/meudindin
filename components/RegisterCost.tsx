@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from './Button';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface Category {
   id: string;
@@ -14,6 +15,7 @@ const RegisterCost: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
+  const { showToast } = useToast();
 
   const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
   const [editId, setEditId] = useState<string | null>(null);
@@ -217,7 +219,7 @@ const RegisterCost: React.FC = () => {
           else throw new Error("Falha ao criar categoria");
         } catch (e) {
           console.error(e);
-          alert("Erro ao criar categoria Compras automaticament. Tente novamente.");
+          showToast("Erro ao criar categoria Compras automaticamente. Tente novamente.", "error");
           return;
         }
       }
@@ -226,17 +228,17 @@ const RegisterCost: React.FC = () => {
     const valueToSave = parseCurrency(amount);
 
     if (!description || !amount || !finalCategoryId) {
-      alert("Por favor, preencha todos os campos.");
+      showToast("Por favor, preencha todos os campos.", "warning");
       return;
     }
 
     if (valueToSave <= 0) {
-      alert("O valor deve ser maior que zero.");
+      showToast("O valor deve ser maior que zero.", "warning");
       return;
     }
 
     if (isCompras && (installments < 1 || !paymentStartDate)) {
-      alert("Por favor, verifique as parcelas e data de pagamento.");
+      showToast("Por favor, verifique as parcelas e data de pagamento.", "warning");
       return;
     }
 
@@ -256,6 +258,7 @@ const RegisterCost: React.FC = () => {
           })
           .eq('id', editId);
         if (error) throw error;
+        showToast(transactionType === 'expense' ? "Despesa atualizada com sucesso!" : "Receita atualizada com sucesso!", "success");
       } else {
         // Create New
         if (isCompras && installments > 1) {
@@ -296,13 +299,13 @@ const RegisterCost: React.FC = () => {
             });
           if (error) throw error;
         }
+        showToast(transactionType === 'expense' ? "Despesa cadastrada com sucesso!" : "Receita cadastrada com sucesso!", "success");
       }
 
-      alert("Salvo com sucesso!");
       navigate(-1);
     } catch (error) {
       console.error('Error saving transaction:', error);
-      alert("Erro ao salvar.");
+      showToast("Erro ao salvar.", "error");
     } finally {
       setLoading(false);
     }
@@ -382,6 +385,7 @@ const RegisterCost: React.FC = () => {
                 className="w-full bg-background-light dark:bg-background-dark rounded-lg h-12 px-4 text-base font-normal text-[#111814] dark:text-white border-none focus:ring-1 focus:ring-primary placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none"
                 placeholder={transactionType === 'expense' ? "Ex: Jantar, Gasolina" : "Ex: Adiantamento, Bônus"}
                 value={description}
+                maxLength={30}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </label>

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
+import { useToast } from '../contexts/ToastContext';
 
 const EditProfile: React.FC = () => {
     const navigate = useNavigate();
     const { session } = useAuth();
+    const { showToast } = useToast();
 
     const [formData, setFormData] = useState({
         name: "",
@@ -82,11 +84,11 @@ const EditProfile: React.FC = () => {
 
             if (error) throw error;
 
-            alert("Perfil atualizado com sucesso!");
+            showToast("Perfil atualizado com sucesso!", "success");
             navigate(-1);
         } catch (error: any) {
             console.error('Error updating profile:', error);
-            alert('Erro ao atualizar perfil: ' + error.message);
+            showToast('Erro ao atualizar perfil: ' + error.message, 'error');
         } finally {
             setLoading(false);
         }
@@ -130,7 +132,7 @@ const EditProfile: React.FC = () => {
                     <div className="flex gap-4 mt-3">
                         <button
                             type="button"
-                            onClick={() => alert("Upload de imagem em breve!")}
+                            onClick={() => showToast("Upload de imagem em breve!", "info")}
                             className="text-primary dark:text-primary font-bold text-sm hover:underline"
                         >
                             Alterar foto

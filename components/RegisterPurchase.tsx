@@ -2,42 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 const RegisterPurchase: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
+  const { showToast } = useToast();
 
   // State
   const [amount, setAmount] = useState('');
   const [personName, setPersonName] = useState('');
-  // itemName was in previous version, user new design has "Cartão Utilizado" instead or maybe implicit?
-  // The new design HAS "Nome da Pessoa", "Data da Compra", "Início Pagamento", "Quantidade de Parcelas", "Cartão Utilizado".
-  // It does NOT have "Nome do Item" (Product Name).
-  // However, `third_party_purchases` table has `item_name`.
-  // I should probably keep `item_name` but maybe rename valid input or combine?
-  // User request: "esse e o codigo da tela... deixe a tela funcional"
-  // The HTML has: Person Name, Date, Payment Start, Installments, Card Used.
-  // It seems "Product Name" is missing from the new design. 
-  // I will treat "Cartão Utilizado" as a new field or map it.
-  // BUT the DB requires `item_name` likely? Or I can make it generic.
-  // Let's use "Cartão Utilizado" as the input for `item_name` (as a description of the purchase source) 
-  // OR simpler: Add a field for Product/Item back if needed, OR just assume "Compra" if not specified.
-  // Wait, usually users want to know WHAT they bought. 
-  // Let's look at the HTML again. It has "Nome da Pessoa", "Cartão Utilizado".
-  // Maybe I should add "O que foi comprado?" back to be safe, or if the user removed it, 
-  // I will just use the "Cartão Utilizado" + "Person" as the identifier?
-  // Let's ADD "O que foi comprado?" (Item Name) to fit the DB and logic, 
-  // matching the style of the other inputs, OR just re-purpose one.
-  // The old code had `itemName`.
-  // I will implicitly add `itemName` input matching the design style, 
-  // OR if strictly following the HTML, I'll put "Cartão Utilizado" into `item_name`? 
-  // "Cartão Utilizado" is "Credit Card Used".
-  // I'll add "Nome do Item" back because it's critical for "Compra de Terceiros" (e.g. "Iphone do Joao").
-  // Actually, I'll stick to the HTML provided exactly first.
-  // If `item_name` is missing, I'll auto-generate it or use "Compra Diversa".
-  // BUT, looking at the previous step, `itemName` was required.
-  // I'll add the `itemName` field back following the design pattern of `personName`.
 
   const [itemName, setItemName] = useState('');
   const [cardUsed, setCardUsed] = useState('');
@@ -56,11 +31,7 @@ const RegisterPurchase: React.FC = () => {
       setAmount(p.amount.toString());
       setPersonName(p.person_name);
       setItemName(p.item_name || '');
-      // cardUsed logic: previously we didn't save it separately, maybe it's in item_name?
-      // If we don't have it, leave blank or try to extract. 
-      // For now, leave blank as we don't have a column.
       setCardUsed('');
-
       setDate(p.purchase_date);
       setPaymentStart(p.start_payment_date);
       setInstallments(p.installments_total);
@@ -79,7 +50,7 @@ const RegisterPurchase: React.FC = () => {
     e.preventDefault();
 
     if (!amount || !personName) {
-      alert("Por favor, preencha o valor e o nome da pessoa.");
+      showToast("Por favor, preencha o valor e o nome da pessoa.", "warning");
       return;
     }
 
@@ -98,40 +69,35 @@ const RegisterPurchase: React.FC = () => {
             installments_total: installments,
             purchase_date: date,
             start_payment_date: paymentStart,
-            // We usually don't reset installments_paid on simple edit unless requested,
-            // but if total installments change, we might need logic.
-            // For simplicity, we just update the basic fields.
+            // We usually don't reset installments_paid on simple edit unless requested
           })
           .eq('id', editId);
 
         if (error) throw error;
-        alert("Compra atualizada com sucesso!");
+        showToast("Compra atualizada com sucesso!", "success");
       } else {
         const { error } = await supabase
           .from('third_party_purchases')
           .insert({
             user_id: session?.user.id,
             person_name: personName,
-            item_name: finalItemName, // Use input or fallback
+            item_name: finalItemName,
             amount: totalAmount,
             installments_total: installments,
             installments_paid: 0,
             purchase_date: date,
             start_payment_date: paymentStart,
             is_paid: false
-            // Note: If we want to save 'cardUsed', we need a column or put it in description. 
-            // For now, I'll append it to item_name if item_name is empty, or ignore if no column.
-            // I will assume the current schema doesn't have `card_used`.
           });
 
         if (error) throw error;
-        alert("Compra registrada com sucesso!");
+        showToast("Compra registrada com sucesso!", "success");
       }
 
       navigate('/wallet');
     } catch (error) {
       console.error('Error saving purchase:', error);
-      alert("Erro ao salvar compra.");
+      showToast("Erro ao salvar compra.", "error");
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from './Button';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface SideMenuProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
+  const { showToast } = useToast();
   const [profile, setProfile] = useState<{ full_name: string | null, avatar_url: string | null }>({ full_name: '', avatar_url: null });
 
   useEffect(() => {
@@ -126,7 +128,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
 
             <button
               className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-variant-light dark:hover:bg-surface-variant-dark text-gray-700 dark:text-gray-200 transition-colors w-full text-left"
-              onClick={() => alert('QR Code')}
+              onClick={() => showToast('Funcionalidade em breve!', 'info')}
             >
               <span className="material-symbols-outlined">qr_code_scanner</span>
               <span className="font-medium">QR Code</span>

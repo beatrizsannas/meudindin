@@ -4,6 +4,7 @@ import { MenuContext } from '../App';
 import Button from './Button';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface Purchase {
   id: string;
@@ -22,6 +23,7 @@ const Wallet: React.FC = () => {
   const { openMenu } = useContext(MenuContext);
   const { session } = useAuth();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -109,9 +111,14 @@ const Wallet: React.FC = () => {
           ? { ...p, installments_paid: newPaidCount, is_paid: isFullyPaid }
           : p
       ));
+      if (isFullyPaid) {
+        showToast("Compra totalmente paga!", "success");
+      } else {
+        showToast("Parcela marcada como paga.", "success");
+      }
     } catch (error) {
       console.error(error);
-      alert("Erro ao atualizar");
+      showToast("Erro ao atualizar", "error");
     }
   };
 
@@ -121,9 +128,10 @@ const Wallet: React.FC = () => {
       const { error } = await supabase.from('third_party_purchases').delete().eq('id', id);
       if (error) throw error;
       setPurchases(prev => prev.filter(p => p.id !== id));
+      showToast("Compra apagada com sucesso!", "success");
     } catch (e) {
       console.error(e);
-      alert("Erro ao apagar");
+      showToast("Erro ao apagar", "error");
     }
   };
 
