@@ -198,6 +198,7 @@ const Wallet: React.FC = () => {
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
               className="w-full h-12 pl-10 pr-10 bg-white dark:bg-surface-dark text-[#111814] dark:text-white rounded-xl border-none focus:ring-2 focus:ring-primary/50 appearance-none text-sm font-bold shadow-sm cursor-pointer transition-all outline-none"
+              style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
             >
               {months.map((m, i) => (
                 <option key={i} value={i}>{m}</option>
@@ -212,6 +213,7 @@ const Wallet: React.FC = () => {
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               className="w-full h-12 pl-4 pr-10 bg-white dark:bg-surface-dark text-[#111814] dark:text-white rounded-xl border-none focus:ring-2 focus:ring-primary/50 appearance-none text-sm font-bold shadow-sm cursor-pointer transition-all outline-none"
+              style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
             >
               {years.map(y => (
                 <option key={y} value={y}>{y}</option>

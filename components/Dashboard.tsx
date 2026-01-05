@@ -37,10 +37,14 @@ const Dashboard: React.FC = () => {
   const [userName, setUserName] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState(0);
   const [incomeTotal, setIncomeTotal] = useState(0);
   const [expenseTotal, setExpenseTotal] = useState(0);
+
+  // Modal State
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -137,6 +141,45 @@ const Dashboard: React.FC = () => {
 
   const handleNotification = () => {
     alert("Você tem 0 novas notificações.");
+  };
+
+  const handleTransactionClick = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setTimeout(() => setSelectedTransaction(null), 300); // Wait for animation
+  };
+
+  const handleEdit = () => {
+    if (selectedTransaction) {
+      navigate('/register', { state: { transaction: selectedTransaction, type: selectedTransaction.type } });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedTransaction && window.confirm("Excluir transação?")) {
+      try {
+        const { error } = await supabase
+          .from('transactions')
+          .delete()
+          .eq('id', selectedTransaction.id);
+
+        if (error) throw error;
+
+        // Update local state
+        setTransactions(prev => prev.filter(t => t.id !== selectedTransaction.id));
+        calculateTotals(transactions.filter(t => t.id !== selectedTransaction.id)); // Re-calc approach needed
+        // Ideally re-fetch totals but for prototyp they might not sync well without full re-fetch
+        fetchTransactions();
+        handleCloseModal();
+      } catch (error) {
+        console.error('Error deleting:', error);
+        alert('Erro ao excluir transação.');
+      }
+    }
   };
 
   // Filtering Logic
@@ -305,7 +348,11 @@ const Dashboard: React.FC = () => {
                 const icon = item.category?.icon || 'receipt';
 
                 return (
-                  <div key={item.id} className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-surface-dark shadow-card border border-transparent hover:border-gray-100 dark:hover:border-gray-800 transition-all">
+                  <div
+                    key={item.id}
+                    onClick={() => handleTransactionClick(item)}
+                    className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-surface-dark shadow-card border border-transparent hover:border-gray-100 dark:hover:border-gray-800 transition-all cursor-pointer active:scale-[0.98]"
+                  >
                     <div className={`flex items-center justify-center size-12 rounded-full shrink-0 ${style.bg} ${style.text}`}>
                       <span className="material-symbols-outlined icon-filled">{icon}</span>
                     </div>
@@ -324,7 +371,7 @@ const Dashboard: React.FC = () => {
                       <p className={`text-sm font-bold ${item.type === 'income' ? 'text-primary dark:text-primary' : 'text-[#111814] dark:text-white'}`}>
                         {item.type === 'expense' ? '-' : '+'} {formatCurrency(Number(item.amount))}
                       </p>
-                      <p className="text-[10px] font-medium text-gray-400 mt-0.5">{item.account}</p>
+                      <p className="text-[10px] font-medium text-gray-400 mt-0.5">{item.account || 'Conta'}</p>
                     </div>
                   </div>
                 );
@@ -333,6 +380,97 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Transaction Details Modal */}
+      {isModalOpen && selectedTransaction && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-[#102217]/60 backdrop-blur-[2px]"
+            onClick={handleCloseModal}
+          ></div>
+          <div className="relative w-full max-w-[340px] bg-surface-light dark:bg-surface-dark rounded-3xl shadow-2xl overflow-hidden ring-1 ring-white/10 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between px-6 pt-6 pb-2">
+              <h3 className="text-lg font-bold text-[#111814] dark:text-white">Resumo da Transação</h3>
+              <button
+                onClick={handleCloseModal}
+                className="flex items-center justify-center size-8 rounded-full bg-surface-variant-light dark:bg-surface-variant-dark hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+              >
+                <span className="material-symbols-outlined text-xl">close</span>
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center px-6 py-4">
+              {/* Dynamic Icon */}
+              <div className={`flex items-center justify-center size-16 rounded-full ${colorStyles[selectedTransaction.category?.color_theme || 'gray'].bg
+                } ${colorStyles[selectedTransaction.category?.color_theme || 'gray'].text
+                } mb-4 shadow-inner`}>
+                <span className="material-symbols-outlined text-3xl">
+                  {selectedTransaction.category?.icon || 'receipt'}
+                </span>
+              </div>
+
+              <h2 className="text-2xl font-bold text-[#111814] dark:text-white text-center mb-1">
+                {selectedTransaction.description}
+              </h2>
+
+              <span className={`px-3 py-1 rounded-full ${selectedTransaction.type === 'expense'
+                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                  : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                } text-xs font-bold uppercase tracking-wide mb-4`}>
+                {selectedTransaction.type === 'expense' ? 'Despesa' : 'Receita'}
+              </span>
+
+              <div className="text-4xl font-bold text-[#111814] dark:text-white tracking-tight mb-8">
+                {formatCurrency(Number(selectedTransaction.amount))}
+              </div>
+
+              <div className="w-full flex flex-col gap-4">
+                <div className="flex justify-between items-center p-3 rounded-xl bg-surface-variant-light dark:bg-surface-variant-dark/50">
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Data</span>
+                  <span className="text-sm font-bold text-[#111814] dark:text-white">{selectedTransaction.date}</span>
+                </div>
+
+                <div className="flex justify-between items-center p-3 rounded-xl bg-surface-variant-light dark:bg-surface-variant-dark/50">
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Categoria</span>
+                  <div className="flex items-center gap-2">
+                    {/* Dot color based on category theme if possible, else gray */}
+                    <span className={`size-2 rounded-full ${selectedTransaction.category?.color_theme === 'orange' ? 'bg-orange-500' : 'bg-gray-500'}`}></span>
+                    <span className="text-sm font-bold text-[#111814] dark:text-white">
+                      {selectedTransaction.category?.name || 'Sem categoria'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center p-3 rounded-xl bg-surface-variant-light dark:bg-surface-variant-dark/50">
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Pagamento</span>
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-base text-gray-400">account_balance</span>
+                    <span className="text-sm font-bold text-[#111814] dark:text-white">{selectedTransaction.account || 'Conta Corrente'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 grid grid-cols-2 gap-3">
+              <button
+                onClick={handleDelete}
+                className="flex items-center justify-center gap-2 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg">delete</span>
+                Excluir
+              </button>
+              <button
+                onClick={handleEdit}
+                className="flex items-center justify-center gap-2 py-3 rounded-xl bg-primary hover:bg-primary-dark text-[#102217] font-bold text-sm shadow-lg shadow-primary/20 transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg icon-filled">edit</span>
+                Editar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
