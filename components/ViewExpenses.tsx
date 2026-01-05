@@ -86,6 +86,7 @@ const ViewExpenses: React.FC = () => {
         `)
         .eq('user_id', session?.user.id)
         .eq('type', 'expense')
+        .eq('exclude_from_global', false)
         .order('date', { ascending: false });
 
       // Year Filter

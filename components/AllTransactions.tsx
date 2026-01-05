@@ -48,6 +48,7 @@ const AllTransactions: React.FC = () => {
           )
         `)
                 .eq('user_id', session?.user.id)
+                .eq('exclude_from_global', false)
                 .order('date', { ascending: false });
 
             if (error) throw error;

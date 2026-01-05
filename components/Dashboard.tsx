@@ -93,6 +93,7 @@ const Dashboard: React.FC = () => {
           )
         `)
         .eq('user_id', session?.user.id)
+        .eq('exclude_from_global', false)
         .order('date', { ascending: false })
         .limit(20);
 
@@ -129,13 +130,15 @@ const Dashboard: React.FC = () => {
       .from('transactions')
       .select('amount')
       .eq('user_id', session?.user.id)
-      .eq('type', 'income');
+      .eq('type', 'income')
+      .eq('exclude_from_global', false);
 
     const { data: expenseData } = await supabase
       .from('transactions')
       .select('amount')
       .eq('user_id', session?.user.id)
-      .eq('type', 'expense');
+      .eq('type', 'expense')
+      .eq('exclude_from_global', false);
 
     const totalIncome = incomeData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
     const totalExpense = expenseData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
@@ -190,9 +193,26 @@ const Dashboard: React.FC = () => {
 
   // Filtering Logic
   // Adapting to real data: Filter by category Name
-  const filteredTransactions = filter === 'Geral'
-    ? transactions
-    : transactions.filter(t => t.category?.name === filter);
+  const filteredTransactions = transactions.filter(t => {
+    if (filter === 'Geral') return true;
+    if (filter === 'Despesas') return t.type === 'expense';
+    if (filter === 'Receitas') return t.type === 'income';
+
+    // Vehicle Filters
+    if (filter === 'Veículo Manutenção' || filter === 'Veículo Combustível') {
+      // Must be vehicle category
+      if (t.category?.name !== 'Veículo' && t.category?.name !== 'Veiculo') return false;
+
+      const descLower = t.description.toLowerCase();
+      const isFuel = descLower.match(/combustível|abastecimento|gas|fuel|posto/) || t.description.startsWith('Combustível:');
+
+      if (filter === 'Veículo Combustível') return !!isFuel;
+      if (filter === 'Veículo Manutenção') return !isFuel; // Default to maintenance if not fuel
+    }
+
+    // Fallback for any other valid category names
+    return t.category?.name === filter;
+  });
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -324,18 +344,28 @@ const Dashboard: React.FC = () => {
               Geral
             </button>
             <button
-              onClick={() => setFilter('Veículo')}
-              className={`flex h-8 shrink-0 items-center justify-center px-5 rounded-full font-bold text-xs shadow-sm transition-all ${filter === 'Veículo' ? 'bg-primary text-[#102217]' : 'bg-white dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              onClick={() => setFilter('Despesas')}
+              className={`flex h-8 shrink-0 items-center justify-center px-5 rounded-full font-bold text-xs shadow-sm transition-all ${filter === 'Despesas' ? 'bg-primary text-[#102217]' : 'bg-white dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
             >
-              <span className="material-symbols-outlined text-sm mr-1.5">directions_car</span>
-              Veículo
+              Despesas
             </button>
             <button
-              onClick={() => setFilter('Cartões')}
-              className={`flex h-8 shrink-0 items-center justify-center px-5 rounded-full font-bold text-xs shadow-sm transition-all ${filter === 'Cartões' ? 'bg-primary text-[#102217]' : 'bg-white dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+              onClick={() => setFilter('Receitas')}
+              className={`flex h-8 shrink-0 items-center justify-center px-5 rounded-full font-bold text-xs shadow-sm transition-all ${filter === 'Receitas' ? 'bg-primary text-[#102217]' : 'bg-white dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
             >
-              <span className="material-symbols-outlined text-sm mr-1.5">credit_card</span>
-              Cartões
+              Receitas
+            </button>
+            <button
+              onClick={() => setFilter('Veículo Manutenção')}
+              className={`flex h-8 shrink-0 items-center justify-center px-5 rounded-full font-bold text-xs shadow-sm transition-all ${filter === 'Veículo Manutenção' ? 'bg-primary text-[#102217]' : 'bg-white dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+            >
+              Veículo Manutenção
+            </button>
+            <button
+              onClick={() => setFilter('Veículo Combustível')}
+              className={`flex h-8 shrink-0 items-center justify-center px-5 rounded-full font-bold text-xs shadow-sm transition-all ${filter === 'Veículo Combustível' ? 'bg-primary text-[#102217]' : 'bg-white dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+            >
+              Veículo Combustível
             </button>
           </div>
 
@@ -349,9 +379,41 @@ const Dashboard: React.FC = () => {
             ) : (
               filteredTransactions.map((item) => {
                 // Determine style based on category theme, fallback to gray
-                const theme = item.category?.color_theme || 'gray';
+                let theme = item.category?.color_theme || 'gray';
+                let icon = item.category?.icon || 'receipt';
+                let displayDescription = item.description;
+                let displayCategoryName = item.category?.name || 'Sem categoria';
+
+                // Handle Vehicle Subtypes Display
+                if (item.category?.name === 'Veículo' || item.category?.name === 'Veiculo') {
+                  const descLower = item.description.toLowerCase();
+                  // Check type based on keywords
+                  const isFuel = descLower.match(/combustível|abastecimento|gas|fuel|posto/) || displayDescription.startsWith('Combustível:');
+                  const isMaintenance = descLower.match(/manutenção|reparo|oficina|óleo|pneu/) || displayDescription.startsWith('Manutenção:');
+
+                  if (isFuel) {
+                    displayCategoryName = 'Veículo Combustível';
+                    icon = 'local_gas_station';
+                    // Strip prefix if present
+                    if (displayDescription.startsWith('Combustível: ')) {
+                      displayDescription = displayDescription.replace('Combustível: ', '');
+                    }
+                  } else if (isMaintenance) {
+                    displayCategoryName = 'Veículo Manutenção';
+                    icon = 'build';
+                    // Strip prefix if present
+                    if (displayDescription.startsWith('Manutenção: ')) {
+                      displayDescription = displayDescription.replace('Manutenção: ', '');
+                    }
+                  }
+                }
+
+                // If specific filter selected, ensure consistent category name theme if needed
+                if (displayCategoryName === 'Veículo Combustível') {
+                  // theme = 'orange'; // Optional: Override theme per subtype
+                }
+
                 const style = colorStyles[theme];
-                const icon = item.category?.icon || 'receipt';
 
                 return (
                   <div
@@ -364,16 +426,18 @@ const Dashboard: React.FC = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-bold text-[#111814] dark:text-white break-words leading-tight">{item.description}</p>
-                        {item.category?.name && item.category.name !== 'Outros' && (
+                        <p className="text-sm font-bold text-[#111814] dark:text-white break-words leading-tight">{displayDescription}</p>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs text-gray-400 font-medium">
+                          {new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                        </p>
+                        {displayCategoryName && displayCategoryName !== 'Outros' && (
                           <span className={`bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wide`}>
-                            {item.category.name}
+                            {displayCategoryName.toUpperCase()}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-400 font-medium mt-0.5">
-                        {new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                      </p>
                     </div>
                     <div className="text-right">
                       <p className={`text-sm font-bold ${item.type === 'income' ? 'text-primary dark:text-primary' : 'text-[#111814] dark:text-white'}`}>

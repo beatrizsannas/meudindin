@@ -74,6 +74,7 @@ const ViewIncome: React.FC = () => {
         `)
         .eq('user_id', session?.user.id)
         .eq('type', 'income')
+        .eq('exclude_from_global', false)
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date', { ascending: false });
