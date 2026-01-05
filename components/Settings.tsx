@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useUserProfile } from '../hooks/useProfile';
 
 import LogoutConfirmationModal from './LogoutConfirmationModal';
+import ExportDataModal from './ExportDataModal';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
@@ -24,6 +25,9 @@ const Settings: React.FC = () => {
 
   // Logout Modal State
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  // Export Modal State
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   const handleOpenDeleteModal = () => {
     setIsDeleteModalOpen(true);
@@ -59,8 +63,6 @@ const Settings: React.FC = () => {
       const { error: pError } = await supabase.from('third_party_purchases').delete().eq('user_id', session?.user.id);
 
       if (tError) throw tError;
-      if (pError) throw pError;
-
       if (pError) throw pError;
 
       await queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -174,13 +176,24 @@ const Settings: React.FC = () => {
             <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">chevron_right</span>
           </button>
           {/* Item 3 */}
-          <Link to="/third-party" className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group">
+          <Link to="/third-party" className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 group">
             <div className="flex items-center justify-center rounded-xl bg-green-50 dark:bg-primary/10 shrink-0 size-10 text-green-600 dark:text-primary group-hover:scale-110 transition-transform">
               <span className="material-symbols-outlined icon-filled text-[20px]">credit_card</span>
             </div>
             <p className="text-gray-900 dark:text-white text-sm font-bold flex-1 text-left">Cartões de Terceiros</p>
             <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">chevron_right</span>
           </Link>
+          {/* Item 4: Export */}
+          <button
+            onClick={() => setIsExportModalOpen(true)}
+            className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
+          >
+            <div className="flex items-center justify-center rounded-xl bg-green-50 dark:bg-primary/10 shrink-0 size-10 text-green-600 dark:text-primary group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined icon-filled text-[20px]">ios_share</span>
+            </div>
+            <p className="text-gray-900 dark:text-white text-sm font-bold flex-1 text-left">Exportar Dados</p>
+            <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">chevron_right</span>
+          </button>
         </div>
 
         {/* Section: Preferências */}
@@ -294,6 +307,12 @@ const Settings: React.FC = () => {
         </div>
       </div>
 
+      {/* Export Modal */}
+      <ExportDataModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+      />
+
       {/* Logout Confirmation Modal */}
       <LogoutConfirmationModal
         isOpen={isLogoutModalOpen}
@@ -302,73 +321,71 @@ const Settings: React.FC = () => {
       />
 
       {/* Delete Confirmation Modal */}
-      {
-        isDeleteModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            {/* Backdrop */}
-            <div
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-              onClick={() => setIsDeleteModalOpen(false)}
-            ></div>
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsDeleteModalOpen(false)}
+          ></div>
 
-            {/* Modal Content */}
-            <div className="relative w-full max-w-sm bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-              <div className="flex flex-col items-center gap-4 text-center">
-                <div className="size-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-2">
-                  <span className="material-symbols-outlined text-red-600 dark:text-red-500 text-3xl">warning</span>
-                </div>
+          {/* Modal Content */}
+          <div className="relative w-full max-w-sm bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div className="size-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-2">
+                <span className="material-symbols-outlined text-red-600 dark:text-red-500 text-3xl">warning</span>
+              </div>
 
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
-                  Apagar todos os dados?
-                </h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                Apagar todos os dados?
+              </h3>
 
-                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                  Essa ação <strong>não pode ser desfeita</strong>. Todas as suas transações e registros serão excluídos permanentemente.
-                </p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                Essa ação <strong>não pode ser desfeita</strong>. Todas as suas transações e registros serão excluídos permanentemente.
+              </p>
 
-                <div className="w-full flex flex-col gap-2 mt-2">
-                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 text-left ml-1">
-                    Digite sua senha para confirmar
-                  </label>
-                  <input
-                    type="password"
-                    value={deletePassword}
-                    onChange={(e) => setDeletePassword(e.target.value)}
-                    placeholder="Sua senha de acesso"
-                    className="w-full h-12 rounded-xl bg-gray-50 dark:bg-background-dark border-transparent focus:border-red-500 focus:ring-red-500/20 text-gray-900 dark:text-white"
-                    autoFocus
-                  />
-                  {deleteError && (
-                    <p className="text-red-500 text-xs font-bold text-left ml-1 animate-in slide-in-from-left-2">
-                      {deleteError}
-                    </p>
+              <div className="w-full flex flex-col gap-2 mt-2">
+                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 text-left ml-1">
+                  Digite sua senha para confirmar
+                </label>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Sua senha de acesso"
+                  className="w-full h-12 rounded-xl bg-gray-50 dark:bg-background-dark border-transparent focus:border-red-500 focus:ring-red-500/20 text-gray-900 dark:text-white"
+                  autoFocus
+                />
+                {deleteError && (
+                  <p className="text-red-500 text-xs font-bold text-left ml-1 animate-in slide-in-from-left-2">
+                    {deleteError}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex gap-3 w-full mt-4">
+                <button
+                  onClick={() => setIsDeleteModalOpen(false)}
+                  className="flex-1 h-12 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={verifyAndDelete}
+                  disabled={isDeleting}
+                  className="flex-1 h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-600/20 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isDeleting ? (
+                    <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  ) : (
+                    "Apagar Tudo"
                   )}
-                </div>
-
-                <div className="flex gap-3 w-full mt-4">
-                  <button
-                    onClick={() => setIsDeleteModalOpen(false)}
-                    className="flex-1 h-12 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={verifyAndDelete}
-                    disabled={isDeleting}
-                    className="flex-1 h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-600/20 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {isDeleting ? (
-                      <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                    ) : (
-                      "Apagar Tudo"
-                    )}
-                  </button>
-                </div>
+                </button>
               </div>
             </div>
           </div>
-        )
-      }
+        </div>
+      )}
     </div >
   );
 };
