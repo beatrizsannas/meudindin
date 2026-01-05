@@ -20,7 +20,10 @@ const RegisterCost: React.FC = () => {
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState<string>('');
+
+  // Amount is a string to handle masked input: "1.234,56"
   const [amount, setAmount] = useState('');
+
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
@@ -33,6 +36,37 @@ const RegisterCost: React.FC = () => {
   useEffect(() => {
     fetchCategories();
   }, [session]);
+
+  // Masking Function
+  const formatCurrency = (value: string) => {
+    // 1. Remove all non-digits
+    const numericValue = value.replace(/\D/g, '');
+
+    // 2. Handle empty case
+    if (!numericValue) return '';
+
+    // 3. Convert to float (cents -> dollars/reais)
+    const floatValue = parseFloat(numericValue) / 100;
+
+    // 4. Format to BRL locale
+    return floatValue.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setAmount(formatCurrency(val));
+  };
+
+  // Helper to parse "1.234,56" back to 1234.56
+  const parseCurrency = (strVal: string) => {
+    if (!strVal) return 0;
+    // Remove "R$", trim, remove dots (thousands), replace comma with dot
+    const clean = strVal.replace(/\./g, '').replace(',', '.');
+    return parseFloat(clean);
+  };
 
   const fetchCategories = async () => {
     try {
@@ -112,7 +146,7 @@ const RegisterCost: React.FC = () => {
         setCategoryId(availableCategories[0].id);
       }
     }
-  }, [transactionType, categories, categoryId, editId]); // Removed availableCategories from deps to avoid loop if object refs change
+  }, [transactionType, categories, categoryId, editId]);
 
   // Check for navigation state
   useEffect(() => {
@@ -120,7 +154,8 @@ const RegisterCost: React.FC = () => {
       if (location.state.transaction) {
         const t = location.state.transaction;
         setEditId(t.id);
-        setAmount(t.amount.toString());
+        // Format initial value for edit
+        setAmount(t.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
         setDescription(t.description);
         setDate(t.date);
         setTransactionType(t.type || 'expense');
@@ -132,7 +167,12 @@ const RegisterCost: React.FC = () => {
         }
         if (location.state.scannedData) {
           const data = location.state.scannedData;
-          if (data.amount) setAmount(data.amount.toString());
+          if (data.amount) {
+            // Handle scanned amount which might be string or number
+            // Force parse to float then format
+            const parsed = typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
+            setAmount(parsed.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+          }
           if (data.date) setDate(data.date);
           if (data.description) setDescription(data.description);
           if (data.category && categories.length > 0) {
@@ -183,8 +223,15 @@ const RegisterCost: React.FC = () => {
       }
     }
 
+    const valueToSave = parseCurrency(amount);
+
     if (!description || !amount || !finalCategoryId) {
       alert("Por favor, preencha todos os campos.");
+      return;
+    }
+
+    if (valueToSave <= 0) {
+      alert("O valor deve ser maior que zero.");
       return;
     }
 
@@ -201,7 +248,7 @@ const RegisterCost: React.FC = () => {
           .from('transactions')
           .update({
             description,
-            amount: parseFloat(amount),
+            amount: valueToSave,
             type: transactionType,
             category_id: finalCategoryId,
             date,
@@ -212,7 +259,7 @@ const RegisterCost: React.FC = () => {
       } else {
         // Create New
         if (isCompras && installments > 1) {
-          const totalVal = parseFloat(amount);
+          const totalVal = valueToSave;
           const installmentVal = totalVal / installments;
           const transactionsToInsert = [];
 
@@ -241,7 +288,7 @@ const RegisterCost: React.FC = () => {
             .insert({
               user_id: session?.user.id,
               description,
-              amount: parseFloat(amount),
+              amount: valueToSave,
               type: transactionType,
               category_id: finalCategoryId,
               date,
@@ -303,11 +350,11 @@ const RegisterCost: React.FC = () => {
               <span className="absolute left-4 text-primary font-bold text-xl">R$</span>
               <input
                 className="w-full bg-background-light dark:bg-background-dark rounded-lg h-16 pl-12 pr-4 text-2xl font-bold text-[#111814] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 border-none focus:ring-2 focus:ring-primary/50 transition-all outline-none"
-                inputMode="decimal"
+                inputMode="numeric"
                 placeholder="0,00"
-                type="number"
+                type="text"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={handleAmountChange}
                 autoFocus
               />
             </div>
