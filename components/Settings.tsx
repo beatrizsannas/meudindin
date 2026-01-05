@@ -165,18 +165,15 @@ const Settings: React.FC = () => {
             <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">chevron_right</span>
           </button>
           {/* Item 2 */}
-          <button
-            onClick={() => handleAction("Gerenciar veículos")}
-            className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 group"
-          >
+          <Link to="/third-party" className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 group">
             <div className="flex items-center justify-center rounded-xl bg-green-50 dark:bg-primary/10 shrink-0 size-10 text-green-600 dark:text-primary group-hover:scale-110 transition-transform">
               <span className="material-symbols-outlined icon-filled text-[20px]">directions_car</span>
             </div>
             <p className="text-gray-900 dark:text-white text-sm font-bold flex-1 text-left">Veículos</p>
             <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">chevron_right</span>
-          </button>
+          </Link>
           {/* Item 3 */}
-          <Link to="/third-party" className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 group">
+          <Link to="/wallet" className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 group">
             <div className="flex items-center justify-center rounded-xl bg-green-50 dark:bg-primary/10 shrink-0 size-10 text-green-600 dark:text-primary group-hover:scale-110 transition-transform">
               <span className="material-symbols-outlined icon-filled text-[20px]">credit_card</span>
             </div>
