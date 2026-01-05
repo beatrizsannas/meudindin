@@ -6,30 +6,22 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 
-interface Purchase {
-  id: string;
-  person_name: string;
-  item_name: string;
-  amount: number;
-  installments_total: number;
-  installments_paid: number;
-  start_payment_date: string;
-  is_paid: boolean;
-  purchase_date: string; // Needed for edit
-  avatar_url?: string; // Add avatar support if DB allows, otherwise use initials
-}
+import { useThirdPartyPurchases, Purchase } from '../hooks/useWallet';
+import { useQueryClient } from '@tanstack/react-query';
 
 const Wallet: React.FC = () => {
   const { openMenu } = useContext(MenuContext);
   const { session } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [purchases, setPurchases] = useState<Purchase[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // React Query
+  const { data: purchases = [], isLoading: loading } = useThirdPartyPurchases();
 
   // Fixed lists for selectors
   const months = [
@@ -37,30 +29,6 @@ const Wallet: React.FC = () => {
     "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
   ];
   const years = [2023, 2024, 2025, 2026];
-
-  useEffect(() => {
-    if (session?.user) {
-      fetchPurchases();
-    }
-  }, [session]);
-
-  const fetchPurchases = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('third_party_purchases')
-        .select('*');
-
-      if (error) throw error;
-      if (data) {
-        setPurchases(data);
-      }
-    } catch (error) {
-      console.error('Error fetching purchases:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleTogglePaid = async (id: string, currentPaid: number, total: number, isCurrentlyPaid: boolean) => {
     // If checking (marking as paid)
@@ -106,11 +74,10 @@ const Wallet: React.FC = () => {
 
       if (error) throw error;
 
-      setPurchases(prev => prev.map(p =>
-        p.id === id
-          ? { ...p, installments_paid: newPaidCount, is_paid: isFullyPaid }
-          : p
-      ));
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['third-party-purchases'] });
+
       if (isFullyPaid) {
         showToast("Compra totalmente paga!", "success");
       } else {
@@ -127,7 +94,9 @@ const Wallet: React.FC = () => {
     try {
       const { error } = await supabase.from('third_party_purchases').delete().eq('id', id);
       if (error) throw error;
-      setPurchases(prev => prev.filter(p => p.id !== id));
+
+      await queryClient.invalidateQueries({ queryKey: ['third-party-purchases'] });
+
       showToast("Compra apagada com sucesso!", "success");
     } catch (e) {
       console.error(e);

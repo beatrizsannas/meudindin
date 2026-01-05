@@ -4,16 +4,19 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 
+import { useTransactions } from '../hooks/useTransactions';
+import { useQueryClient } from '@tanstack/react-query';
+
 interface Transaction {
-  id: number;
+  id: string; // ID is string in hook
   description: string;
   amount: number;
   date: string;
   account: string;
   category_id: string;
-  categories: {
+  category: {
     name: string;
-  }
+  } | null;
 }
 
 interface Category {
@@ -31,9 +34,12 @@ const ViewExpenses: React.FC = () => {
   const [selectedMonthIndex, setSelectedMonthIndex] = useState(new Date().getMonth());
   const [selectedCategory, setSelectedCategory] = useState('Categoria');
   const [selectedAccount, setSelectedAccount] = useState('Conta');
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  // React Query
+  const queryClient = useQueryClient();
+  const { data: allTransactions = [], isLoading: transactionsLoading } = useTransactions(session?.user?.id);
+  const loading = transactionsLoading;
+
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const months = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -44,7 +50,7 @@ const ViewExpenses: React.FC = () => {
 
   // Helper to map category names to icons/colors
   const getCategoryStyle = (catName: string = '') => {
-    const name = catName.toLowerCase();
+    const name = catName?.toLowerCase() || '';
     if (name.includes('alimentação') || name.includes('supermercado') || name.includes('acompanhamento')) return { icon: 'shopping_cart', colorClass: 'text-orange-600 dark:text-orange-400', bgClass: 'bg-orange-100 dark:bg-orange-900/20' };
     if (name.includes('transporte') || name.includes('uber') || name.includes('veículo') || name.includes('gasolina')) return { icon: 'directions_car', colorClass: 'text-yellow-600 dark:text-yellow-400', bgClass: 'bg-yellow-100 dark:bg-yellow-900/20' };
     if (name.includes('lazer') || name.includes('netflix') || name.includes('cinema')) return { icon: 'movie', colorClass: 'text-purple-600 dark:text-purple-400', bgClass: 'bg-purple-100 dark:bg-purple-900/20' };
@@ -59,12 +65,6 @@ const ViewExpenses: React.FC = () => {
     fetchCategories();
   }, []);
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchTransactions();
-    }
-  }, [session, selectedYear, selectedMonthIndex, selectedCategory, selectedAccount]);
-
   const fetchCategories = async () => {
     try {
       const { data, error } = await supabase.from('categories').select('id, name').eq('type', 'expense');
@@ -74,63 +74,34 @@ const ViewExpenses: React.FC = () => {
     }
   };
 
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true);
+  // Derive filtered transactions
+  const transactions = allTransactions.filter(t => {
+    // Basic Layout Filters
+    if (t.type !== 'expense') return false;
+    if (t.exclude_from_global) return false;
 
-      let query = supabase
-        .from('transactions')
-        .select(`
-          *,
-          categories (name)
-        `)
-        .eq('user_id', session?.user.id)
-        .eq('type', 'expense')
-        .eq('exclude_from_global', false)
-        .order('date', { ascending: false });
+    // 1. Year Filter
+    const d = new Date(t.date + 'T12:00:00');
+    const year = d.getFullYear();
+    if (selectedYear !== 'Todos' && year !== selectedYear) return false;
 
-      // Year Filter
-      if (selectedYear !== 'Todos') {
-        const startDate = `${selectedYear}-01-01`;
-        const endDate = `${selectedYear}-12-31`;
-
-        // Month Filter (Only applies if a specific year is selected)
-        if (selectedMonthIndex !== -1) {
-          const startOfMonth = new Date(selectedYear, selectedMonthIndex, 1).toISOString().split('T')[0];
-          const endOfMonth = new Date(selectedYear, selectedMonthIndex + 1, 0).toISOString().split('T')[0];
-          query = query.gte('date', startOfMonth).lte('date', endOfMonth);
-        } else {
-          // Whole Year
-          query = query.gte('date', startDate).lte('date', endDate);
-        }
-      }
-      // If Year is 'Todos', we don't filter by date at all (show all history)
-
-      if (selectedAccount !== 'Conta' && selectedAccount !== 'Todas') {
-        query = query.eq('account', selectedAccount);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      let filteredData = (data as any[]).map(item => ({
-        ...item,
-        categories: item.categories || { name: 'Sem Categoria' } // Handle null category
-      }));
-
-      // Client-side category filtering
-      if (selectedCategory !== 'Categoria' && selectedCategory !== 'Todas') {
-        filteredData = filteredData.filter(t => t.categories?.name === selectedCategory);
-      }
-
-      setTransactions(filteredData);
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    } finally {
-      setLoading(false);
+    // 2. Month Filter
+    if (selectedYear !== 'Todos' && selectedMonthIndex !== -1) {
+      if (d.getMonth() !== selectedMonthIndex) return false;
     }
-  };
+
+    // 3. Account Filter
+    if (selectedAccount !== 'Conta' && selectedAccount !== 'Todas') {
+      if (t.account !== selectedAccount) return false;
+    }
+
+    // 4. Category Filter
+    if (selectedCategory !== 'Categoria' && selectedCategory !== 'Todas') {
+      if (t.category?.name !== selectedCategory) return false;
+    }
+
+    return true;
+  });
 
   // Group by Date for UI
   const groupedTransactions = transactions.reduce((groups, transaction) => {
@@ -170,12 +141,14 @@ const ViewExpenses: React.FC = () => {
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!window.confirm("Apagar despesa?")) return;
     try {
       const { error } = await supabase.from('transactions').delete().eq('id', id);
       if (error) throw error;
-      setTransactions(prev => prev.filter(t => t.id !== id));
+
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
       showToast("Despesa apagada com sucesso!", "success");
     } catch (error) {
       console.error(error);
@@ -300,7 +273,7 @@ const ViewExpenses: React.FC = () => {
                 </div>
 
                 {groupedTransactions[dateStr].map(transaction => {
-                  const style = getCategoryStyle(transaction.categories?.name);
+                  const style = getCategoryStyle(transaction.category?.name);
                   return (
                     <div key={transaction.id} className="relative group flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
                       <div className={`flex items-center justify-center size-12 rounded-full ${style.bgClass} ${style.colorClass} shrink-0`}>
@@ -313,7 +286,7 @@ const ViewExpenses: React.FC = () => {
                       <div className="text-right">
                         <p className="text-base font-bold text-red-600 dark:text-red-400">- {formatCurrency(transaction.amount)}</p>
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
-                          {transaction.categories?.name}
+                          {transaction.category?.name}
                         </span>
                       </div>
 

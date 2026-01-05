@@ -4,11 +4,13 @@ import Button from './Button';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../contexts/ToastContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
   const [profile, setProfile] = useState<{ full_name: string | null, avatar_url: string | null }>({ full_name: '', avatar_url: null });
   const [loading, setLoading] = useState(true);
 
@@ -78,6 +80,12 @@ const Settings: React.FC = () => {
 
       if (tError) throw tError;
       if (pError) throw pError;
+
+      if (pError) throw pError;
+
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      await queryClient.invalidateQueries({ queryKey: ['third-party-purchases'] });
+      await queryClient.invalidateQueries({ queryKey: ['transaction-totals'] });
 
       showToast("Todos os dados foram apagados com sucesso!", "success");
       setIsDeleteModalOpen(false);

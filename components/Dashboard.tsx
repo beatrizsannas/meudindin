@@ -5,6 +5,9 @@ import Button from './Button';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useUserProfile } from '../hooks/useProfile';
+import { useTransactions, useTransactionTotals, Transaction } from '../hooks/useTransactions';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Define styles mapping for dynamic rendering
 const colorStyles: Record<string, { bg: string, text: string }> = {
@@ -15,138 +18,34 @@ const colorStyles: Record<string, { bg: string, text: string }> = {
   gray: { bg: 'bg-gray-50 dark:bg-gray-700/50', text: 'text-gray-500 dark:text-gray-400' }
 };
 
-interface Transaction {
-  id: string;
-  description: string;
-  amount: number;
-  type: 'income' | 'expense';
-  date: string;
-  account: string;
-  category_id: string;
-  category: {
-    name: string;
-    icon: string;
-    color_theme: string;
-  } | null;
-}
-
 const Dashboard: React.FC = () => {
   const [filter, setFilter] = useState('Geral');
   const { openMenu } = useContext(MenuContext);
   const navigate = useNavigate();
   const { session } = useAuth();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
-  const [userName, setUserName] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [balance, setBalance] = useState(0);
-  const [incomeTotal, setIncomeTotal] = useState(0);
-  const [expenseTotal, setExpenseTotal] = useState(0);
+  // React Query Hooks
+  const { data: profile } = useUserProfile(session?.user?.id);
+  const { data: allTransactions = [], isLoading: transactionsLoading } = useTransactions(session?.user?.id);
+  const { data: totals = { income: 0, expense: 0, balance: 0 }, isLoading: totalsLoading } = useTransactionTotals(session?.user?.id);
+
+  // Filter for Dashboard: Recent 20, not hidden
+  const transactions = allTransactions
+    .filter(t => !t.exclude_from_global)
+    .slice(0, 20);
+
+  const loading = transactionsLoading || totalsLoading;
+
+  // Derived state
+  const userName = profile?.full_name?.split(' ')[0] || 'Usuário';
+  const avatarUrl = profile?.avatar_url;
+  const { income: incomeTotal, expense: expenseTotal, balance } = totals;
 
   // Modal State
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    if (session?.user) {
-      fetchUserProfile();
-      fetchTransactions();
-    }
-  }, [session]);
-
-  const fetchUserProfile = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url')
-        .eq('id', session?.user.id)
-        .single();
-
-      if (data) {
-        setUserName(data.full_name?.split(' ')[0] || 'Usuário');
-        setAvatarUrl(data.avatar_url);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
-
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('transactions')
-        .select(`
-          id,
-          description,
-          amount,
-          type,
-          date,
-          account,
-          category_id,
-          category:categories (
-            name,
-            icon,
-            color_theme
-          )
-        `)
-        .eq('user_id', session?.user.id)
-        .eq('exclude_from_global', false)
-        .order('date', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-
-      if (data) {
-        // Keep date raw for passing to Edit screen, format only for display
-        const mappedTransactions: Transaction[] = data.map((t: any) => ({
-          id: t.id,
-          description: t.description,
-          amount: t.amount,
-          type: t.type,
-          date: t.date, // Keep raw YYYY-MM-DD
-          account: t.account,
-          category_id: t.category_id,
-          category: t.category
-        }));
-        setTransactions(mappedTransactions);
-        calculateTotals(mappedTransactions);
-      }
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Note: For real separate totals we should query the DB with aggregation, 
-  // but for now creating a sum from recent transactions + simplified logic
-  // Ideally we create a separate function to get full totals not just recent limit(20)
-  const calculateTotals = async (recentTransactions: Transaction[]) => {
-    // Fetch full aggregates
-    const { data: incomeData } = await supabase
-      .from('transactions')
-      .select('amount')
-      .eq('user_id', session?.user.id)
-      .eq('type', 'income')
-      .eq('exclude_from_global', false);
-
-    const { data: expenseData } = await supabase
-      .from('transactions')
-      .select('amount')
-      .eq('user_id', session?.user.id)
-      .eq('type', 'expense')
-      .eq('exclude_from_global', false);
-
-    const totalIncome = incomeData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
-    const totalExpense = expenseData?.reduce((sum, item) => sum + Number(item.amount), 0) || 0;
-
-    setIncomeTotal(totalIncome);
-    setExpenseTotal(totalExpense);
-    setBalance(totalIncome - totalExpense);
-  };
 
   const handleNotification = () => {
     showToast("Você tem 0 novas notificações.", "info");
@@ -178,10 +77,10 @@ const Dashboard: React.FC = () => {
 
         if (error) throw error;
 
-        // Update local state
-        setTransactions(prev => prev.filter(t => t.id !== selectedTransaction.id));
-        calculateTotals(transactions.filter(t => t.id !== selectedTransaction.id));
-        fetchTransactions();
+        // Update local state (optimistic or just wait for refetch)
+        // Invalidating queries will trigger refetch
+        await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
         handleCloseModal();
         showToast("Transação excluída com sucesso!", "success");
       } catch (error) {

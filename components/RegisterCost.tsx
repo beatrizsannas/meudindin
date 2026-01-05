@@ -4,6 +4,7 @@ import Button from './Button';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Category {
   id: string;
@@ -16,6 +17,7 @@ const RegisterCost: React.FC = () => {
   const location = useLocation();
   const { session } = useAuth();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
   const [editId, setEditId] = useState<string | null>(null);
@@ -301,6 +303,8 @@ const RegisterCost: React.FC = () => {
         }
         showToast(transactionType === 'expense' ? "Despesa cadastrada com sucesso!" : "Receita cadastrada com sucesso!", "success");
       }
+
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
 
       navigate(-1);
     } catch (error) {

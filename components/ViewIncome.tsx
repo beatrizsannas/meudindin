@@ -5,16 +5,19 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 
+import { useTransactions } from '../hooks/useTransactions';
+import { useQueryClient } from '@tanstack/react-query';
+
 interface Transaction {
-  id: number;
+  id: string; // ID is string in hook
   description: string;
   amount: number;
   date: string;
   account: string;
   category_id: string;
-  categories: {
+  category: {
     name: string;
-  }
+  } | null;
 }
 
 const ViewIncome: React.FC = () => {
@@ -25,12 +28,41 @@ const ViewIncome: React.FC = () => {
 
   // Filter States
   const [selectedRange, setSelectedRange] = useState('Este Mês');
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  // React Query
+  const queryClient = useQueryClient();
+  const { data: allTransactions = [], isLoading: transactionsLoading } = useTransactions(session?.user?.id);
+  const loading = transactionsLoading;
+
+  // Filter transactions
+  const transactions = allTransactions.filter(t => {
+    if (t.type !== 'income') return false;
+    if (t.exclude_from_global) return false;
+
+    // Date Filtering
+    const tDate = new Date(t.date + 'T12:00:00');
+    const today = new Date();
+
+    // Define range
+    let start, end;
+    if (selectedRange === 'Este Mês') {
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+      end = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+    } else if (selectedRange === 'Mês Passado') {
+      start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      end = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
+    } else if (selectedRange === 'Últimos 3 Meses') {
+      start = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+      end = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+    } else {
+      return true; // Show all if unknown
+    }
+
+    return tDate >= start && tDate <= end;
+  });
 
   // Helper to map income categories to icons/colors
   const getCategoryStyle = (catName: string = '') => {
-    const name = catName.toLowerCase();
+    const name = catName?.toLowerCase() || '';
     if (name.includes('salário') || name.includes('emprego')) return { icon: 'work', colorClass: 'text-green-600 dark:text-green-400', bgClass: 'bg-green-100 dark:bg-green-900/20' };
     if (name.includes('freelance') || name.includes('extra') || name.includes('projeto')) return { icon: 'laptop_mac', colorClass: 'text-teal-600 dark:text-teal-400', bgClass: 'bg-teal-100 dark:bg-teal-900/20' };
     if (name.includes('venda') || name.includes('olx')) return { icon: 'sell', colorClass: 'text-blue-600 dark:text-blue-400', bgClass: 'bg-blue-100 dark:bg-blue-900/20' };
@@ -38,60 +70,6 @@ const ViewIncome: React.FC = () => {
 
     // Default
     return { icon: 'attach_money', colorClass: 'text-gray-600 dark:text-gray-400', bgClass: 'bg-gray-100 dark:bg-gray-800' };
-  };
-
-  useEffect(() => {
-    if (session?.user) {
-      fetchTransactions();
-    }
-  }, [session, selectedRange]);
-
-  const fetchTransactions = async () => {
-    try {
-      setLoading(true);
-
-      const today = new Date();
-      let startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-      let endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
-
-      if (selectedRange === 'Mês Passado') {
-        startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().split('T')[0];
-        endDate = new Date(today.getFullYear(), today.getMonth(), 0).toISOString().split('T')[0];
-      } else if (selectedRange === 'Últimos 3 Meses') {
-        startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1).toISOString().split('T')[0];
-        // End date remains end of current month
-      } else if (selectedRange === '2023') { // Example year
-        // Ideally dynamic or just ignore for simplicity in prototype
-        startDate = '2023-01-01';
-        endDate = '2023-12-31';
-      }
-
-      const { data, error } = await supabase
-        .from('transactions')
-        .select(`
-          *,
-          categories (name)
-        `)
-        .eq('user_id', session?.user.id)
-        .eq('type', 'income')
-        .eq('exclude_from_global', false)
-        .gte('date', startDate)
-        .lte('date', endDate)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-
-      const mappedData = (data as any[]).map(item => ({
-        ...item,
-        categories: item.categories || { name: 'Receita' }
-      }));
-
-      setTransactions(mappedData);
-    } catch (error) {
-      console.error('Error fetching income:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const totalIncome = transactions.reduce((sum, t) => sum + t.amount, 0);
@@ -108,12 +86,14 @@ const ViewIncome: React.FC = () => {
     navigate('/register', { state: { type: 'income' } });
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     if (!window.confirm("Apagar receita?")) return;
     try {
       const { error } = await supabase.from('transactions').delete().eq('id', id);
       if (error) throw error;
-      setTransactions(prev => prev.filter(t => t.id !== id));
+
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
       showToast("Receita apagada com sucesso!", "success");
     } catch (error) {
       console.error(error);
@@ -202,7 +182,7 @@ const ViewIncome: React.FC = () => {
               <p className="text-center text-gray-500">Nenhuma receita encontrada para este período.</p>
             ) : (
               transactions.map(transaction => {
-                const style = getCategoryStyle(transaction.categories?.name);
+                const style = getCategoryStyle(transaction.category?.name);
                 return (
                   <div key={transaction.id} className="relative group flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
                     <div className={`flex items-center justify-center size-12 rounded-full ${style.bgClass} ${style.colorClass} shrink-0`}>
@@ -214,7 +194,7 @@ const ViewIncome: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-base font-bold text-green-600 dark:text-green-400">+ {formatCurrency(transaction.amount)}</p>
-                      <p className="text-xs font-medium text-gray-400">{transaction.categories?.name}</p>
+                      <p className="text-xs font-medium text-gray-400">{transaction.category?.name}</p>
                     </div>
 
                     {/* Action Buttons (Visible on hover/tap) */}

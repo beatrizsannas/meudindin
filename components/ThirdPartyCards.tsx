@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useTransactions } from '../hooks/useTransactions';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Types
 interface Transaction {
@@ -18,6 +20,7 @@ const ThirdPartyCards: React.FC = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   // Form State
   const [amount, setAmount] = useState('');
@@ -28,8 +31,10 @@ const ThirdPartyCards: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   // Data State
-  const [expenses, setExpenses] = useState<Transaction[]>([]);
   const [categoryId, setCategoryId] = useState<string | null>(null);
+
+  // React Query
+  const { data: allTransactions = [] } = useTransactions(session?.user?.id);
 
   // Filter State - Default to 'Todos'
   const [selectedMonth, setSelectedMonth] = useState<number | 'Todos'>('Todos');
@@ -42,16 +47,9 @@ const ThirdPartyCards: React.FC = () => {
 
   useEffect(() => {
     if (session?.user) {
-      initialize();
+      fetchCategoryId();
     }
   }, [session]);
-
-  const initialize = async () => {
-    const id = await fetchCategoryId();
-    if (id) {
-      fetchExpenses(id);
-    }
-  };
 
   const fetchCategoryId = async () => {
     try {
@@ -65,59 +63,43 @@ const ThirdPartyCards: React.FC = () => {
 
       if (data && data.length > 0) {
         setCategoryId(data[0].id);
-        return data[0].id;
       }
     } catch (error) {
       console.error('Error fetching category:', error);
     }
-    return null;
   };
 
-  const fetchExpenses = async (catId: string | null = categoryId) => {
-    if (!catId) return;
+  const expenses = useMemo(() => {
+    if (!categoryId) return [];
 
-    try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', session?.user.id)
-        .eq('category_id', catId)
-        .order('date', { ascending: false });
+    return allTransactions
+      .filter(t => t.category_id === categoryId)
+      .map(t => {
+        const descLower = t.description.toLowerCase();
+        let type: 'fuel' | 'maintenance' = 'maintenance';
 
-      if (error) throw error;
+        if (descLower.match(/gas|fuel|abastecimento|posto/) || t.description.startsWith('Combustível:')) {
+          type = 'fuel';
+        }
 
-      if (data) {
-        const mapped: Transaction[] = data.map((t: any) => {
-          const descLower = t.description.toLowerCase();
-          let type: 'fuel' | 'maintenance' = 'maintenance';
+        let displayDescription = t.description;
+        if (displayDescription.startsWith('Combustível: ')) {
+          displayDescription = displayDescription.replace('Combustível: ', '');
+        } else if (displayDescription.startsWith('Manutenção: ')) {
+          displayDescription = displayDescription.replace('Manutenção: ', '');
+        }
 
-          if (descLower.match(/gas|fuel|abastecimento|posto/) || t.description.startsWith('Combustível:')) {
-            type = 'fuel';
-          }
-
-          let displayDescription = t.description;
-          if (displayDescription.startsWith('Combustível: ')) {
-            displayDescription = displayDescription.replace('Combustível: ', '');
-          } else if (displayDescription.startsWith('Manutenção: ')) {
-            displayDescription = displayDescription.replace('Manutenção: ', '');
-          }
-
-          return {
-            id: t.id,
-            description: displayDescription,
-            amount: t.amount,
-            date: t.date.split('-').reverse().join('/'), // Fix: Parse string directly to avoid timezone D-1 issue
-            dateObj: new Date(t.date + 'T12:00:00'), // Fix: Add time to safely create Date obj for sorting/filtering
-            type: type
-          };
-        });
-        setExpenses(mapped);
-      }
-    } catch (error) {
-      console.error('Error fetching expenses:', error);
-      showToast("Erro ao carregar histórico", "error");
-    }
-  };
+        return {
+          id: t.id,
+          description: displayDescription,
+          amount: t.amount,
+          date: t.date.split('-').reverse().join('/'),
+          dateObj: new Date(t.date + 'T12:00:00'),
+          type: type
+        } as Transaction;
+      })
+      .sort((a, b) => b.dateObj.getTime() - a.dateObj.getTime());
+  }, [allTransactions, categoryId]);
 
   const handleSave = async () => {
     if (!amount || !description || !categoryId) {
@@ -154,7 +136,9 @@ const ThirdPartyCards: React.FC = () => {
       setDescription('');
       setDate(new Date().toISOString().split('T')[0]);
       setIncludeInExpenses(true);
-      fetchExpenses();
+
+      // Update cache
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
 
     } catch (error: any) {
       console.error("Error saving:", error);

@@ -4,14 +4,17 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 
+import { useTransactions } from '../hooks/useTransactions';
+import { useQueryClient } from '@tanstack/react-query';
+
 interface Transaction {
-    id: number;
+    id: string;
     description: string;
     amount: number;
     date: string;
     type: 'income' | 'expense';
     category_id: string;
-    categories: {
+    category: {
         name: string;
         icon?: string;
         color_theme?: string;
@@ -23,45 +26,17 @@ const AllTransactions: React.FC = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
 
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [loading, setLoading] = useState(true);
+    // React Query
+    const queryClient = useQueryClient();
+    const { data: allTransactions = [], isLoading } = useTransactions(session?.user?.id);
+    const loading = isLoading;
+
+    // Local Filter State
     const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
     const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        if (session?.user) {
-            fetchTransactions();
-        }
-    }, [session]);
-
-    const fetchTransactions = async () => {
-        try {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('transactions')
-                .select(`
-          *,
-          categories (
-            name,
-            icon,
-            color_theme
-          )
-        `)
-                .eq('user_id', session?.user.id)
-                .eq('exclude_from_global', false)
-                .order('date', { ascending: false });
-
-            if (error) throw error;
-
-            if (data) {
-                setTransactions(data);
-            }
-        } catch (error) {
-            console.error('Error fetching transactions:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Filter Logic
+    const transactions = allTransactions.filter(t => !t.exclude_from_global);
 
     const getCategoryStyle = (catName: string = '', type: string) => {
         const name = catName.toLowerCase();
@@ -83,7 +58,7 @@ const AllTransactions: React.FC = () => {
         return transactions.filter(t => {
             const matchesType = filterType === 'all' || t.type === filterType;
             const matchesSearch = t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (t.categories?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+                (t.category?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
             return matchesType && matchesSearch;
         });
     };
@@ -117,12 +92,14 @@ const AllTransactions: React.FC = () => {
     const formatCurrency = (val: number) =>
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: string) => {
         if (!window.confirm("Apagar transação?")) return;
         try {
             const { error } = await supabase.from('transactions').delete().eq('id', id);
             if (error) throw error;
-            setTransactions(prev => prev.filter(t => t.id !== id));
+
+            await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
             showToast("Transação apagada com sucesso!", "success");
         } catch (err) {
             console.error(err);
@@ -189,7 +166,7 @@ const AllTransactions: React.FC = () => {
                             <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3 ml-1">{formatDateTitle(dateStr)}</h3>
                             <div className="flex flex-col gap-3">
                                 {groupedTransactions[dateStr].map(transaction => {
-                                    const style = getCategoryStyle(transaction.categories?.name, transaction.type);
+                                    const style = getCategoryStyle(transaction.category?.name, transaction.type);
                                     return (
                                         <div key={transaction.id} className="relative group flex items-center gap-4 p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-gray-100 dark:border-gray-800 shadow-sm transition-all hover:border-gray-200 dark:hover:border-gray-700">
                                             <div className={`flex items-center justify-center size-12 rounded-full ${style.bg} ${style.text} shrink-0`}>
@@ -201,7 +178,7 @@ const AllTransactions: React.FC = () => {
                                                 </div>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                                     {/* Mocking time if not present, or just showing category */}
-                                                    {transaction.categories?.name}
+                                                    {transaction.category?.name}
                                                 </p>
                                             </div>
                                             <div className="text-right">

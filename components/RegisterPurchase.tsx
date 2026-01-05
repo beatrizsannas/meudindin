@@ -3,12 +3,14 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useQueryClient } from '@tanstack/react-query';
 
 const RegisterPurchase: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   // State
   const [amount, setAmount] = useState('');
@@ -28,7 +30,7 @@ const RegisterPurchase: React.FC = () => {
       const p = location.state.purchase;
       setIsEditing(true);
       setEditId(p.id);
-      setAmount(p.amount.toString());
+      setAmount(p.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
       setPersonName(p.person_name);
       setItemName(p.item_name || '');
       setCardUsed('');
@@ -55,7 +57,7 @@ const RegisterPurchase: React.FC = () => {
     }
 
     const finalItemName = itemName || `Compra no ${cardUsed || 'Cartão'} `;
-    const totalAmount = parseFloat(amount.toString().replace(',', '.')); // ensure clean float
+    const totalAmount = parseFloat(amount.toString().replace(/\./g, '').replace(',', '.')); // ensure clean float
 
     setLoading(true);
     try {
@@ -94,6 +96,8 @@ const RegisterPurchase: React.FC = () => {
         showToast("Compra registrada com sucesso!", "success");
       }
 
+      await queryClient.invalidateQueries({ queryKey: ['third-party-purchases'] });
+
       navigate('/wallet');
     } catch (error) {
       console.error('Error saving purchase:', error);
@@ -123,16 +127,20 @@ const RegisterPurchase: React.FC = () => {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
             <label className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide" htmlFor="amount">Valor da Compra</label>
             <div className="relative flex items-center justify-center w-full">
-              <span className="text-3xl font-bold text-gray-400 mr-2 mt-1">R$</span>
+              <span className={`text-3xl font-bold transition-colors mr-2 mt-1 ${amount ? 'text-[#111814] dark:text-white' : 'text-gray-400'}`}>R$</span>
               <input
                 autoFocus
-                className="text-5xl font-extrabold text-[#111814] dark:text-white bg-transparent border-none text-center p-0 w-full max-w-[240px] focus:ring-0 placeholder-gray-200 dark:placeholder-white/10 caret-primary"
+                className="text-5xl font-extrabold text-[#111814] dark:text-white bg-transparent border-none text-center p-0 w-full max-w-[240px] focus:ring-0 placeholder-gray-200 dark:placeholder-white/10 caret-primary outline-none"
                 id="amount"
                 placeholder="0,00"
-                type="number"
-                inputMode="decimal"
+                type="text"
+                inputMode="numeric"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '');
+                  const formatted = (Number(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                  setAmount(formatted);
+                }}
               />
             </div>
           </section>
