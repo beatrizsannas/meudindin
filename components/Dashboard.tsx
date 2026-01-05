@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MenuContext } from '../App';
 import Button from './Button';
@@ -32,9 +32,60 @@ const Dashboard: React.FC = () => {
   const { data: totals = { income: 0, expense: 0, balance: 0 }, isLoading: totalsLoading } = useTransactionTotals(session?.user?.id);
 
   // Filter for Dashboard: Recent 20, not hidden
-  const transactions = allTransactions
-    .filter(t => !t.exclude_from_global)
-    .slice(0, 20);
+  // Filter for Dashboard: Recent 20, not hidden, grouped installments
+  const transactions = useMemo(() => {
+    const installmentRegex = /^(.*?) \((\d+)\/(\d+)\)$/;
+    const groups = new Map<string, { total: number, date: string, item: Transaction, baseDesc: string }>();
+    const singles: Transaction[] = [];
+
+    // Helper to get time
+    const getTime = (d: string) => new Date(d).getTime();
+
+    allTransactions.forEach(t => {
+      if (t.exclude_from_global) return;
+
+      const match = t.description.match(installmentRegex);
+      if (match) {
+        const baseDesc = match[1];
+        // Key: baseDesc + created_at (identifies the batch)
+        const key = `${baseDesc}|${t.created_at || 'unknown'}`;
+
+        if (!groups.has(key)) {
+          groups.set(key, {
+            total: 0,
+            date: t.date,
+            item: t,
+            baseDesc
+          });
+        }
+
+        const group = groups.get(key)!;
+        group.total += Number(t.amount);
+        // Find earliest date (purchase date)
+        if (getTime(t.date) < getTime(group.date)) {
+          group.date = t.date;
+        }
+      } else {
+        singles.push(t);
+      }
+    });
+
+    const groupedList = Array.from(groups.values()).map(g => ({
+      ...g.item,
+      description: g.baseDesc,
+      amount: g.total,
+      date: g.date,
+    }));
+
+    return [...singles, ...groupedList]
+      .sort((a, b) => {
+        const diffDate = getTime(b.date) - getTime(a.date);
+        if (diffDate !== 0) return diffDate;
+        return (b.created_at || '').localeCompare(a.created_at || '');
+      })
+      .slice(0, 20);
+
+  }, [allTransactions]);
 
   const loading = transactionsLoading || totalsLoading;
 

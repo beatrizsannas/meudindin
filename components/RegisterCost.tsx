@@ -28,14 +28,14 @@ const RegisterCost: React.FC = () => {
   // Amount is a string to handle masked input: "1.234,56"
   const [amount, setAmount] = useState('');
 
-  const [description, setDescription] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [loading, setLoading] = useState(false);
-
   // New state for Compras/Installments
   const [installments, setInstallments] = useState(1);
   const [paymentStartDate, setPaymentStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [isCompras, setIsCompras] = useState(false);
+  const [isInstallment, setIsInstallment] = useState(false);
+
+  const [description, setDescription] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -79,71 +79,12 @@ const RegisterCost: React.FC = () => {
         .select('id, name, type, icon, color_theme');
 
       if (error) throw error;
+      if (error) throw error;
       if (data) {
-        // Check if Compras exists
-        const hasCompras = data.find(c => c.name.toLowerCase() === 'compras' && c.type === 'expense');
-
-        if (hasCompras) {
-          setCategories(data);
-        } else {
-          // Optimistically add Compras so user sees it immediately
-          const mockCompras = {
-            id: 'temp-compras-id',
-            name: 'Compras',
-            type: 'expense',
-            icon: 'shopping_bag',
-            color_theme: 'orange'
-          };
-          // Filter out if it somehow exists to avoid dupes in state
-          setCategories([...data, mockCompras]);
-
-          if (session?.user) {
-            createComprasCategory();
-          }
-        }
+        setCategories(data);
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
-    }
-  };
-
-  const createComprasCategory = async () => {
-    try {
-      // Robust check: look for any 'Compras' category for this user or global
-      const { data: existing } = await supabase
-        .from('categories')
-        .select('id, name, type, icon, color_theme')
-        .ilike('name', 'Compras')
-        .eq('type', 'expense')
-        .limit(1);
-
-      if (existing && existing.length > 0) {
-        // CRITICAL: Found it, so update our local state to use the REAL ID instead of temp
-        setCategories(prev => prev.map(c => c.id === 'temp-compras-id' ? existing[0] : c));
-        if (categoryId === 'temp-compras-id') {
-          setCategoryId(existing[0].id);
-        }
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('categories')
-        .insert({
-          name: 'Compras',
-          type: 'expense',
-          icon: 'shopping_bag',
-          color_theme: 'orange',
-          user_id: session?.user.id
-        })
-        .select()
-        .single();
-
-      if (data) {
-        setCategories(prev => prev.map(c => c.id === 'temp-compras-id' ? data : c));
-      }
-    } catch (err) {
-      console.log('Could not auto-create Compras category', err);
-      // Do not throw, just log. We handle it at save time if needed.
     }
   };
 
@@ -151,10 +92,13 @@ const RegisterCost: React.FC = () => {
   const availableCategories = categories.filter(c => c.type === transactionType);
 
   // Detect if selected category is "Compras"
+  // No longer auto-detect Compras
+  /* 
   useEffect(() => {
     const cat = categories.find(c => c.id === categoryId);
     setIsCompras(cat?.name.toLowerCase() === 'compras');
   }, [categoryId, categories]);
+  */
 
   // Set default category
   useEffect(() => {
@@ -214,50 +158,14 @@ const RegisterCost: React.FC = () => {
   };
 
   const handleSave = async () => {
-    let finalCategoryId = categoryId;
-
-    // Handle temp ID resolution
-    if (categoryId === 'temp-compras-id') {
-      // Try to find it again (maybe it was created in background)
-      const { data } = await supabase
-        .from('categories')
-        .select('id')
-        .ilike('name', 'Compras')
-        .eq('type', 'expense')
-        .limit(1);
-
-      if (data && data.length > 0) {
-        finalCategoryId = data[0].id;
-      } else {
-        // Create inline if background failed
-        try {
-          const { data: newData, error } = await supabase.from('categories').insert({
-            name: 'Compras',
-            type: 'expense',
-            icon: 'shopping_bag',
-            color_theme: 'orange',
-            user_id: session?.user.id
-          }).select().single();
-
-          if (newData) finalCategoryId = newData.id;
-          else {
-            // Race condition fallback: check one last time
-            const { data: raceData } = await supabase
-              .from('categories')
-              .select('id')
-              .ilike('name', 'Compras')
-              .eq('type', 'expense')
-              .limit(1);
-            if (raceData && raceData.length > 0) finalCategoryId = raceData[0].id;
-            else throw new Error("Falha ao criar categoria");
-          }
-        } catch (e) {
-          console.error(e);
-          showToast("Erro ao criar categoria Compras automaticamente. Tente novamente.", "error");
-          return;
-        }
-      }
+    // 0. Verify Session
+    if (!session?.user?.id) {
+      showToast("Sessão inválida. Por favor faça login novamente.", "error");
+      return;
     }
+
+    const finalCategoryId = categoryId;
+    // No more creation of temp categories here logic removed
 
     const valueToSave = parseCurrency(amount);
 
@@ -271,7 +179,7 @@ const RegisterCost: React.FC = () => {
       return;
     }
 
-    if (isCompras && (installments < 1 || !paymentStartDate)) {
+    if (isInstallment && (installments < 1 || !paymentStartDate)) {
       showToast("Por favor, verifique as parcelas e data de pagamento.", "warning");
       return;
     }
@@ -293,9 +201,10 @@ const RegisterCost: React.FC = () => {
           .eq('id', editId);
         if (error) throw error;
         showToast(transactionType === 'expense' ? "Despesa atualizada com sucesso!" : "Receita atualizada com sucesso!", "success");
+
       } else {
         // Create New
-        if (isCompras && installments > 1) {
+        if (isInstallment && installments > 1) {
           const totalVal = valueToSave;
           const installmentVal = totalVal / installments;
           const transactionsToInsert = [];
@@ -459,8 +368,21 @@ const RegisterCost: React.FC = () => {
             </div>
           </div>
 
-          {/* Compras Extra Fields - Matches User Design Exactly */}
-          {isCompras && (
+          {/* Transaction Type Specific Fields */}
+          {transactionType === 'expense' && (
+            <div className="flex items-center justify-between py-2">
+              <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Parcelar?</span>
+              <button
+                onClick={() => setIsInstallment(!isInstallment)}
+                className={`w-12 h-6 rounded-full relative transition-colors ${isInstallment ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
+              >
+                <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${isInstallment ? 'translate-x-6' : ''}`} />
+              </button>
+            </div>
+          )}
+
+          {/* Installments Extra Fields */}
+          {isInstallment && (
             <div className="flex flex-col gap-4 pt-2 animate-in fade-in slide-in-from-top-4 duration-300">
               <div className="flex flex-col sm:flex-row gap-4">
                 <label className="flex flex-col flex-1 gap-2">
@@ -517,8 +439,8 @@ const RegisterCost: React.FC = () => {
         <div className="flex flex-col gap-4">
           {/* Placeholder for history - can be added later if needed */}
         </div>
-      </main>
-    </div>
+      </main >
+    </div >
   );
 };
 
