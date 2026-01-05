@@ -33,7 +33,7 @@ const RegisterCost: React.FC = () => {
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [session]);
 
   const fetchCategories = async () => {
     try {
