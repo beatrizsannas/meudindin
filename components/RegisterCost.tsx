@@ -32,6 +32,7 @@ const RegisterCost: React.FC = () => {
   const [installments, setInstallments] = useState(1);
   const [paymentStartDate, setPaymentStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [isInstallment, setIsInstallment] = useState(false);
+  const [isScanner, setIsScanner] = useState(false);
 
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -128,6 +129,7 @@ const RegisterCost: React.FC = () => {
           setTransactionType(location.state.type as 'expense' | 'income');
         }
         if (location.state.scannedData) {
+          setIsScanner(true);
           const data = location.state.scannedData;
           if (data.amount) {
             // Handle scanned amount which might be string or number
@@ -370,9 +372,13 @@ const RegisterCost: React.FC = () => {
 
           {/* Transaction Type Specific Fields */}
           {transactionType === 'expense' && (
-            <div className="flex items-center justify-between py-2">
-              <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Parcelar?</span>
+            <div className={`flex items-center justify-between py-2 ${isScanner ? 'opacity-50 pointer-events-none' : ''}`}>
+              <div className="flex flex-col">
+                <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Parcelar?</span>
+                {isScanner && <span className="text-xs text-red-400">Indisponível via Scanner</span>}
+              </div>
               <button
+                disabled={isScanner}
                 onClick={() => setIsInstallment(!isInstallment)}
                 className={`w-12 h-6 rounded-full relative transition-colors ${isInstallment ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
               >
