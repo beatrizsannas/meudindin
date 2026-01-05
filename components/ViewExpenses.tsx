@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import ConfirmModal from './ConfirmModal';
 
 import { useTransactions } from '../hooks/useTransactions';
 import { useQueryClient } from '@tanstack/react-query';
@@ -38,6 +39,80 @@ const ViewExpenses: React.FC = () => {
   const queryClient = useQueryClient();
   const { data: allTransactions = [], isLoading: transactionsLoading } = useTransactions(session?.user?.id);
   const loading = transactionsLoading;
+
+  // Clone / Selection Logic
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [cloning, setCloning] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedIds(new Set());
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
+    setSelectedIds(newSet);
+  };
+
+  const isInstallment = (description: string) => {
+    // Regex to match (X/Y) pattern
+    return /\(\d+\/\d+\)/.test(description);
+  };
+
+  const handleClone = async () => {
+    // Only proceed (Modal takes care of confirmation)
+    setCloning(true);
+    try {
+      const itemsToClone = allTransactions.filter(t => selectedIds.has(t.id));
+      const newTransactions = itemsToClone.map(t => {
+        const originalDate = new Date(t.date + 'T12:00:00');
+        // Add 1 month
+        const nextMonthDate = new Date(originalDate);
+        nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+
+        // Handle overflow (e.g. Jan 31 -> Feb 28)
+        if (nextMonthDate.getDate() !== originalDate.getDate()) {
+          nextMonthDate.setDate(0); // Last day of previous month
+        }
+
+        return {
+          user_id: session?.user.id,
+          description: t.description,
+          amount: t.amount,
+          type: 'expense',
+          category_id: t.category_id,
+          date: nextMonthDate.toISOString().split('T')[0],
+          account: t.account,
+          exclude_from_global: false // assuming default
+        };
+      });
+
+      const { error } = await supabase.from('transactions').insert(newTransactions);
+      if (error) throw error;
+
+      const count = newTransactions.length;
+      const suffix = count === 1 ? 'despesa clonada' : 'despesas clonadas';
+      showToast(`${count} ${suffix} com sucesso!`, "success");
+
+      setIsSelectionMode(false);
+      setSelectedIds(new Set());
+      setShowConfirmModal(false);
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
+    } catch (error) {
+      console.error(error);
+      showToast("Erro ao clonar despesas.", "error");
+    } finally {
+      setCloning(false);
+    }
+  };
 
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -169,6 +244,28 @@ const ViewExpenses: React.FC = () => {
           </Link>
           <h1 className="text-lg font-bold text-[#111814] dark:text-white">Ver Despesas</h1>
         </div>
+
+        <div className="flex items-center gap-2">
+          {isSelectionMode && selectedIds.size > 0 && (
+            <button
+              onClick={() => setShowConfirmModal(true)}
+              disabled={cloning}
+              className="text-sm font-bold text-[#111814] bg-primary px-3 py-1.5 rounded-full shadow-sm hover:brightness-110 transition-all flex items-center gap-1"
+            >
+              {cloning ? '...' : 'Clonar'}
+              <span className="material-symbols-outlined text-[16px]">content_copy</span>
+            </button>
+          )}
+          <button
+            onClick={toggleSelectionMode}
+            className={`text-sm font-bold px-3 py-1.5 rounded-full transition-colors ${isSelectionMode
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+              }`}
+          >
+            {isSelectionMode ? 'Cancelar' : 'Selecionar'}
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-0 pt-4 px-4 pb-24">
@@ -279,8 +376,13 @@ const ViewExpenses: React.FC = () => {
                       <div className={`flex items-center justify-center size-12 rounded-full ${style.bgClass} ${style.colorClass} shrink-0`}>
                         <span className="material-symbols-outlined">{style.icon}</span>
                       </div>
+
+
+
                       <div className="flex-1 min-w-0">
-                        <p className="text-base font-bold text-[#111814] dark:text-white truncate">{transaction.description}</p>
+                        <p className={`text-base font-bold text-[#111814] dark:text-white truncate ${isSelectionMode && isInstallment(transaction.description) ? 'opacity-50' : ''}`}>
+                          {transaction.description}
+                        </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{transaction.account || 'Conta'}</p>
                       </div>
                       <div className="text-right flex flex-col items-end">
@@ -291,6 +393,19 @@ const ViewExpenses: React.FC = () => {
 
                         {/* Action Buttons (Below Category) */}
                         <div className="flex items-center gap-1 mt-2">
+                          {isSelectionMode && (
+                            <button
+                              onClick={() => !isInstallment(transaction.description) && toggleSelect(transaction.id)}
+                              disabled={isInstallment(transaction.description)}
+                              className={`size-[30px] flex items-center justify-center rounded-full transition-colors border ${selectedIds.has(transaction.id)
+                                ? 'bg-primary border-primary text-[#102217]'
+                                : 'bg-transparent border-gray-300 dark:border-gray-600 text-transparent'
+                                } disabled:opacity-30 disabled:cursor-not-allowed`}
+                            >
+                              {selectedIds.has(transaction.id) && <span className="material-symbols-outlined text-[18px]">check</span>}
+                            </button>
+                          )}
+
                           <Link
                             to="/register"
                             state={{ transaction, type: 'expense' }}
@@ -315,6 +430,18 @@ const ViewExpenses: React.FC = () => {
         </div>
         <div className="h-6"></div>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleClone}
+        isLoading={cloning}
+        title="Clonar Despesas"
+        description={`Deseja clonar ${selectedIds.size} ${selectedIds.size === 1 ? 'despesa' : 'despesas'} para o mês seguinte?`}
+        confirmText="Clonar"
+        cancelText="Cancelar"
+      />
     </div>
   );
 };
