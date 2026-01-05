@@ -18,7 +18,6 @@ const RegisterCost: React.FC = () => {
   const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
   const [editId, setEditId] = useState<string | null>(null);
 
-  // Missing state variables restored
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState<string>('');
   const [amount, setAmount] = useState('');
@@ -39,16 +38,30 @@ const RegisterCost: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('categories')
-        .select('id, name, type, icon, color_theme'); // Requested more fields to check/duplicate
+        .select('id, name, type, icon, color_theme');
 
       if (error) throw error;
       if (data) {
-        setCategories(data);
+        // Check if Compras exists
+        const hasCompras = data.find(c => c.name.toLowerCase() === 'compras' && c.type === 'expense');
 
-        // Auto-create 'Compras' if it doesn't exist for expenses
-        const hasCompras = data.some(c => c.name.toLowerCase() === 'compras' && c.type === 'expense');
-        if (!hasCompras && session?.user) {
-          createComprasCategory();
+        if (hasCompras) {
+          setCategories(data);
+        } else {
+          // Optimistically add Compras so user sees it immediately
+          const mockCompras = {
+            id: 'temp-compras-id',
+            name: 'Compras',
+            type: 'expense',
+            icon: 'shopping_bag',
+            color_theme: 'orange'
+          };
+          // Filter out if it somehow exists to avoid dupes in state
+          setCategories([...data, mockCompras]);
+
+          if (session?.user) {
+            createComprasCategory();
+          }
         }
       }
     } catch (error) {
@@ -58,6 +71,10 @@ const RegisterCost: React.FC = () => {
 
   const createComprasCategory = async () => {
     try {
+      // Double check before insert to avoid race conditions
+      const { data: existing } = await supabase.from('categories').select('id').eq('name', 'Compras').single();
+      if (existing) return;
+
       const { data, error } = await supabase
         .from('categories')
         .insert({
@@ -65,13 +82,13 @@ const RegisterCost: React.FC = () => {
           type: 'expense',
           icon: 'shopping_bag',
           color_theme: 'orange',
-          user_id: session?.user.id // Try with user_id, if it fails it fails (some setups are global)
+          user_id: session?.user.id
         })
         .select()
         .single();
 
       if (data) {
-        setCategories(prev => [...prev, data]);
+        setCategories(prev => prev.map(c => c.id === 'temp-compras-id' ? data : c));
       }
     } catch (err) {
       console.log('Could not auto-create Compras category', err);
@@ -87,56 +104,43 @@ const RegisterCost: React.FC = () => {
     setIsCompras(cat?.name.toLowerCase() === 'compras');
   }, [categoryId, categories]);
 
-  // Set default category when type changes or categories load
+  // Set default category
   useEffect(() => {
-    // Only set default if we are NOT editing or if the current category is invalid for the type
-    // If editing, we want to keep the category from the transaction unless user changes type
     if (availableCategories.length > 0 && !editId) {
       const isValid = availableCategories.find(c => c.id === categoryId);
       if (!isValid) {
         setCategoryId(availableCategories[0].id);
       }
     }
-  }, [transactionType, categories, categoryId, editId, availableCategories]);
+  }, [transactionType, categories, categoryId, editId]); // Removed availableCategories from deps to avoid loop if object refs change
 
-  // Check for navigation state (scanned data or type or EDIT)
+  // Check for navigation state
   useEffect(() => {
     if (location.state) {
-      // Handle Edit Mode
       if (location.state.transaction) {
         const t = location.state.transaction;
         setEditId(t.id);
         setAmount(t.amount.toString());
         setDescription(t.description);
-        setDate(t.date); // Assuming date is YYYY-MM-DD
-        setTransactionType(t.type || 'expense'); // Ensure type is present in transaction object
+        setDate(t.date);
+        setTransactionType(t.type || 'expense');
         setCategoryId(t.category_id);
       }
-      // Handle New Mode configuration
       else {
         if (location.state.type) {
-          const type = location.state.type as 'expense' | 'income';
-          setTransactionType(type);
+          setTransactionType(location.state.type as 'expense' | 'income');
         }
-
         if (location.state.scannedData) {
           const data = location.state.scannedData;
           if (data.amount) setAmount(data.amount.toString());
           if (data.date) setDate(data.date);
           if (data.description) setDescription(data.description);
-
-          // Map scanned category to database category by name
           if (data.category && categories.length > 0) {
             const catLower = data.category.toLowerCase();
-            // Attempt to find a matching category by name
             const match = categories.find(c => {
-              const cName = c.name.toLowerCase();
-              if (catLower.includes('food') && cName === 'outros') return true;
-              if (catLower.includes('fuel') && cName === 'veículo') return true;
-              if (cName === catLower) return true;
+              if (c.name.toLowerCase() === catLower) return true;
               return false;
             });
-
             if (match) {
               setTransactionType(match.type as 'expense' | 'income');
               setCategoryId(match.id);
@@ -145,15 +149,41 @@ const RegisterCost: React.FC = () => {
         }
       }
     }
-  }, [location.state, categories]); // Re-run when categories are loaded to handle mapping
+  }, [location.state, categories]);
 
   const handleTransactionTypeChange = (type: 'expense' | 'income') => {
     setTransactionType(type);
-    // Reset handled by effect
   };
 
   const handleSave = async () => {
-    if (!description || !amount || !categoryId) {
+    let finalCategoryId = categoryId;
+
+    // Handle temp ID resolution
+    if (categoryId === 'temp-compras-id') {
+      const { data } = await supabase.from('categories').select('id').eq('name', 'Compras').single();
+      if (data) {
+        finalCategoryId = data.id;
+      } else {
+        // Create inline if background failed
+        try {
+          const { data: newData, error } = await supabase.from('categories').insert({
+            name: 'Compras',
+            type: 'expense',
+            icon: 'shopping_bag',
+            color_theme: 'orange',
+            user_id: session?.user.id
+          }).select().single();
+          if (newData) finalCategoryId = newData.id;
+          else throw new Error("Falha ao criar categoria");
+        } catch (e) {
+          console.error(e);
+          alert("Erro ao criar categoria Compras automaticament. Tente novamente.");
+          return;
+        }
+      }
+    }
+
+    if (!description || !amount || !finalCategoryId) {
       alert("Por favor, preencha todos os campos.");
       return;
     }
@@ -166,17 +196,14 @@ const RegisterCost: React.FC = () => {
     setLoading(true);
     try {
       if (editId) {
-        // Update existing - Note: Edits to recurring purchases are complex. 
-        // For now, simpler implementation: Update ONLY the single transaction being edited. 
-        // Changing it to installments here is tricky without deleting others.
-        // We will treat edit as normal single update for now.
+        // Update existing
         const { error } = await supabase
           .from('transactions')
           .update({
             description,
-            amount: parseFloat(amount), // In edit, we assume user updates the absolute amount of THIS installment
+            amount: parseFloat(amount),
             type: transactionType,
-            category_id: categoryId,
+            category_id: finalCategoryId,
             date,
             account: 'Conta Corrente'
           })
@@ -185,27 +212,13 @@ const RegisterCost: React.FC = () => {
       } else {
         // Create New
         if (isCompras && installments > 1) {
-          // Handle Installments
           const totalVal = parseFloat(amount);
           const installmentVal = totalVal / installments;
           const transactionsToInsert = [];
 
-          let currentDate = new Date(paymentStartDate);
-          // Adjust for timezone if needed, but YYYY-MM-DD string usage usually safe for naive date
-          // However, iterating months in JS:
-
           for (let i = 0; i < installments; i++) {
-            // Calculate date for this installment
-            // Fix: Add months correctly
             const d = new Date(paymentStartDate);
             d.setMonth(d.getMonth() + i);
-            // Check for month rollover edge cases (e.g. Jan 31 -> Feb 28/29) using library or careful logic
-            // Generic simple month add:
-            // If original was 31, and next month has 30, it might jump.
-            // Let's use string manipulation or setDate/setMonth carefuly.
-            // Better approach for simple billing: Keep Day of Month if possible.
-            // d is independent instance.
-
             const isoDate = d.toISOString().split('T')[0];
 
             transactionsToInsert.push({
@@ -213,20 +226,16 @@ const RegisterCost: React.FC = () => {
               description: `${description} (${i + 1}/${installments})`,
               amount: installmentVal,
               type: transactionType,
-              category_id: categoryId,
+              category_id: finalCategoryId,
               date: isoDate,
               account: 'Conta Corrente'
             });
           }
 
-          const { error } = await supabase
-            .from('transactions')
-            .insert(transactionsToInsert);
-
+          const { error } = await supabase.from('transactions').insert(transactionsToInsert);
           if (error) throw error;
-
         } else {
-          // Standard Single Insert
+          // Single
           const { error } = await supabase
             .from('transactions')
             .insert({
@@ -234,7 +243,7 @@ const RegisterCost: React.FC = () => {
               description,
               amount: parseFloat(amount),
               type: transactionType,
-              category_id: categoryId,
+              category_id: finalCategoryId,
               date,
               account: 'Conta Corrente'
             });
@@ -351,18 +360,16 @@ const RegisterCost: React.FC = () => {
             </div>
           </div>
 
-          {/* Compras Extra Fields */}
+          {/* Compras Extra Fields - Matches User Design Exactly */}
           {isCompras && (
-            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
-              <div className="h-px w-full bg-gray-100 dark:bg-white/5"></div>
-
+            <div className="flex flex-col gap-4 pt-2 animate-in fade-in slide-in-from-top-4 duration-300">
               <div className="flex flex-col sm:flex-row gap-4">
                 <label className="flex flex-col flex-1 gap-2">
-                  <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Início Pagamento</span>
+                  <span className="text-text-secondary dark:text-[#8faeb5] text-sm font-medium">Início Pagamento</span>
                   <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-xl pointer-events-none">event_upcoming</span>
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary dark:text-[#8faeb5] text-xl pointer-events-none">event_upcoming</span>
                     <input
-                      className="w-full bg-background-light dark:bg-background-dark rounded-lg h-12 pl-10 pr-4 text-base font-normal text-[#111814] dark:text-white border-none focus:ring-1 focus:ring-primary placeholder:text-gray-400 outline-none appearance-none"
+                      className="w-full bg-background-light dark:bg-background-dark rounded-lg h-12 pl-10 pr-4 text-base font-normal text-text-main dark:text-[#f0f5f2] border-none focus:ring-1 focus:ring-primary placeholder:text-text-secondary/50 appearance-none"
                       type="date"
                       style={{ colorScheme: 'light dark' }}
                       value={paymentStartDate}
@@ -373,17 +380,17 @@ const RegisterCost: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-2">
-                <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Quantidade de Parcelas</span>
+                <span className="text-text-secondary dark:text-[#8faeb5] text-sm font-medium">Quantidade de Parcelas</span>
                 <div className="flex items-center justify-between bg-background-light dark:bg-background-dark rounded-lg p-2 border border-transparent focus-within:ring-1 focus-within:ring-primary">
                   <button
                     onClick={() => setInstallments(prev => Math.max(1, prev - 1))}
-                    className="size-10 flex items-center justify-center rounded-md bg-white dark:bg-surface-light/10 text-[#111814] dark:text-white shadow-sm hover:bg-gray-100 dark:hover:bg-white/20 transition-colors"
+                    className="size-10 flex items-center justify-center rounded-md bg-surface-light dark:bg-surface-dark text-text-main dark:text-[#f0f5f2] shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   >
                     <span className="material-symbols-outlined">remove</span>
                   </button>
                   <div className="flex flex-col items-center">
-                    <span className="text-xl font-bold text-[#111814] dark:text-white">{installments}</span>
-                    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 tracking-widest uppercase">Vez{installments > 1 ? 'es' : ''}</span>
+                    <span className="text-xl font-bold text-text-main dark:text-[#f0f5f2]">{installments}</span>
+                    <span className="text-[10px] font-bold text-text-secondary dark:text-[#8faeb5] tracking-widest uppercase">Vez{installments > 1 ? 'es' : ''}</span>
                   </div>
                   <button
                     onClick={() => setInstallments(prev => Math.min(60, prev + 1))}
