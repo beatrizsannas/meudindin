@@ -106,8 +106,8 @@ const ThirdPartyCards: React.FC = () => {
             id: t.id,
             description: displayDescription,
             amount: t.amount,
-            date: new Date(t.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }),
-            dateObj: new Date(t.date),
+            date: t.date.split('-').reverse().join('/'), // Fix: Parse string directly to avoid timezone D-1 issue
+            dateObj: new Date(t.date + 'T12:00:00'), // Fix: Add time to safely create Date obj for sorting/filtering
             type: type
           };
         });

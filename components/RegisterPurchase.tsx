@@ -104,7 +104,7 @@ const RegisterPurchase: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col bg-background-light dark:bg-background-dark font-display min-h-full transition-colors duration-200">
+    <div className="flex flex-col bg-white dark:bg-background-dark font-display min-h-full transition-colors duration-200">
       <div className="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto overflow-x-hidden shadow-2xl">
         <header className="sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pt-6 pb-2">
           <div className="flex items-center justify-between">
