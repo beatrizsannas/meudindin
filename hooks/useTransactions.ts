@@ -7,6 +7,7 @@ export interface Transaction {
     amount: number;
     type: 'income' | 'expense';
     date: string;
+    created_at: string;
     account: string;
     category_id: string;
     category: {
@@ -31,6 +32,7 @@ export const useTransactions = (userId: string | undefined) => {
           amount,
           type,
           date,
+          created_at,
           account,
           category_id,
           exclude_from_global,
@@ -48,7 +50,8 @@ export const useTransactions = (userId: string | undefined) => {
                 // It fetches ALL for that category regardless of flag?
                 // The original ThirdPartyCards fetch: .eq('category_id', catId). No exclude filter.
                 // So we should fetch ALL for the user, and let components filter.
-                .order('date', { ascending: false });
+                .order('date', { ascending: false })
+                .order('created_at', { ascending: false });
 
             if (error) throw error;
 
@@ -59,6 +62,7 @@ export const useTransactions = (userId: string | undefined) => {
                 amount: t.amount,
                 type: t.type,
                 date: t.date,
+                created_at: t.created_at,
                 account: t.account,
                 category_id: t.category_id,
                 category: t.category,

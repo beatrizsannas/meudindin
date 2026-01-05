@@ -283,28 +283,28 @@ const ViewExpenses: React.FC = () => {
                         <p className="text-base font-bold text-[#111814] dark:text-white truncate">{transaction.description}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{transaction.account || 'Conta'}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right flex flex-col items-end">
                         <p className="text-base font-bold text-red-600 dark:text-red-400">- {formatCurrency(transaction.amount)}</p>
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
                           {transaction.category?.name}
                         </span>
-                      </div>
 
-                      {/* Action Buttons (Visible on hover/tap) */}
-                      <div className="absolute right-2 top-0 bottom-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-surface-light/90 dark:bg-surface-dark/90 px-2 rounded-r-xl">
-                        <Link
-                          to="/register"
-                          state={{ transaction, type: 'expense' }}
-                          className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-300"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">edit</span>
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(transaction.id)}
-                          className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
-                        >
-                          <span className="material-symbols-outlined text-[18px]">delete</span>
-                        </button>
+                        {/* Action Buttons (Below Category) */}
+                        <div className="flex items-center gap-1 mt-2">
+                          <Link
+                            to="/register"
+                            state={{ transaction, type: 'expense' }}
+                            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-300 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">edit</span>
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(transaction.id)}
+                            className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );

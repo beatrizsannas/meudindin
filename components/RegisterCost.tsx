@@ -109,9 +109,15 @@ const RegisterCost: React.FC = () => {
 
   const createComprasCategory = async () => {
     try {
-      // Double check before insert to avoid race conditions
-      const { data: existing } = await supabase.from('categories').select('id').eq('name', 'Compras').single();
-      if (existing) return;
+      // Robust check: look for any 'Compras' category for this user or global
+      const { data: existing } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('name', 'Compras')
+        .eq('type', 'expense')
+        .limit(1);
+
+      if (existing && existing.length > 0) return;
 
       const { data, error } = await supabase
         .from('categories')
@@ -130,6 +136,7 @@ const RegisterCost: React.FC = () => {
       }
     } catch (err) {
       console.log('Could not auto-create Compras category', err);
+      // Do not throw, just log. We handle it at save time if needed.
     }
   };
 
@@ -204,9 +211,16 @@ const RegisterCost: React.FC = () => {
 
     // Handle temp ID resolution
     if (categoryId === 'temp-compras-id') {
-      const { data } = await supabase.from('categories').select('id').eq('name', 'Compras').single();
-      if (data) {
-        finalCategoryId = data.id;
+      // Try to find it again (maybe it was created in background)
+      const { data } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('name', 'Compras')
+        .eq('type', 'expense')
+        .limit(1);
+
+      if (data && data.length > 0) {
+        finalCategoryId = data[0].id;
       } else {
         // Create inline if background failed
         try {
@@ -217,8 +231,19 @@ const RegisterCost: React.FC = () => {
             color_theme: 'orange',
             user_id: session?.user.id
           }).select().single();
+
           if (newData) finalCategoryId = newData.id;
-          else throw new Error("Falha ao criar categoria");
+          else {
+            // Race condition fallback: check one last time
+            const { data: raceData } = await supabase
+              .from('categories')
+              .select('id')
+              .eq('name', 'Compras')
+              .eq('type', 'expense')
+              .limit(1);
+            if (raceData && raceData.length > 0) finalCategoryId = raceData[0].id;
+            else throw new Error("Falha ao criar categoria");
+          }
         } catch (e) {
           console.error(e);
           showToast("Erro ao criar categoria Compras automaticamente. Tente novamente.", "error");
@@ -269,9 +294,21 @@ const RegisterCost: React.FC = () => {
           const transactionsToInsert = [];
 
           for (let i = 0; i < installments; i++) {
-            const d = new Date(paymentStartDate);
-            d.setMonth(d.getMonth() + i);
-            const isoDate = d.toISOString().split('T')[0];
+            // Robust month calculation handling end-of-month overflow
+            const [y, m, d] = paymentStartDate.split('-').map(Number); // YYYY, MM, DD
+            // Date.UTC months are 0-indexed (MM-1). parts[1] is 1-indexed.
+            const targetMonthIndex = (m - 1) + i;
+
+            const dateObj = new Date(Date.UTC(y, targetMonthIndex, d));
+
+            // Check for overflow (e.g. Jan 31 -> Feb 28/Mar 3 mismatch)
+            if (dateObj.getUTCDate() !== d) {
+              // If day mismatch, it means we overflowed. Set to 0 (last day of prev month)
+              // This gives us Feb 28 for Jan 31 + 1 month
+              dateObj.setUTCDate(0);
+            }
+
+            const isoDate = dateObj.toISOString().split('T')[0];
 
             transactionsToInsert.push({
               user_id: session?.user.id,
@@ -398,7 +435,7 @@ const RegisterCost: React.FC = () => {
           {/* Category Selection */}
           <div className="flex flex-col gap-2">
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Categoria</span>
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+            <div className="flex flex-wrap gap-2 pb-1">
               {availableCategories.length === 0 ? (
                 <p className="text-sm text-gray-400">Carregando categorias...</p>
               ) : (
