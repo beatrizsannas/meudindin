@@ -7,6 +7,8 @@ import { useToast } from '../contexts/ToastContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUserProfile } from '../hooks/useProfile';
 
+import LogoutConfirmationModal from './LogoutConfirmationModal';
+
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
@@ -19,6 +21,9 @@ const Settings: React.FC = () => {
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Logout Modal State
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const handleOpenDeleteModal = () => {
     setIsDeleteModalOpen(true);
@@ -73,12 +78,15 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
-    if (window.confirm("Deseja realmente sair da sua conta?")) {
-      localStorage.removeItem('isAuthenticated');
-      supabase.auth.signOut();
-      navigate('/login', { replace: true });
-    }
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const confirmLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    supabase.auth.signOut();
+    navigate('/login', { replace: true });
+    setIsLogoutModalOpen(false);
   };
 
   const handleAction = (message: string) => {
@@ -271,7 +279,7 @@ const Settings: React.FC = () => {
           </Button>
           <Button
             type="button"
-            onClick={handleLogout}
+            onClick={handleLogoutClick}
             fullWidth
             variant="secondary"
             className="bg-white dark:bg-surface-dark text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-card border border-transparent hover:border-red-100 h-14 rounded-2xl"
@@ -285,6 +293,13 @@ const Settings: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={confirmLogout}
+      />
 
       {/* Delete Confirmation Modal */}
       {

@@ -37,11 +37,13 @@ const Login: React.FC = () => {
         {/* Header / Logo */}
         <div className="flex flex-col items-center gap-5 pt-8 pb-4">
           {/* Logo Graphic */}
-          <div
-            className="relative flex items-center justify-center h-24 w-24 rounded-2xl bg-gradient-to-br from-[#0df26c] to-[#04c452] shadow-lg shadow-[#0df26c]/30"
-            data-alt="Abstract wallet and graph logo icon in neon green"
-          >
-            <span className="material-symbols-outlined text-white text-[48px]">account_balance_wallet</span>
+          <div className="relative flex items-center justify-center h-24 w-24 rounded-[28px] bg-gradient-to-br from-[#0df26c] to-[#04c452] shadow-xl shadow-[#0df26c]/30 ring-1 ring-white/20" data-alt="Sophisticated modern wallet logo icon">
+            <svg className="w-[3.25rem] h-[3.25rem] text-white drop-shadow-sm" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4.5 7C4.5 5.34315 5.84315 4 7.5 4H17.5C18.6046 4 19.5 4.89543 19.5 6V8.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" strokeWidth="2"></path>
+              <path d="M4.5 11V16.5C4.5 18.1569 5.84315 19.5 7.5 19.5H9.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.8" strokeWidth="2"></path>
+              <rect fill="currentColor" height="10" rx="2.5" width="12.5" x="8.5" y="8.5"></rect>
+              <circle className="fill-[#0df26c]" cx="14.75" cy="13.5" r="2.25"></circle>
+            </svg>
           </div>
           {/* App Title */}
           <div className="flex flex-col items-center justify-center gap-1">
