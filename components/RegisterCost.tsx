@@ -112,12 +112,19 @@ const RegisterCost: React.FC = () => {
       // Robust check: look for any 'Compras' category for this user or global
       const { data: existing } = await supabase
         .from('categories')
-        .select('id')
-        .eq('name', 'Compras')
+        .select('id, name, type, icon, color_theme')
+        .ilike('name', 'Compras')
         .eq('type', 'expense')
         .limit(1);
 
-      if (existing && existing.length > 0) return;
+      if (existing && existing.length > 0) {
+        // CRITICAL: Found it, so update our local state to use the REAL ID instead of temp
+        setCategories(prev => prev.map(c => c.id === 'temp-compras-id' ? existing[0] : c));
+        if (categoryId === 'temp-compras-id') {
+          setCategoryId(existing[0].id);
+        }
+        return;
+      }
 
       const { data, error } = await supabase
         .from('categories')
@@ -215,7 +222,7 @@ const RegisterCost: React.FC = () => {
       const { data } = await supabase
         .from('categories')
         .select('id')
-        .eq('name', 'Compras')
+        .ilike('name', 'Compras')
         .eq('type', 'expense')
         .limit(1);
 
@@ -238,7 +245,7 @@ const RegisterCost: React.FC = () => {
             const { data: raceData } = await supabase
               .from('categories')
               .select('id')
-              .eq('name', 'Compras')
+              .ilike('name', 'Compras')
               .eq('type', 'expense')
               .limit(1);
             if (raceData && raceData.length > 0) finalCategoryId = raceData[0].id;
