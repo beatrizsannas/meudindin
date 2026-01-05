@@ -1,25 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 
-import { useTransactions } from '../hooks/useTransactions';
+import { useTransactions, Transaction } from '../hooks/useTransactions';
 import { useQueryClient } from '@tanstack/react-query';
 
-interface Transaction {
-    id: string;
-    description: string;
-    amount: number;
-    date: string;
-    type: 'income' | 'expense';
-    category_id: string;
-    category: {
-        name: string;
-        icon?: string;
-        color_theme?: string;
-    } | null;
-}
+
 
 const AllTransactions: React.FC = () => {
     const { session } = useAuth();
@@ -36,7 +24,68 @@ const AllTransactions: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     // Filter Logic
-    const transactions = allTransactions.filter(t => !t.exclude_from_global);
+    // Filter Logic
+    // const transactions = allTransactions.filter(t => !t.exclude_from_global); (OLD)
+
+    // Group installments similar to Dashboard
+    const initialTransactions = useMemo(() => {
+        const installmentRegex = /^(.*?) \((\d+)\/(\d+)\)$/;
+        const groups = new Map<string, { total: number, date: string, item: Transaction, baseDesc: string, count: number }>();
+        const singles: Transaction[] = [];
+
+        // Helper to get time
+        const getTime = (d: string) => new Date(d).getTime();
+
+        allTransactions.forEach(t => {
+            if (t.exclude_from_global) return;
+
+            const match = t.description.match(installmentRegex);
+            if (match) {
+                const baseDesc = match[1];
+                // Key: baseDesc + created_at (ids the batch)
+                const key = `${baseDesc}|${t.created_at || 'unknown'}`;
+
+                if (!groups.has(key)) {
+                    groups.set(key, {
+                        total: 0,
+                        date: t.date,
+                        item: t,
+                        baseDesc,
+                        count: 0
+                    });
+                }
+
+                const group = groups.get(key)!;
+                group.total += Number(t.amount);
+                group.count += 1;
+                // Find earliest date (purchase date)
+                if (getTime(t.date) < getTime(group.date)) {
+                    group.date = t.date;
+                }
+            } else {
+                singles.push(t);
+            }
+        });
+
+        const groupedList = Array.from(groups.values()).map(g => ({
+            ...g.item,
+            description: g.baseDesc,
+            originalDescription: g.item.description, // Keep raw desc
+            amount: g.total,
+            date: g.date,
+            installmentCount: g.count
+        }));
+
+        return [...singles, ...groupedList]
+            .sort((a, b) => {
+                const diffDate = getTime(b.date) - getTime(a.date);
+                if (diffDate !== 0) return diffDate;
+                return (b.created_at || '').localeCompare(a.created_at || '');
+            });
+
+    }, [allTransactions]);
+
+    const transactions = initialTransactions;
 
     const getCategoryStyle = (catName: string = '', type: string) => {
         const name = catName.toLowerCase();
@@ -194,7 +243,13 @@ const AllTransactions: React.FC = () => {
                                             {/* Action Buttons (Visible on hover/tap) */}
                                             <div className="absolute right-2 top-0 bottom-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-surface-light/95 dark:bg-surface-dark/95 px-2 rounded-r-xl backdrop-blur-sm">
                                                 <button
-                                                    onClick={() => navigate('/register', { state: { transaction, type: transaction.type } })}
+                                                    onClick={() => {
+                                                        const txToEdit = { ...transaction };
+                                                        if (txToEdit.originalDescription) {
+                                                            txToEdit.description = txToEdit.originalDescription;
+                                                        }
+                                                        navigate('/register', { state: { transaction: txToEdit, type: transaction.type } });
+                                                    }}
                                                     className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-300"
                                                     title="Editar"
                                                 >

@@ -16,6 +16,8 @@ export interface Transaction {
         color_theme: string;
     } | null;
     exclude_from_global?: boolean;
+    installmentCount?: number;
+    originalDescription?: string; // Used for editing grouped installments
 }
 
 export const useTransactions = (userId: string | undefined) => {

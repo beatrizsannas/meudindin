@@ -29,6 +29,7 @@ const ThirdPartyCards: React.FC = () => {
   const [description, setDescription] = useState('');
   const [includeInExpenses, setIncludeInExpenses] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Data State
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -136,6 +137,7 @@ const ThirdPartyCards: React.FC = () => {
       setDescription('');
       setDate(new Date().toISOString().split('T')[0]);
       setIncludeInExpenses(true);
+      setIsModalOpen(false);
 
       // Update cache
       await queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -164,116 +166,22 @@ const ThirdPartyCards: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark transition-colors duration-300 pb-24">
-      <header className="sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
-          <span className="material-symbols-outlined text-[#111814] dark:text-white">arrow_back</span>
+      <header className="sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate(-1)} className="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+            <span className="material-symbols-outlined text-[#111814] dark:text-white">arrow_back</span>
+          </button>
+          <h1 className="text-xl font-bold text-[#111814] dark:text-white">Veículos</h1>
+        </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-[#111814] shadow-lg hover:scale-110 active:scale-95 transition-all"
+        >
+          <span className="material-symbols-outlined font-bold">add</span>
         </button>
-        <h1 className="text-xl font-bold text-[#111814] dark:text-white">Registrar Custos</h1>
       </header>
 
-      <main className="flex flex-col px-6 gap-6">
-
-        {/* Amount Input */}
-        <div className="flex flex-col gap-2">
-          <label className="text-text-main dark:text-white text-sm font-bold ml-1">Valor da Despesa</label>
-          <div className="relative">
-            <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold text-2xl transition-colors ${amount ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`}>R$</span>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={amount}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '');
-                const formatted = (Number(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                setAmount(formatted);
-              }}
-              placeholder="0,00"
-              className={`w-full h-20 pl-14 pr-4 bg-surface-light dark:bg-surface-dark text-4xl font-bold border-none rounded-2xl focus:ring-0 outline-none transition-colors ${amount ? 'text-[#111814] dark:text-white placeholder:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}
-            />
-          </div>
-        </div>
-
-        {/* Category Type Selection */}
-        <div className="flex flex-col gap-2">
-          <label className="text-text-main dark:text-white text-sm font-bold ml-1">Categoria</label>
-          <div className="flex bg-gray-100 dark:bg-surface-dark/50 p-1 rounded-xl">
-            <button
-              onClick={() => setCategoryType('fuel')}
-              className={`flex-1 flex items-center justify-center gap-2 h-12 rounded-lg font-bold text-sm transition-all ${categoryType === 'fuel'
-                ? 'bg-white text-[#111814] shadow-sm'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                }`}
-            >
-              <span className="material-symbols-outlined text-[20px]">local_gas_station</span>
-              Combustível
-            </button>
-            <button
-              onClick={() => setCategoryType('maintenance')}
-              className={`flex-1 flex items-center justify-center gap-2 h-12 rounded-lg font-bold text-sm transition-all ${categoryType === 'maintenance'
-                ? 'bg-white text-[#111814] shadow-sm'
-                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                }`}
-            >
-              <span className="material-symbols-outlined text-[20px]">build</span>
-              Manutenção
-            </button>
-          </div>
-        </div>
-
-        {/* Date & Description */}
-        <div className="grid grid-cols-1 gap-4">
-          <label className="flex flex-col gap-2">
-            <span className="text-text-main dark:text-white text-sm font-bold ml-1">Data</span>
-            <div className="relative flex items-center">
-              <input
-                className="w-full h-14 bg-surface-light dark:bg-surface-dark text-text-main dark:text-white border-none rounded-xl focus:ring-0 px-4 font-bold text-lg [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-              <span className="absolute right-4 pointer-events-none text-primary dark:text-primary">
-                <span className="material-symbols-outlined text-2xl">calendar_month</span>
-              </span>
-            </div>
-          </label>
-          <label className="flex flex-col gap-2">
-            <span className="text-text-main dark:text-white text-sm font-bold ml-1">Descrição</span>
-            <input
-              className="w-full h-14 bg-surface-light dark:bg-surface-dark text-text-main dark:text-white placeholder:text-text-secondary/50 border-none rounded-xl focus:ring-2 focus:ring-primary/50 px-4 font-medium"
-              placeholder="Ex: Gasolina Posto Ipiranga"
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </label>
-
-          {/* Include in Expenses Toggle */}
-          <label className="flex items-center gap-3 p-1 rounded-xl cursor-pointer mt-1">
-            <div className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                className="sr-only peer"
-                checked={includeInExpenses}
-                onChange={(e) => setIncludeInExpenses(e.target.checked)}
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-            </div>
-            <span className="text-sm font-bold text-text-main dark:text-white">Somar nas despesas gerais</span>
-          </label>
-        </div>
-
-        {/* Save Button */}
-        <button
-          onClick={handleSave}
-          disabled={loading}
-          className="w-full h-14 mt-2 bg-primary hover:bg-primary-dark active:scale-[0.98] text-text-main font-bold text-lg rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          <span className="material-symbols-outlined">{loading ? 'hourglass_empty' : 'save'}</span>
-          {loading ? 'Salvando...' : 'Salvar Despesa'}
-        </button>
-
-        <div className="h-px w-full bg-gray-200 dark:bg-white/10 mt-2"></div>
-
+      <main className="flex flex-col px-6 gap-6 pt-2">
         {/* History Filter */}
         <div className="flex flex-col gap-2">
           <label className="text-text-main dark:text-white text-sm font-bold ml-1">Filtrar Histórico</label>
@@ -326,7 +234,6 @@ const ThirdPartyCards: React.FC = () => {
         <div className="mt-2">
           <div className="flex items-center justify-between mb-4 px-1">
             <h3 className="text-text-main dark:text-white text-lg font-bold">Últimos Gastos</h3>
-            {/* <button className="text-sm text-primary font-bold hover:underline">Ver tudo</button> */}
           </div>
           <div className="flex flex-col gap-3">
             {filteredHistory.length === 0 ? (
@@ -349,8 +256,128 @@ const ThirdPartyCards: React.FC = () => {
         </div>
 
         <div className="h-4 w-full"></div>
-      </main >
-    </div >
+      </main>
+
+      {/* Registration Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
+          <div className="relative w-full max-w-md bg-white dark:bg-background-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
+
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Nova Despesa</h2>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <span className="material-symbols-outlined text-gray-500">close</span>
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-6">
+              {/* Amount Input */}
+              <div className="flex flex-col gap-2">
+                <label className="text-text-main dark:text-white text-sm font-bold ml-1">Valor da Despesa</label>
+                <div className="relative">
+                  <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold text-2xl transition-colors ${amount ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`}>R$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={amount}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '');
+                      const formatted = (Number(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                      setAmount(formatted);
+                    }}
+                    placeholder="0,00"
+                    className={`w-full h-20 pl-14 pr-4 bg-gray-50 dark:bg-surface-dark text-4xl font-bold border-none rounded-2xl focus:ring-0 outline-none transition-colors ${amount ? 'text-[#111814] dark:text-white placeholder:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}
+                  />
+                </div>
+              </div>
+
+              {/* Category Type Selection */}
+              <div className="flex flex-col gap-2">
+                <label className="text-text-main dark:text-white text-sm font-bold ml-1">Categoria</label>
+                <div className="flex bg-gray-100 dark:bg-surface-dark p-1 rounded-xl">
+                  <button
+                    onClick={() => setCategoryType('fuel')}
+                    className={`flex-1 flex items-center justify-center gap-2 h-12 rounded-lg font-bold text-sm transition-all ${categoryType === 'fuel'
+                      ? 'bg-white dark:bg-gray-700 text-[#111814] dark:text-white shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                      }`}
+                  >
+                    <span className="material-symbols-outlined text-[20px]">local_gas_station</span>
+                    Combustível
+                  </button>
+                  <button
+                    onClick={() => setCategoryType('maintenance')}
+                    className={`flex-1 flex items-center justify-center gap-2 h-12 rounded-lg font-bold text-sm transition-all ${categoryType === 'maintenance'
+                      ? 'bg-white dark:bg-gray-700 text-[#111814] dark:text-white shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                      }`}
+                  >
+                    <span className="material-symbols-outlined text-[20px]">build</span>
+                    Manutenção
+                  </button>
+                </div>
+              </div>
+
+              {/* Date & Description */}
+              <div className="grid grid-cols-1 gap-4">
+                <label className="flex flex-col gap-2">
+                  <span className="text-text-main dark:text-white text-sm font-bold ml-1">Data</span>
+                  <div className="relative flex items-center">
+                    <input
+                      className="w-full h-14 bg-gray-50 dark:bg-surface-dark text-text-main dark:text-white border-none rounded-xl focus:ring-0 px-4 font-bold text-lg [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full"
+                      type="date"
+                      value={date}
+                      onChange={(e) => setDate(e.target.value)}
+                    />
+                    <span className="absolute right-4 pointer-events-none text-primary dark:text-primary">
+                      <span className="material-symbols-outlined text-2xl">calendar_month</span>
+                    </span>
+                  </div>
+                </label>
+                <label className="flex flex-col gap-2">
+                  <span className="text-text-main dark:text-white text-sm font-bold ml-1">Descrição</span>
+                  <input
+                    className="w-full h-14 bg-gray-50 dark:bg-surface-dark text-text-main dark:text-white placeholder:text-text-secondary/50 border-none rounded-xl focus:ring-2 focus:ring-primary/50 px-4 font-medium"
+                    placeholder="Ex: Gasolina Posto Ipiranga"
+                    type="text"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                  />
+                </label>
+
+                {/* Include in Expenses Toggle */}
+                <label className="flex items-center gap-3 p-1 rounded-xl cursor-pointer mt-1">
+                  <div className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={includeInExpenses}
+                      onChange={(e) => setIncludeInExpenses(e.target.checked)}
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                  </div>
+                  <span className="text-sm font-bold text-text-main dark:text-white">Somar nas despesas gerais</span>
+                </label>
+              </div>
+
+              {/* Save Button */}
+              <button
+                onClick={handleSave}
+                disabled={loading}
+                className="w-full h-14 mt-2 bg-primary hover:bg-primary-dark active:scale-[0.98] text-text-main font-bold text-lg rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                <span className="material-symbols-outlined">{loading ? 'hourglass_empty' : 'save'}</span>
+                {loading ? 'Salvando...' : 'Salvar Despesa'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

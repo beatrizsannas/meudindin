@@ -1,49 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from './Button';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../contexts/ToastContext';
 import { useQueryClient } from '@tanstack/react-query';
+import { useUserProfile } from '../hooks/useProfile';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { session } = useAuth();
   const { showToast } = useToast();
   const queryClient = useQueryClient();
-  const [profile, setProfile] = useState<{ full_name: string | null, avatar_url: string | null }>({ full_name: '', avatar_url: null });
-  const [loading, setLoading] = useState(true);
+  const { data: userProfile, isLoading: isLoadingProfile } = useUserProfile(session?.user?.id);
 
   // Delete Modal State
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    if (session?.user) {
-      fetchProfile();
-    }
-  }, [session]);
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url')
-        .eq('id', session?.user.id)
-        .single();
-
-      if (data) {
-        setProfile(data);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleOpenDeleteModal = () => {
     setIsDeleteModalOpen(true);
@@ -127,15 +102,17 @@ const Settings: React.FC = () => {
         <section className="mt-6 px-6">
           <Link to="/settings/profile" className="flex items-center gap-4 bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-card transition-colors cursor-pointer group hover:bg-gray-50 dark:hover:bg-white/5">
             <div className="relative">
-              {profile.avatar_url ? (
+              {isLoadingProfile ? (
+                <div className="h-14 w-14 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+              ) : userProfile?.avatar_url ? (
                 <div
                   className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-14 w-14 border-2 border-primary shadow-sm"
-                  style={{ backgroundImage: `url("${profile.avatar_url}")` }}
+                  style={{ backgroundImage: `url("${userProfile.avatar_url}")` }}
                 ></div>
               ) : (
                 <div className="flex items-center justify-center h-14 w-14 rounded-full bg-primary/20 border-2 border-primary shadow-sm">
                   <span className="text-primary font-bold text-xl">
-                    {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : 'U'}
+                    {userProfile?.full_name ? userProfile.full_name.charAt(0).toUpperCase() : 'U'}
                   </span>
                 </div>
               )}
@@ -144,9 +121,13 @@ const Settings: React.FC = () => {
               </div>
             </div>
             <div className="flex flex-col justify-center flex-1">
-              <p className="text-gray-900 dark:text-white text-lg font-bold leading-tight">
-                {profile.full_name || 'Usuário'}
-              </p>
+              {isLoadingProfile ? (
+                <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-1"></div>
+              ) : (
+                <p className="text-gray-900 dark:text-white text-lg font-bold leading-tight">
+                  {userProfile?.full_name || 'Usuário'}
+                </p>
+              )}
               <p className="text-gray-400 dark:text-gray-500 text-xs font-medium">
                 {session?.user.email || 'email@exemplo.com'}
               </p>
@@ -306,72 +287,74 @@ const Settings: React.FC = () => {
       </div>
 
       {/* Delete Confirmation Modal */}
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsDeleteModalOpen(false)}
-          ></div>
+      {
+        isDeleteModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            {/* Backdrop */}
+            <div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+              onClick={() => setIsDeleteModalOpen(false)}
+            ></div>
 
-          {/* Modal Content */}
-          <div className="relative w-full max-w-sm bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex flex-col items-center gap-4 text-center">
-              <div className="size-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-2">
-                <span className="material-symbols-outlined text-red-600 dark:text-red-500 text-3xl">warning</span>
-              </div>
+            {/* Modal Content */}
+            <div className="relative w-full max-w-sm bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="size-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-2">
+                  <span className="material-symbols-outlined text-red-600 dark:text-red-500 text-3xl">warning</span>
+                </div>
 
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
-                Apagar todos os dados?
-              </h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                  Apagar todos os dados?
+                </h3>
 
-              <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
-                Essa ação <strong>não pode ser desfeita</strong>. Todas as suas transações e registros serão excluídos permanentemente.
-              </p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">
+                  Essa ação <strong>não pode ser desfeita</strong>. Todas as suas transações e registros serão excluídos permanentemente.
+                </p>
 
-              <div className="w-full flex flex-col gap-2 mt-2">
-                <label className="text-xs font-bold text-gray-500 dark:text-gray-400 text-left ml-1">
-                  Digite sua senha para confirmar
-                </label>
-                <input
-                  type="password"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder="Sua senha de acesso"
-                  className="w-full h-12 rounded-xl bg-gray-50 dark:bg-background-dark border-transparent focus:border-red-500 focus:ring-red-500/20 text-gray-900 dark:text-white"
-                  autoFocus
-                />
-                {deleteError && (
-                  <p className="text-red-500 text-xs font-bold text-left ml-1 animate-in slide-in-from-left-2">
-                    {deleteError}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex gap-3 w-full mt-4">
-                <button
-                  onClick={() => setIsDeleteModalOpen(false)}
-                  className="flex-1 h-12 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={verifyAndDelete}
-                  disabled={isDeleting}
-                  className="flex-1 h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-600/20 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isDeleting ? (
-                    <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                  ) : (
-                    "Apagar Tudo"
+                <div className="w-full flex flex-col gap-2 mt-2">
+                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 text-left ml-1">
+                    Digite sua senha para confirmar
+                  </label>
+                  <input
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Sua senha de acesso"
+                    className="w-full h-12 rounded-xl bg-gray-50 dark:bg-background-dark border-transparent focus:border-red-500 focus:ring-red-500/20 text-gray-900 dark:text-white"
+                    autoFocus
+                  />
+                  {deleteError && (
+                    <p className="text-red-500 text-xs font-bold text-left ml-1 animate-in slide-in-from-left-2">
+                      {deleteError}
+                    </p>
                   )}
-                </button>
+                </div>
+
+                <div className="flex gap-3 w-full mt-4">
+                  <button
+                    onClick={() => setIsDeleteModalOpen(false)}
+                    className="flex-1 h-12 rounded-xl border border-gray-200 dark:border-gray-700 font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={verifyAndDelete}
+                    disabled={isDeleting}
+                    className="flex-1 h-12 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-600/20 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isDeleting ? (
+                      <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    ) : (
+                      "Apagar Tudo"
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

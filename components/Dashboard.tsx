@@ -35,7 +35,7 @@ const Dashboard: React.FC = () => {
   // Filter for Dashboard: Recent 20, not hidden, grouped installments
   const transactions = useMemo(() => {
     const installmentRegex = /^(.*?) \((\d+)\/(\d+)\)$/;
-    const groups = new Map<string, { total: number, date: string, item: Transaction, baseDesc: string }>();
+    const groups = new Map<string, { total: number, date: string, item: Transaction, baseDesc: string, count: number }>();
     const singles: Transaction[] = [];
 
     // Helper to get time
@@ -55,12 +55,14 @@ const Dashboard: React.FC = () => {
             total: 0,
             date: t.date,
             item: t,
-            baseDesc
+            baseDesc,
+            count: 0
           });
         }
 
         const group = groups.get(key)!;
         group.total += Number(t.amount);
+        group.count += 1;
         // Find earliest date (purchase date)
         if (getTime(t.date) < getTime(group.date)) {
           group.date = t.date;
@@ -73,8 +75,10 @@ const Dashboard: React.FC = () => {
     const groupedList = Array.from(groups.values()).map(g => ({
       ...g.item,
       description: g.baseDesc,
+      originalDescription: g.item.description, // Keep the raw description for editing
       amount: g.total,
       date: g.date,
+      installmentCount: g.count
     }));
 
     return [...singles, ...groupedList]
@@ -110,12 +114,6 @@ const Dashboard: React.FC = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setTimeout(() => setSelectedTransaction(null), 300); // Wait for animation
-  };
-
-  const handleEdit = () => {
-    if (selectedTransaction) {
-      navigate('/register', { state: { transaction: selectedTransaction, type: selectedTransaction.type } });
-    }
   };
 
   const handleDelete = async () => {
@@ -380,20 +378,15 @@ const Dashboard: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <p className="text-xs text-gray-400 font-medium">
-                          {new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                          {new Date(item.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                         </p>
-                        {displayCategoryName && displayCategoryName !== 'Outros' && (
-                          <span className={`bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wide`}>
-                            {displayCategoryName.toUpperCase()}
-                          </span>
-                        )}
                       </div>
                     </div>
                     <div className="text-right">
                       <p className={`text-sm font-bold ${item.type === 'income' ? 'text-primary dark:text-primary' : 'text-[#111814] dark:text-white'}`}>
                         {item.type === 'expense' ? '-' : '+'} {formatCurrency(Number(item.amount))}
                       </p>
-                      <p className="text-[10px] font-medium text-gray-400 mt-0.5">{item.account || 'Conta'}</p>
+                      <p className="text-[10px] font-medium text-gray-400 mt-0.5 text-right uppercase">{displayCategoryName || 'Geral'}</p>
                     </div>
                   </div>
                 );
@@ -404,98 +397,111 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Transaction Details Modal */}
-      {isModalOpen && selectedTransaction && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-[#102217]/60 backdrop-blur-[2px]"
-            onClick={handleCloseModal}
-          ></div>
-          <div className="relative w-full max-w-[340px] bg-surface-light dark:bg-surface-dark rounded-3xl shadow-2xl overflow-hidden ring-1 ring-white/10 animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between px-6 pt-6 pb-2">
-              <h3 className="text-lg font-bold text-[#111814] dark:text-white">Resumo da Transação</h3>
-              <button
-                onClick={handleCloseModal}
-                className="flex items-center justify-center size-8 rounded-full bg-surface-variant-light dark:bg-surface-variant-dark hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
-              >
-                <span className="material-symbols-outlined text-xl">close</span>
-              </button>
-            </div>
-
-            <div className="flex flex-col items-center px-6 py-4">
-              {/* Dynamic Icon */}
-              <div className={`flex items-center justify-center size-16 rounded-full ${colorStyles[selectedTransaction.category?.color_theme || 'gray'].bg
-                } ${colorStyles[selectedTransaction.category?.color_theme || 'gray'].text
-                } mb-4 shadow-inner`}>
-                <span className="material-symbols-outlined text-3xl">
-                  {selectedTransaction.category?.icon || 'receipt'}
-                </span>
+      {
+        isModalOpen && selectedTransaction && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-[#102217]/60 backdrop-blur-[2px]"
+              onClick={handleCloseModal}
+            ></div>
+            <div className="relative w-full max-w-[340px] bg-surface-light dark:bg-surface-dark rounded-3xl shadow-2xl overflow-hidden ring-1 ring-white/10 animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center justify-between px-6 pt-6 pb-2">
+                <h3 className="text-lg font-bold text-[#111814] dark:text-white">Resumo da Transação</h3>
+                <button
+                  onClick={handleCloseModal}
+                  className="flex items-center justify-center size-8 rounded-full bg-surface-variant-light dark:bg-surface-variant-dark hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-xl">close</span>
+                </button>
               </div>
 
-              <h2 className="text-2xl font-bold text-[#111814] dark:text-white text-center mb-1">
-                {selectedTransaction.description}
-              </h2>
-
-              <span className={`px-3 py-1 rounded-full ${selectedTransaction.type === 'expense'
-                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
-                : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                } text-xs font-bold uppercase tracking-wide mb-4`}>
-                {selectedTransaction.type === 'expense' ? 'Despesa' : 'Receita'}
-              </span>
-
-              <div className="text-4xl font-bold text-[#111814] dark:text-white tracking-tight mb-8">
-                {formatCurrency(Number(selectedTransaction.amount))}
-              </div>
-
-              <div className="w-full flex flex-col gap-4">
-                <div className="flex justify-between items-center p-3 rounded-xl bg-surface-variant-light dark:bg-surface-variant-dark/50">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Data</span>
-                  <span className="text-sm font-bold text-[#111814] dark:text-white">
-                    {new Date(selectedTransaction.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'numeric', year: 'numeric' })}
+              <div className="flex flex-col items-center px-6 py-4">
+                {/* Dynamic Icon */}
+                <div className={`flex items-center justify-center size-16 rounded-full ${colorStyles[selectedTransaction.category?.color_theme || 'gray'].bg
+                  } ${colorStyles[selectedTransaction.category?.color_theme || 'gray'].text
+                  } mb-4 shadow-inner`}>
+                  <span className="material-symbols-outlined text-3xl">
+                    {selectedTransaction.category?.icon || 'receipt'}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center p-3 rounded-xl bg-surface-variant-light dark:bg-surface-variant-dark/50">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Categoria</span>
-                  <div className="flex items-center gap-2">
-                    {/* Dot color based on category theme if possible, else gray */}
-                    <span className={`size-2 rounded-full ${selectedTransaction.category?.color_theme === 'orange' ? 'bg-orange-500' : 'bg-gray-500'}`}></span>
+                <h2 className="text-2xl font-bold text-[#111814] dark:text-white text-center mb-1">
+                  {selectedTransaction.description}
+                </h2>
+
+                <span className={`px-3 py-1 rounded-full ${selectedTransaction.type === 'expense'
+                  ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                  : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                  } text-xs font-bold uppercase tracking-wide mb-4`}>
+                  {selectedTransaction.type === 'expense' ? 'Despesa' : 'Receita'}
+                </span>
+
+                <div className="text-4xl font-bold text-[#111814] dark:text-white tracking-tight mb-8">
+                  {formatCurrency(Number(selectedTransaction.amount))}
+                </div>
+
+                <div className="w-full flex flex-col gap-4">
+                  <div className="flex justify-between items-center p-3 rounded-xl bg-surface-variant-light dark:bg-surface-variant-dark/50">
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Data</span>
                     <span className="text-sm font-bold text-[#111814] dark:text-white">
-                      {selectedTransaction.category?.name || 'Sem categoria'}
+                      {new Date(selectedTransaction.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'numeric', year: 'numeric' })}
                     </span>
                   </div>
-                </div>
 
-                <div className="flex justify-between items-center p-3 rounded-xl bg-surface-variant-light dark:bg-surface-variant-dark/50">
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Pagamento</span>
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-base text-gray-400">account_balance</span>
-                    <span className="text-sm font-bold text-[#111814] dark:text-white">{selectedTransaction.account || 'Conta Corrente'}</span>
+                  <div className="flex justify-between items-center p-3 rounded-xl bg-surface-variant-light dark:bg-surface-variant-dark/50">
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Categoria</span>
+                    <div className="flex items-center gap-2">
+                      {/* Dot color based on category theme if possible, else gray */}
+                      <span className={`size-2 rounded-full ${selectedTransaction.category?.color_theme === 'orange' ? 'bg-orange-500' : 'bg-gray-500'}`}></span>
+                      <span className="text-sm font-bold text-[#111814] dark:text-white">
+                        {selectedTransaction.category?.name || 'Sem categoria'}
+                      </span>
+                    </div>
                   </div>
+
+
+
+                  {/* Installment Info if applicable */}
+                  {selectedTransaction.installmentCount && selectedTransaction.installmentCount > 1 && (
+                    <div className="flex justify-between items-center p-3 rounded-xl bg-surface-variant-light dark:bg-surface-variant-dark/50">
+                      <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Parcelamento</span>
+                      <span className="text-sm font-bold text-[#111814] dark:text-white">
+                        {selectedTransaction.installmentCount} Vezes
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
 
-            <div className="p-6 grid grid-cols-2 gap-3">
-              <button
-                onClick={handleDelete}
-                className="flex items-center justify-center gap-2 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
-              >
-                <span className="material-symbols-outlined text-lg">delete</span>
-                Excluir
-              </button>
-              <button
-                onClick={handleEdit}
-                className="flex items-center justify-center gap-2 py-3 rounded-xl bg-primary hover:bg-primary-dark text-[#102217] font-bold text-sm shadow-lg shadow-primary/20 transition-colors"
-              >
-                <span className="material-symbols-outlined text-lg icon-filled">edit</span>
-                Editar
-              </button>
+              <div className="p-6 grid grid-cols-2 gap-3">
+                <button
+                  onClick={handleDelete}
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-bold text-sm hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-lg">delete</span>
+                  Excluir
+                </button>
+                <button
+                  onClick={() => {
+                    const txToEdit = { ...selectedTransaction };
+                    // If it's a grouped installment, restore the original description so Regex doesn't break on save
+                    if (txToEdit.originalDescription) {
+                      txToEdit.description = txToEdit.originalDescription;
+                    }
+                    navigate('/register', { state: { transaction: txToEdit, type: txToEdit.type } });
+                  }}
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl bg-primary hover:bg-primary-dark text-[#102217] font-bold text-sm shadow-lg shadow-primary/20 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-lg icon-filled">edit</span>
+                  Editar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-    </div>
+    </div >
   );
 };
 
