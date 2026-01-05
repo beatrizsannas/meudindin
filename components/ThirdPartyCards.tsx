@@ -298,7 +298,7 @@ const ThirdPartyCards: React.FC = () => {
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="w-full h-12 appearance-none bg-surface-light dark:bg-surface-dark border-none rounded-xl pl-4 pr-10 text-text-main dark:text-white font-bold text-sm focus:ring-2 focus:ring-primary/50 shadow-sm outline-none"
+                className="w-full h-12 appearance-none bg-surface-light dark:bg-surface-dark border-none rounded-xl pl-4 pr-10 text-text-main dark:text-white font-bold text-sm focus:ring-2 focus:ring-primary/50 shadow-sm outline-none bg-none"
                 style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
               >
                 {months.map((m, i) => (
@@ -311,7 +311,7 @@ const ThirdPartyCards: React.FC = () => {
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="w-full h-12 appearance-none bg-surface-light dark:bg-surface-dark border-none rounded-xl pl-4 pr-10 text-text-main dark:text-white font-bold text-sm focus:ring-2 focus:ring-primary/50 shadow-sm outline-none"
+                className="w-full h-12 appearance-none bg-surface-light dark:bg-surface-dark border-none rounded-xl pl-4 pr-10 text-text-main dark:text-white font-bold text-sm focus:ring-2 focus:ring-primary/50 shadow-sm outline-none bg-none"
                 style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
               >
                 <option value={2026}>2026</option>
