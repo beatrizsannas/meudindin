@@ -33,7 +33,7 @@ const RegisterPurchase: React.FC = () => {
       setAmount(p.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
       setPersonName(p.person_name);
       setItemName(p.item_name || '');
-      setCardUsed('');
+      setCardUsed(p.card_used || '');
       setDate(p.purchase_date);
       setPaymentStart(p.start_payment_date);
       setInstallments(p.installments_total);
@@ -122,7 +122,7 @@ const RegisterPurchase: React.FC = () => {
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-6 space-y-6 pb-20">
+        <main className="flex-1 px-4 py-6 space-y-6 pb-6">
           <section className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-white/5 flex flex-col items-center justify-center gap-2 relative overflow-hidden group">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
             <label className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide" htmlFor="amount">Valor da Compra</label>
