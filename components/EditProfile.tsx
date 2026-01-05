@@ -4,10 +4,13 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../contexts/ToastContext';
 
+import { useQueryClient } from '@tanstack/react-query';
+
 const EditProfile: React.FC = () => {
     const navigate = useNavigate();
     const { session } = useAuth();
     const { showToast } = useToast();
+    const queryClient = useQueryClient();
 
     const [formData, setFormData] = useState({
         name: "",
@@ -17,6 +20,7 @@ const EditProfile: React.FC = () => {
         avatar_url: null as string | null
     });
     const [loading, setLoading] = useState(true);
+    const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
     useEffect(() => {
         if (session?.user) {
@@ -42,7 +46,8 @@ const EditProfile: React.FC = () => {
                     name: data.full_name || "",
                     avatar_url: data.avatar_url,
                     phone: data.phone || "",
-                    dob: data.dob || ""
+                    // Fix: Ensure date is strictly YYYY-MM-DD for the input type="date"
+                    dob: data.dob ? data.dob.split('T')[0] : ""
                 }));
             }
         } catch (error) {
@@ -84,6 +89,9 @@ const EditProfile: React.FC = () => {
 
             if (error) throw error;
 
+            // Invalidate profile query to update other components immediately
+            await queryClient.invalidateQueries({ queryKey: ['profile', session.user.id] });
+
             showToast("Perfil atualizado com sucesso!", "success");
             navigate(-1);
         } catch (error: any) {
@@ -94,8 +102,25 @@ const EditProfile: React.FC = () => {
         }
     };
 
+    const handleAvatarSelect = (url: string) => {
+        setFormData(prev => ({ ...prev, avatar_url: url }));
+        setIsAvatarModalOpen(false);
+    };
+
+    // Predefined Avatars (DiceBear) - Happy & Curly/Wavy Hair Focus
+    const avatars = [
+        "https://api.dicebear.com/9.x/avataaars/svg?seed=Aneka&mouth=smile&eyes=happy&top=curvy&hairColor=2c1b18",
+        "https://api.dicebear.com/9.x/avataaars/svg?seed=Felix&mouth=smile&eyes=happy&top=shortCurly&hairColor=2c1b18",
+        "https://api.dicebear.com/9.x/avataaars/svg?seed=Bella&mouth=smile&eyes=happy&top=curly&hairColor=4a312c",
+        "https://api.dicebear.com/9.x/avataaars/svg?seed=Leo&mouth=smile&eyes=happy&top=fro&hairColor=000000",
+        "https://api.dicebear.com/9.x/avataaars/svg?seed=Zoe&mouth=smile&eyes=happy&top=bigHair&hairColor=724133",
+        "https://api.dicebear.com/9.x/avataaars/svg?seed=Jack&mouth=smile&eyes=happy&top=shortWaved&hairColor=2c1b18",
+        "https://api.dicebear.com/9.x/avataaars/svg?seed=Callie&mouth=smile&eyes=happy&top=longButNotTooLong&hairColor=2c1b18",
+        "https://api.dicebear.com/9.x/avataaars/svg?seed=Sam&mouth=smile&eyes=happy&top=dreads&hairColor=000000"
+    ];
+
     return (
-        <div className="relative flex h-auto min-h-screen w-full flex-col overflow-x-hidden max-w-md mx-auto shadow-2xl bg-background-light dark:bg-background-dark">
+        <div className="flex flex-col h-full min-h-screen bg-background-light dark:bg-background-dark">
             <header className="flex items-center bg-surface-light dark:bg-surface-dark p-4 pb-2 justify-between sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800 transition-colors">
                 <button
                     onClick={() => navigate(-1)}
@@ -111,7 +136,7 @@ const EditProfile: React.FC = () => {
 
             <main className="flex-1 px-4 py-6">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="relative group cursor-pointer">
+                    <div className="relative group cursor-pointer" onClick={() => setIsAvatarModalOpen(true)}>
                         {formData.avatar_url ? (
                             <div
                                 className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-28 w-28 border-4 border-surface-light dark:border-surface-dark shadow-md"
@@ -132,7 +157,7 @@ const EditProfile: React.FC = () => {
                     <div className="flex gap-4 mt-3">
                         <button
                             type="button"
-                            onClick={() => showToast("Upload de imagem em breve!", "info")}
+                            onClick={() => setIsAvatarModalOpen(true)}
                             className="text-primary dark:text-primary font-bold text-sm hover:underline"
                         >
                             Alterar foto
@@ -236,6 +261,42 @@ const EditProfile: React.FC = () => {
                     {loading ? 'Salvando...' : 'Salvar Alterações'}
                 </button>
             </div>
+
+            {/* Avatar Selection Modal */}
+            {isAvatarModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white dark:bg-surface-dark rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+                        <div className="p-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-white/5">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Escolha um Avatar</h3>
+                            <button
+                                onClick={() => setIsAvatarModalOpen(false)}
+                                className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-gray-500">close</span>
+                            </button>
+                        </div>
+                        <div className="p-6 grid grid-cols-4 gap-4">
+                            {avatars.map((url, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => handleAvatarSelect(url)}
+                                    className="relative aspect-square rounded-full border-2 border-transparent hover:border-primary hover:scale-110 focus:border-primary focus:scale-110 transition-all outline-none group"
+                                >
+                                    <img src={url} alt={`Avatar ${index + 1}`} className="w-full h-full rounded-full bg-gray-100 dark:bg-white/5" />
+                                    {formData.avatar_url === url && (
+                                        <div className="absolute inset-0 bg-primary/20 rounded-full flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-primary font-bold shadow-lg">check</span>
+                                        </div>
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="p-4 bg-gray-50 dark:bg-white/5 text-center text-xs text-gray-400">
+                            Selecione um dos avatares para o seu perfil
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
