@@ -57,28 +57,14 @@ const BottomNav = () => {
   const navItems = [
     { path: '/', icon: 'home', label: 'Início' },
     { path: '/third-party', icon: 'directions_car', label: 'Veículo' },
-    { path: '/scan', icon: 'qr_code_scanner', label: 'Scan', isFloating: true },
     { path: '/wallet', icon: 'account_balance_wallet', label: 'Terceiros' },
     { path: '/settings', icon: 'settings', label: 'Ajustes' },
   ];
 
   return (
     <div className="absolute bottom-0 left-0 right-0 z-50 bg-surface-light dark:bg-surface-dark px-6 pb-6 pt-3 shadow-nav rounded-t-3xl border-t border-gray-100 dark:border-gray-800">
-      <div className="flex justify-between items-end relative">
+      <div className="flex justify-around items-end relative">
         {navItems.map((item) => {
-          if (item.isFloating) {
-            return (
-              <div key={item.path} className="relative -top-5">
-                <Link
-                  to={item.path}
-                  className="flex items-center justify-center size-14 rounded-full bg-[#111814] dark:bg-white text-primary dark:text-[#111814] shadow-float hover:scale-105 active:scale-95 transition-all duration-300 ring-4 ring-background-light dark:ring-background-dark"
-                >
-                  <span className="material-symbols-outlined text-3xl">{item.icon}</span>
-                </Link>
-              </div>
-            );
-          }
-
           const active = isActive(item.path);
           return (
             <Link

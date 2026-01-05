@@ -133,13 +133,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
                 )
               ))}
 
-              <button
-                className="flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-surface-variant-light dark:hover:bg-surface-variant-dark text-gray-700 dark:text-gray-200 transition-colors w-full text-left"
-                onClick={() => showToast('Funcionalidade em breve!', 'info')}
-              >
-                <span className="material-symbols-outlined">qr_code_scanner</span>
-                <span className="font-medium">QR Code</span>
-              </button>
+
             </nav>
 
             {/* Footer */}

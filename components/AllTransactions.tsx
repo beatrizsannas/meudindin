@@ -22,6 +22,26 @@ const AllTransactions: React.FC = () => {
     // Local Filter State
     const [filterType, setFilterType] = useState<'all' | 'income' | 'expense'>('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedMonth, setSelectedMonth] = useState<string>('Todos'); // '0', '1', ... '11' or 'Todos'
+    const [selectedYear, setSelectedYear] = useState<string>('Todos'); // '2024', '2025' or 'Todos'
+
+    const months = [
+        { value: '0', label: 'Janeiro' },
+        { value: '1', label: 'Fevereiro' },
+        { value: '2', label: 'Março' },
+        { value: '3', label: 'Abril' },
+        { value: '4', label: 'Maio' },
+        { value: '5', label: 'Junho' },
+        { value: '6', label: 'Julho' },
+        { value: '7', label: 'Agosto' },
+        { value: '8', label: 'Setembro' },
+        { value: '9', label: 'Outubro' },
+        { value: '10', label: 'Novembro' },
+        { value: '11', label: 'Dezembro' },
+    ];
+
+    const currentYear = new Date().getFullYear();
+    const years = ['Todos', String(currentYear + 1), String(currentYear), String(currentYear - 1), String(currentYear - 2)];
 
     // Filter Logic
     // Filter Logic
@@ -108,7 +128,13 @@ const AllTransactions: React.FC = () => {
             const matchesType = filterType === 'all' || t.type === filterType;
             const matchesSearch = t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (t.category?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-            return matchesType && matchesSearch;
+
+            // Date Filter
+            const d = new Date(t.date + 'T12:00:00');
+            const matchesMonth = selectedMonth === 'Todos' || d.getMonth() === parseInt(selectedMonth);
+            const matchesYear = selectedYear === 'Todos' || d.getFullYear() === parseInt(selectedYear);
+
+            return matchesType && matchesSearch && matchesMonth && matchesYear;
         });
     };
 
@@ -121,7 +147,7 @@ const AllTransactions: React.FC = () => {
         return groups;
     }, {} as Record<string, Transaction[]>);
 
-    const sortedDates = Object.keys(groupedTransactions).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+    const sortedDates = Object.keys(groupedTransactions).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
     const formatDateTitle = (dateStr: string) => {
         const d = new Date(dateStr + 'T12:00:00');
@@ -130,12 +156,17 @@ const AllTransactions: React.FC = () => {
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
 
+        // For future dates logic if needed, but simple Date string is fine
+        const day = d.getDate();
+        const month = d.toLocaleDateString('pt-BR', { month: 'long' });
+        const year = d.getFullYear();
+
+        // Show year if not current year, strictly speaking user asked for flow "today -> future"
+        // But the format logic mainly handles "Relative" titles.
         if (d.toDateString() === today.toDateString()) return 'Hoje';
         if (d.toDateString() === yesterday.toDateString()) return 'Ontem';
 
-        const day = d.getDate();
-        const month = d.toLocaleDateString('pt-BR', { month: 'long' });
-        return `${day} de ${month.charAt(0).toUpperCase() + month.slice(1)}`;
+        return `${day} de ${month.charAt(0).toUpperCase() + month.slice(1)} ${d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() : ''}`;
     };
 
     const formatCurrency = (val: number) =>
@@ -190,6 +221,35 @@ const AllTransactions: React.FC = () => {
                     >
                         Despesas
                     </button>
+                </div>
+
+                {/* Date Filters */}
+                <div className="flex gap-3 mb-4 overflow-x-auto scrollbar-hide">
+                    <div className="relative shrink-0">
+                        <select
+                            value={selectedMonth}
+                            onChange={(e) => setSelectedMonth(e.target.value)}
+                            className="bg-surface-variant-light dark:bg-surface-variant-dark border border-gray-200 dark:border-gray-700 rounded-xl py-2 pl-4 pr-8 text-sm font-bold shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-gray-200 outline-none"
+                        >
+                            <option value="Todos">Mês: Todos</option>
+                            {months.map(m => (
+                                <option key={m.value} value={m.value}>{m.label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="relative shrink-0">
+                        <select
+                            value={selectedYear}
+                            onChange={(e) => setSelectedYear(e.target.value)}
+                            className="bg-surface-variant-light dark:bg-surface-variant-dark border border-gray-200 dark:border-gray-700 rounded-xl py-2 pl-4 pr-8 text-sm font-bold shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-gray-200 outline-none"
+                        >
+                            <option value="Todos">Ano: Todos</option>
+                            {years.map(y => (
+                                <option key={y} value={y}>{y === 'Todos' ? 'Todos' : y}</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 <div className="relative">

@@ -41,7 +41,18 @@ const Dashboard: React.FC = () => {
     // Helper to get time
     const getTime = (d: string) => new Date(d).getTime();
 
+    // Safety check for future dates: Hide transactions > today (e.g. cloned next month)
+    const now = new Date();
+    // Use local date to avoid timezone issues (toISOString uses UTC)
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+
     allTransactions.forEach(t => {
+      // Exclude excluded global
+      if (t.exclude_from_global) return;
+
       if (t.exclude_from_global) return;
 
       const match = t.description.match(installmentRegex);
@@ -82,6 +93,7 @@ const Dashboard: React.FC = () => {
     }));
 
     return [...singles, ...groupedList]
+      .filter(t => t.date <= todayStr) // Apply filter here: Hides future Singles (Cloned) and future Groups (Scheduled)
       .sort((a, b) => {
         const diffDate = getTime(b.date) - getTime(a.date);
         if (diffDate !== 0) return diffDate;
@@ -281,7 +293,12 @@ const Dashboard: React.FC = () => {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold leading-tight text-[#111814] dark:text-white">Transações Recentes</h3>
-            <Link to="/all-transactions" className="text-sm font-bold text-primary hover:text-primary-dark transition-colors">Ver tudo</Link>
+            <Link
+              to="/all-transactions"
+              className="text-xs font-bold px-3 py-1.5 rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:brightness-110 transition-all"
+            >
+              Ver tudo
+            </Link>
           </div>
 
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
