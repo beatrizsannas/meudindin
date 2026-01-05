@@ -108,180 +108,178 @@ const RegisterPurchase: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col bg-white dark:bg-background-dark font-display min-h-full transition-colors duration-200">
-      <div className="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto overflow-x-hidden shadow-2xl">
-        <header className="sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pt-6 pb-2">
-          <div className="flex items-center justify-between">
-            <Link to="/wallet" className="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
-              <span className="material-symbols-outlined text-[#111814] dark:text-white text-[24px]">arrow_back</span>
-            </Link>
-            <h1 className="text-lg font-bold leading-tight tracking-tight flex-1 text-center text-[#111814] dark:text-white">
-              {isEditing ? 'Editar Compra' : 'Registrar Compra'}
-            </h1>
-            <div className="size-10"></div>
-          </div>
-        </header>
+    <div className="flex flex-col h-full bg-white dark:bg-background-dark min-h-screen">
+      <header className="sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pt-6 pb-2">
+        <div className="flex items-center justify-between">
+          <Link to="/wallet" className="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+            <span className="material-symbols-outlined text-[#111814] dark:text-white text-[24px]">arrow_back</span>
+          </Link>
+          <h1 className="text-lg font-bold leading-tight tracking-tight flex-1 text-center text-[#111814] dark:text-white">
+            {isEditing ? 'Editar Compra' : 'Registrar Compra'}
+          </h1>
+          <div className="size-10"></div>
+        </div>
+      </header>
 
-        <main className="flex-1 px-4 py-6 space-y-6 pb-6">
-          <section className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-white/5 flex flex-col items-center justify-center gap-2 relative overflow-hidden group">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
-            <label className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide" htmlFor="amount">Valor da Compra</label>
-            <div className="relative flex items-center justify-center w-full">
-              <span className={`text-3xl font-bold transition-colors mr-2 mt-1 ${amount ? 'text-[#111814] dark:text-white' : 'text-gray-400'}`}>R$</span>
+      <main className="flex-1 px-4 py-6 space-y-6">
+        <section className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-white/5 flex flex-col items-center justify-center gap-2 relative overflow-hidden group">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+          <label className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide" htmlFor="amount">Valor da Compra</label>
+          <div className="relative flex items-center justify-center w-full">
+            <span className={`text-3xl font-bold transition-colors mr-2 mt-1 ${amount ? 'text-[#111814] dark:text-white' : 'text-gray-400'}`}>R$</span>
+            <input
+              autoFocus
+              className="text-5xl font-extrabold text-[#111814] dark:text-white bg-transparent border-none text-center p-0 w-full max-w-[240px] focus:ring-0 placeholder-gray-200 dark:placeholder-white/10 caret-primary outline-none"
+              id="amount"
+              placeholder="0,00"
+              type="text"
+              inputMode="numeric"
+              value={amount}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                const formatted = (Number(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                setAmount(formatted);
+              }}
+            />
+          </div>
+        </section>
+
+        <form className="space-y-5" onSubmit={handleSave}>
+          {/* Person Name */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Nome da Pessoa</label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-[20px]">person</span>
+              </div>
               <input
-                autoFocus
-                className="text-5xl font-extrabold text-[#111814] dark:text-white bg-transparent border-none text-center p-0 w-full max-w-[240px] focus:ring-0 placeholder-gray-200 dark:placeholder-white/10 caret-primary outline-none"
-                id="amount"
-                placeholder="0,00"
+                className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
+                placeholder="Ex: Carlos Silva"
                 type="text"
-                inputMode="numeric"
-                value={amount}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, '');
-                  const formatted = (Number(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                  setAmount(formatted);
-                }}
+                required
+                value={personName}
+                onChange={(e) => setPersonName(e.target.value)}
               />
             </div>
-          </section>
+          </div>
 
-          <form className="space-y-5" onSubmit={handleSave}>
-            {/* Person Name */}
+          {/* Added Item Name to match Logic requirements, retaining style */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">O que foi comprado?</label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-[20px]">shopping_bag</span>
+              </div>
+              <input
+                className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
+                placeholder="Ex: iPhone 14"
+                type="text"
+                value={itemName}
+                onChange={(e) => setItemName(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Nome da Pessoa</label>
+              <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Data da Compra</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-[20px]">person</span>
+                  <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-[20px]">calendar_today</span>
                 </div>
                 <input
-                  className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
-                  placeholder="Ex: Carlos Silva"
-                  type="text"
-                  required
-                  value={personName}
-                  onChange={(e) => setPersonName(e.target.value)}
+                  className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-2 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm sm:text-sm sm:leading-6 transition-all"
+                  style={{ colorScheme: 'light dark' }}
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
                 />
               </div>
             </div>
-
-            {/* Added Item Name to match Logic requirements, retaining style */}
             <div className="space-y-1.5">
-              <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">O que foi comprado?</label>
+              <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Início Pagamento</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-[20px]">shopping_bag</span>
+                  <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-[20px]">event_upcoming</span>
                 </div>
                 <input
-                  className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
-                  placeholder="Ex: iPhone 14"
-                  type="text"
-                  value={itemName}
-                  onChange={(e) => setItemName(e.target.value)}
+                  className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-2 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm sm:text-sm sm:leading-6 transition-all"
+                  style={{ colorScheme: 'light dark' }}
+                  type="date"
+                  value={paymentStart}
+                  onChange={(e) => setPaymentStart(e.target.value)}
                 />
               </div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Data da Compra</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-[20px]">calendar_today</span>
-                  </div>
-                  <input
-                    className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-2 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm sm:text-sm sm:leading-6 transition-all"
-                    style={{ colorScheme: 'light dark' }}
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Início Pagamento</label>
-                <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-[20px]">event_upcoming</span>
-                  </div>
-                  <input
-                    className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-2 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm sm:text-sm sm:leading-6 transition-all"
-                    style={{ colorScheme: 'light dark' }}
-                    type="date"
-                    value={paymentStart}
-                    onChange={(e) => setPaymentStart(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Quantidade de Parcelas</label>
-              <div className="bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 rounded-xl p-1.5 flex items-center justify-between shadow-sm px-2">
-                <button
-                  className="w-12 h-10 flex items-center justify-center rounded-lg bg-gray-50 dark:bg-white/5 text-[#111814] dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 active:scale-95 transition-all"
-                  type="button"
-                  onClick={handleDecrement}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>remove</span>
-                </button>
-                <div className="flex-1 px-4 flex items-center justify-center gap-2">
-                  <input
-                    className="w-auto max-w-[3rem] bg-transparent border-0 text-center font-bold text-lg text-[#111814] dark:text-white focus:ring-0 p-0 pointer-events-none"
-                    max="99"
-                    min="1"
-                    type="number"
-                    value={installments}
-                    readOnly
-                  />
-                  <span className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wide">
-                    {installments === 1 ? 'Vez' : 'Vezes'}
-                  </span>
-                </div>
-                <button
-                  className="w-12 h-10 flex items-center justify-center rounded-lg bg-primary text-[#102217] shadow-sm hover:brightness-110 active:scale-95 transition-all"
-                  type="button"
-                  onClick={handleIncrement}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
-                </button>
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Cartão Utilizado</label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors" style={{ fontSize: '20px' }}>credit_card</span>
-                </div>
-                <input
-                  className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
-                  placeholder="Ex: Nubank, Inter..."
-                  type="text"
-                  value={cardUsed}
-                  onChange={(e) => setCardUsed(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="pt-6 pb-4 space-y-3">
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Quantidade de Parcelas</label>
+            <div className="bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 rounded-xl p-1.5 flex items-center justify-between shadow-sm px-2">
               <button
-                type="submit"
-                disabled={loading}
-                className="group w-full bg-primary hover:brightness-110 active:scale-[0.98] text-[#102217] rounded-xl py-4 px-6 font-bold text-base shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2"
+                className="w-12 h-10 flex items-center justify-center rounded-lg bg-gray-50 dark:bg-white/5 text-[#111814] dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 active:scale-95 transition-all"
+                type="button"
+                onClick={handleDecrement}
               >
-                <span className="material-symbols-outlined transition-transform group-hover:-translate-y-0.5" style={{ fontSize: '22px' }}>check_circle</span>
-                {loading ? 'Salvando...' : 'Salvar Compra'}
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>remove</span>
               </button>
-              <Link
-                to="/wallet"
-                className="flex items-center justify-center w-full bg-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 active:scale-[0.98] rounded-xl py-4 px-6 font-semibold text-base transition-all"
+              <div className="flex-1 px-4 flex items-center justify-center gap-2">
+                <input
+                  className="w-auto max-w-[3rem] bg-transparent border-0 text-center font-bold text-lg text-[#111814] dark:text-white focus:ring-0 p-0 pointer-events-none"
+                  max="99"
+                  min="1"
+                  type="number"
+                  value={installments}
+                  readOnly
+                />
+                <span className="text-sm text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wide">
+                  {installments === 1 ? 'Vez' : 'Vezes'}
+                </span>
+              </div>
+              <button
+                className="w-12 h-10 flex items-center justify-center rounded-lg bg-primary text-[#102217] shadow-sm hover:brightness-110 active:scale-95 transition-all"
+                type="button"
+                onClick={handleIncrement}
               >
-                Cancelar
-              </Link>
+                <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>add</span>
+              </button>
             </div>
-          </form>
-        </main>
-      </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Cartão Utilizado</label>
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors" style={{ fontSize: '20px' }}>credit_card</span>
+              </div>
+              <input
+                className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
+                placeholder="Ex: Nubank, Inter..."
+                type="text"
+                value={cardUsed}
+                onChange={(e) => setCardUsed(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="pt-6 pb-4 space-y-3">
+            <button
+              type="submit"
+              disabled={loading}
+              className="group w-full bg-primary hover:brightness-110 active:scale-[0.98] text-[#102217] rounded-xl py-4 px-6 font-bold text-base shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined transition-transform group-hover:-translate-y-0.5" style={{ fontSize: '22px' }}>check_circle</span>
+              {loading ? 'Salvando...' : 'Salvar Compra'}
+            </button>
+            <Link
+              to="/wallet"
+              className="flex items-center justify-center w-full bg-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 active:scale-[0.98] rounded-xl py-4 px-6 font-semibold text-base transition-all"
+            >
+              Cancelar
+            </Link>
+          </div>
+        </form>
+      </main>
     </div>
   );
 };
