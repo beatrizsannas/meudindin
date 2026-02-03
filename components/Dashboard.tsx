@@ -7,6 +7,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useUserProfile } from '../hooks/useProfile';
 import { useTransactions, useTransactionTotals, Transaction } from '../hooks/useTransactions';
+import { useCreditCards } from '../hooks/useCreditCards';
+import { useNotifications } from '../hooks/useNotifications';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Define styles mapping for dynamic rendering
@@ -30,6 +32,7 @@ const Dashboard: React.FC = () => {
   const { data: profile } = useUserProfile(session?.user?.id);
   const { data: allTransactions = [], isLoading: transactionsLoading } = useTransactions(session?.user?.id);
   const { data: totals = { income: 0, expense: 0, balance: 0 }, isLoading: totalsLoading } = useTransactionTotals(session?.user?.id);
+  const { cards } = useCreditCards(session?.user?.id); // Fetch cards for notifications
 
   // Filter for Dashboard: Recent 20, not hidden
   // Filter for Dashboard: Recent 20, not hidden, grouped installments
@@ -108,14 +111,45 @@ const Dashboard: React.FC = () => {
   // Derived state
   const userName = profile?.full_name?.split(' ')[0] || 'Usuário';
   const avatarUrl = profile?.avatar_url;
-  const { income: incomeTotal, expense: expenseTotal, balance } = totals;
+  const { balance } = totals; // Keep balance from global totals
+
+  // Calculate Monthly Totals for Dashboard
+  const { incomeTotal, expenseTotal } = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    return allTransactions.reduce(
+      (acc, t) => {
+        if (t.exclude_from_global) return acc; // Skip hidden transactions
+
+        // Parse transaction date (YYYY-MM-DD string)
+        const [tYear, tMonth] = t.date.split('-').map(Number);
+
+        // Check if transaction is in current month/year
+        // specific check: tMonth is 1-indexed in date string, currentMonth is 0-indexed
+        if (tYear === currentYear && (tMonth - 1) === currentMonth) {
+          if (t.type === 'income') {
+            acc.incomeTotal += Number(t.amount);
+          } else if (t.type === 'expense') {
+            acc.expenseTotal += Number(t.amount);
+          }
+        }
+        return acc;
+      },
+      { incomeTotal: 0, expenseTotal: 0 }
+    );
+  }, [allTransactions]);
 
   // Modal State
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Calculate notifications
+  const { notifications, unreadCount } = useNotifications(session?.user?.id);
+
   const handleNotification = () => {
-    showToast("Você tem 0 novas notificações.", "info");
+    navigate('/notifications');
   };
 
   const handleTransactionClick = (transaction: Transaction) => {
@@ -219,7 +253,9 @@ const Dashboard: React.FC = () => {
             className="relative p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
           >
             <span className="material-symbols-outlined text-[#111814] dark:text-white text-[28px] icon-filled">notifications</span>
-            {/* <span className="absolute top-2 right-2.5 size-2.5 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark"></span> */}
+            {unreadCount > 0 && (
+              <span className="absolute top-2 right-2.5 size-2.5 bg-red-500 rounded-full border-2 border-background-light dark:border-background-dark animate-pulse"></span>
+            )}
           </button>
         </div>
       </div>

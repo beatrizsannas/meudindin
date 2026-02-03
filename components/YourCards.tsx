@@ -5,6 +5,60 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useCreditCards, CreditCard } from '../hooks/useCreditCards';
 import Button from './Button';
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, CartesianGrid, LabelList } from 'recharts';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
+// Custom Select Component for elegant styling
+interface CustomSelectProps {
+    value: string;
+    onChange: (value: string) => void;
+    options: string[];
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full h-14 bg-gray-50 dark:bg-surface-dark text-text-main dark:text-white border-none rounded-xl focus:ring-2 focus:ring-primary/50 px-4 font-medium flex items-center justify-between transition-colors"
+                type="button"
+            >
+                <span className={value ? 'text-[#111814] dark:text-white' : 'text-text-secondary/50'}>
+                    {value}
+                </span>
+                <span className={`material-symbols-outlined text-gray-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+                    expand_more
+                </span>
+            </button>
+
+            {isOpen && (
+                <>
+                    <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
+                    <div className="absolute top-full mt-2 w-full z-20 bg-white dark:bg-surface-dark rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                        {options.map((option) => (
+                            <button
+                                key={option}
+                                type="button"
+                                onClick={() => {
+                                    onChange(option);
+                                    setIsOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-3 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${value === option ? 'text-primary bg-primary/5' : 'text-gray-600 dark:text-gray-300'
+                                    }`}
+                            >
+                                {option}
+                            </button>
+                        ))}
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
+
 
 const YourCards: React.FC = () => {
     const navigate = useNavigate();
@@ -21,6 +75,7 @@ const YourCards: React.FC = () => {
     const [limit, setLimit] = useState('');
     const [dueDay, setDueDay] = useState('');
     const [usageRating, setUsageRating] = useState(50);
+    const [brand, setBrand] = useState('Outros');
     const [saving, setSaving] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
@@ -28,15 +83,17 @@ const YourCards: React.FC = () => {
         if (card) {
             setEditingCard(card);
             setName(card.name);
-            setLimit((card.limit * 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+            setLimit((card.limit).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
             setDueDay(card.due_day.toString());
             setUsageRating(card.usage_rating);
+            setBrand(card.brand || 'Outros');
         } else {
             setEditingCard(null);
             setName('');
             setLimit('');
             setDueDay('');
             setUsageRating(50);
+            setBrand('Outros');
         }
         setIsModalOpen(true);
     };
@@ -68,7 +125,8 @@ const YourCards: React.FC = () => {
                     name,
                     limit: limitValue,
                     due_day: dueDayValue,
-                    usage_rating: usageRating
+                    usage_rating: usageRating,
+                    brand
                 });
                 showToast("Cartão atualizado com sucesso!", "success");
             } else {
@@ -76,7 +134,8 @@ const YourCards: React.FC = () => {
                     name,
                     limit: limitValue,
                     due_day: dueDayValue,
-                    usage_rating: usageRating
+                    usage_rating: usageRating,
+                    brand
                 });
                 showToast("Cartão adicionado com sucesso!", "success");
             }
@@ -104,6 +163,21 @@ const YourCards: React.FC = () => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
+    // Dashboard Calculations
+    const totalCards = cards?.length || 0;
+    const totalLimit = cards?.reduce((acc, card) => acc + card.limit, 0) || 0;
+
+    // Chart Data
+    const brandData = cards?.reduce((acc: any[], card) => {
+        const existing = acc.find(item => item.name === (card.brand || 'Outros'));
+        if (existing) {
+            existing.value += 1;
+        } else {
+            acc.push({ name: card.brand || 'Outros', value: 1 });
+        }
+        return acc;
+    }, []) || [];
+
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark transition-colors duration-300 pb-24">
             <header className="sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
@@ -121,7 +195,65 @@ const YourCards: React.FC = () => {
                 </button>
             </header>
 
+
+
             <main className="flex flex-col px-6 gap-6 pt-2">
+                {/* Dashboard Indicators */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Total de Cartões</p>
+                        <p className="text-2xl font-bold text-[#111814] dark:text-white">{totalCards}</p>
+                    </div>
+                    <div className="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Limite Total</p>
+                        <p className="text-xl font-bold text-primary">{formatCurrency(totalLimit)}</p>
+                    </div>
+                </div>
+
+                {/* Brand Chart */}
+                {cards && cards.length > 0 && (
+                    <div className="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center">
+                        <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 w-full text-left mb-2">Distribuição por Bandeira</h3>
+                        <div className="w-full h-32">
+                            <div className="w-full overflow-x-auto flex justify-start">
+                                <div style={{ minWidth: "100%", width: Math.max(100 + brandData.length * 60, 300) }}>
+                                    <ResponsiveContainer width="100%" height={120}>
+                                        <BarChart
+                                            data={brandData}
+                                            margin={{ top: 30, right: 30, left: 0, bottom: 0 }}
+                                            barCategoryGap="20%"
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" opacity={0.1} vertical={false} />
+                                            <XAxis
+                                                dataKey="name"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                                                dy={10}
+                                                interval={0}
+                                            />
+                                            <RechartsTooltip
+                                                cursor={{ fill: 'rgba(255, 255, 255, 0.1)' }}
+                                                contentStyle={{
+                                                    backgroundColor: '#1F2937',
+                                                    border: 'none',
+                                                    borderRadius: '8px',
+                                                    color: '#fff'
+                                                }}
+                                            />
+                                            <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={40}>
+                                                <LabelList dataKey="value" position="top" style={{ fontSize: '10px', fill: '#9CA3AF', fontWeight: 'bold' }} />
+                                                {brandData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {isLoading ? (
                     <div className="flex flex-col gap-4">
                         {[1, 2].map(i => (
@@ -148,7 +280,10 @@ const YourCards: React.FC = () => {
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <p className="text-sm text-gray-400 font-medium tracking-wider uppercase">Nome do Cartão</p>
-                                            <h3 className="text-xl font-bold tracking-wide">{card.name}</h3>
+                                            <h3 className="text-xl font-bold tracking-wide flex items-center gap-2">
+                                                {card.name}
+                                                {card.brand && <span className="text-xs px-2 py-0.5 bg-white/20 rounded-full font-normal uppercase">{card.brand}</span>}
+                                            </h3>
                                         </div>
                                         <div className="flex gap-2">
                                             <button
@@ -197,119 +332,133 @@ const YourCards: React.FC = () => {
             </main>
 
             {/* Delete Confirmation Modal */}
-            {showDeleteConfirm && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(null)}></div>
-                    <div className="relative z-10 bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Excluir Cartão?</h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-6">Esta ação não pode ser desfeita.</p>
-                        <div className="flex gap-3">
-                            <Button variant="ghost" fullWidth onClick={() => setShowDeleteConfirm(null)}>Cancelar</Button>
-                            <Button variant="primary" fullWidth className="!bg-red-500 text-white" onClick={() => handleDelete(showDeleteConfirm)}>Excluir</Button>
+            {
+                showDeleteConfirm && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(null)}></div>
+                        <div className="relative z-10 bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Excluir Cartão?</h3>
+                            <p className="text-gray-500 dark:text-gray-400 mb-6">Esta ação não pode ser desfeita.</p>
+                            <div className="flex gap-3">
+                                <Button variant="ghost" fullWidth onClick={() => setShowDeleteConfirm(null)}>Cancelar</Button>
+                                <Button variant="primary" fullWidth className="!bg-red-500 text-white" onClick={() => handleDelete(showDeleteConfirm)}>Excluir</Button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Add/Edit Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal}></div>
-                    <div className="relative w-full max-w-md bg-white dark:bg-background-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
+            {
+                isModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal}></div>
+                        <div className="relative w-full max-w-md bg-white dark:bg-background-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
 
-                        <div className="flex items-center justify-between mb-6">
-                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{editingCard ? 'Editar Cartão' : 'Novo Cartão'}</h2>
-                            <button
-                                onClick={closeModal}
-                                className="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                            >
-                                <span className="material-symbols-outlined text-gray-500">close</span>
-                            </button>
-                        </div>
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">{editingCard ? 'Editar Cartão' : 'Novo Cartão'}</h2>
+                                <button
+                                    onClick={closeModal}
+                                    className="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                >
+                                    <span className="material-symbols-outlined text-gray-500">close</span>
+                                </button>
+                            </div>
 
-                        <div className="flex flex-col gap-6">
-                            {/* Name Input */}
-                            <label className="flex flex-col gap-2">
-                                <span className="text-text-main dark:text-white text-sm font-bold ml-1">Nome do Cartão</span>
-                                <input
-                                    className="w-full h-14 bg-gray-50 dark:bg-surface-dark text-text-main dark:text-white placeholder:text-text-secondary/50 border-none rounded-xl focus:ring-2 focus:ring-primary/50 px-4 font-medium"
-                                    placeholder="Ex: NuBank, Inter..."
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                />
-                            </label>
-
-                            {/* Limit Input */}
-                            <div className="flex flex-col gap-2">
-                                <label className="text-text-main dark:text-white text-sm font-bold ml-1">Limite do Cartão</label>
-                                <div className="relative">
-                                    <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold text-2xl transition-colors ${limit ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`}>R$</span>
+                            <div className="flex flex-col gap-6">
+                                {/* Name Input */}
+                                <label className="flex flex-col gap-2">
+                                    <span className="text-text-main dark:text-white text-sm font-bold ml-1">Nome do Cartão</span>
                                     <input
+                                        className="w-full h-14 bg-gray-50 dark:bg-surface-dark text-text-main dark:text-white placeholder:text-text-secondary/50 border-none rounded-xl focus:ring-2 focus:ring-primary/50 px-4 font-medium"
+                                        placeholder="Ex: NuBank, Inter..."
                                         type="text"
-                                        inputMode="numeric"
-                                        value={limit}
-                                        onChange={(e) => {
-                                            const value = e.target.value.replace(/\D/g, '');
-                                            const formatted = (Number(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
-                                            setLimit(formatted);
-                                        }}
-                                        placeholder="0,00"
-                                        className={`w-full h-14 pl-14 pr-4 bg-gray-50 dark:bg-surface-dark text-xl font-bold border-none rounded-xl focus:ring-0 outline-none transition-colors ${limit ? 'text-[#111814] dark:text-white placeholder:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                    />
+                                </label>
+
+                                {/* Brand Select */}
+                                <div className="flex flex-col gap-2">
+                                    <span className="text-text-main dark:text-white text-sm font-bold ml-1">Bandeira do Cartão</span>
+                                    <CustomSelect
+                                        value={brand}
+                                        onChange={setBrand}
+                                        options={['Outros', 'Mastercard', 'Visa', 'Elo', 'Hipercard', 'Amex']}
                                     />
                                 </div>
-                            </div>
 
-                            {/* Due Day Input */}
-                            <label className="flex flex-col gap-2">
-                                <span className="text-text-main dark:text-white text-sm font-bold ml-1">Dia do Vencimento</span>
-                                <input
-                                    className="w-full h-14 bg-gray-50 dark:bg-surface-dark text-text-main dark:text-white placeholder:text-text-secondary/50 border-none rounded-xl focus:ring-2 focus:ring-primary/50 px-4 font-medium"
-                                    placeholder="Ex: 10"
-                                    type="number"
-                                    min="1"
-                                    max="31"
-                                    value={dueDay}
-                                    onChange={(e) => setDueDay(e.target.value)}
-                                />
-                            </label>
-
-                            {/* Usage Rating Slider */}
-                            <div className="flex flex-col gap-2">
-                                <div className="flex justify-between items-center ml-1">
-                                    <span className="text-text-main dark:text-white text-sm font-bold">Frequência de Uso</span>
-                                    <span className={`text-sm font-bold ${usageRating > 70 ? 'text-red-500' : usageRating > 30 ? 'text-yellow-500' : 'text-green-500'}`}>
-                                        {usageRating > 70 ? 'Muito Usado' : usageRating > 30 ? 'Moderado' : 'Pouco Usado'} ({usageRating}%)
-                                    </span>
+                                {/* Limit Input */}
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-text-main dark:text-white text-sm font-bold ml-1">Limite do Cartão</label>
+                                    <div className="relative">
+                                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold text-2xl transition-colors ${limit ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`}>R$</span>
+                                        <input
+                                            type="text"
+                                            inputMode="numeric"
+                                            value={limit}
+                                            onChange={(e) => {
+                                                const value = e.target.value.replace(/\D/g, '');
+                                                const formatted = (Number(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                                                setLimit(formatted);
+                                            }}
+                                            placeholder="0,00"
+                                            className={`w-full h-14 pl-14 pr-4 bg-gray-50 dark:bg-surface-dark text-xl font-bold border-none rounded-xl focus:ring-0 outline-none transition-colors ${limit ? 'text-[#111814] dark:text-white placeholder:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}
+                                        />
+                                    </div>
                                 </div>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="100"
-                                    value={usageRating}
-                                    onChange={(e) => setUsageRating(parseInt(e.target.value))}
-                                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
-                                />
-                                <div className="flex justify-between text-xs text-gray-400 mt-1">
-                                    <span>Pouco</span>
-                                    <span>Muito</span>
-                                </div>
-                            </div>
 
-                            {/* Save Button */}
-                            <button
-                                onClick={handleSave}
-                                disabled={saving}
-                                className="w-full h-14 mt-4 bg-primary hover:bg-primary-dark active:scale-[0.98] text-text-main font-bold text-lg rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                <span className="material-symbols-outlined">{saving ? 'hourglass_empty' : 'save'}</span>
-                                {saving ? 'Salvando...' : 'Salvar Cartão'}
-                            </button>
+                                {/* Due Day Input */}
+                                <label className="flex flex-col gap-2">
+                                    <span className="text-text-main dark:text-white text-sm font-bold ml-1">Dia do Vencimento</span>
+                                    <input
+                                        className="w-full h-14 bg-gray-50 dark:bg-surface-dark text-text-main dark:text-white placeholder:text-text-secondary/50 border-none rounded-xl focus:ring-2 focus:ring-primary/50 px-4 font-medium"
+                                        placeholder="Ex: 10"
+                                        type="number"
+                                        min="1"
+                                        max="31"
+                                        value={dueDay}
+                                        onChange={(e) => setDueDay(e.target.value)}
+                                    />
+                                </label>
+
+                                {/* Usage Rating Slider */}
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex justify-between items-center ml-1">
+                                        <span className="text-text-main dark:text-white text-sm font-bold">Frequência de Uso</span>
+                                        <span className={`text-sm font-bold ${usageRating > 70 ? 'text-red-500' : usageRating > 30 ? 'text-yellow-500' : 'text-green-500'}`}>
+                                            {usageRating > 70 ? 'Muito Usado' : usageRating > 30 ? 'Moderado' : 'Pouco Usado'} ({usageRating}%)
+                                        </span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={usageRating}
+                                        onChange={(e) => setUsageRating(parseInt(e.target.value))}
+                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 accent-primary"
+                                    />
+                                    <div className="flex justify-between text-xs text-gray-400 mt-1">
+                                        <span>Pouco</span>
+                                        <span>Muito</span>
+                                    </div>
+                                </div>
+
+                                {/* Save Button */}
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving}
+                                    className="w-full h-14 mt-4 bg-primary hover:bg-primary-dark active:scale-[0.98] text-text-main font-bold text-lg rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    <span className="material-symbols-outlined">{saving ? 'hourglass_empty' : 'save'}</span>
+                                    {saving ? 'Salvando...' : 'Salvar Cartão'}
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            )}
-        </div>
+                    </div >
+                )
+            }
+        </div >
     );
 };
 

@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useTransactions } from '../hooks/useTransactions';
+import ConfirmModal from './ConfirmModal';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Types
@@ -30,6 +31,11 @@ const ThirdPartyCards: React.FC = () => {
   const [includeInExpenses, setIncludeInExpenses] = useState(true);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Edit & Delete State
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Data State
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -117,26 +123,35 @@ const ThirdPartyCards: React.FC = () => {
         finalDescription = `Manutenção: ${description}`;
       }
 
-      const { error } = await supabase
-        .from('transactions')
-        .insert({
-          user_id: session?.user.id,
-          amount: parseFloat(amount.replace(/\./g, '').replace(',', '.')),
-          type: 'expense',
-          category_id: categoryId,
-          date: date,
-          description: finalDescription,
-          account: 'Conta Corrente',
-          exclude_from_global: !includeInExpenses
-        });
+      const payload = {
+        user_id: session?.user.id,
+        amount: parseFloat(amount.replace(/\./g, '').replace(',', '.')),
+        type: 'expense',
+        category_id: categoryId,
+        date: date,
+        description: finalDescription,
+        account: 'Conta Corrente',
+        exclude_from_global: !includeInExpenses
+      };
 
-      if (error) throw error;
+      if (editingId) {
+        // Update existing
+        const { error } = await supabase
+          .from('transactions')
+          .update(payload)
+          .eq('id', editingId);
+        if (error) throw error;
+        showToast("Despesa atualizada com sucesso!", "success");
+      } else {
+        // Create new
+        const { error } = await supabase
+          .from('transactions')
+          .insert(payload);
+        if (error) throw error;
+        showToast("Despesa salva com sucesso!", "success");
+      }
 
-      showToast("Despesa salva com sucesso!", "success");
-      setAmount('');
-      setDescription('');
-      setDate(new Date().toISOString().split('T')[0]);
-      setIncludeInExpenses(true);
+      resetForm();
       setIsModalOpen(false);
 
       // Update cache
@@ -144,10 +159,61 @@ const ThirdPartyCards: React.FC = () => {
 
     } catch (error: any) {
       console.error("Error saving:", error);
-      showToast("Erro ao salvar compra: " + error.message, "error");
+      showToast("Erro ao salvar: " + error.message, "error");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDelete = async () => {
+    if (!editingId) return;
+
+    setDeleteLoading(true);
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', editingId);
+
+      if (error) throw error;
+
+      showToast("Despesa excluída com sucesso!", "success");
+      resetForm();
+      setIsModalOpen(false);
+      setIsConfirmOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+
+    } catch (error: any) {
+      console.error("Error deleting:", error);
+      showToast("Erro ao excluir: " + error.message, "error");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleEdit = (item: Transaction) => {
+    setEditingId(item.id);
+    setAmount(item.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+    setDescription(item.description);
+    // Convert date DD/MM/YYYY to YYYY-MM-DD
+    const [day, month, year] = item.date.split('/');
+    setDate(`${year}-${month}-${day}`);
+    setCategoryType(item.type);
+    setIncludeInExpenses(true); // Default, or fetch actual value if exposed
+    setIsModalOpen(true);
+  };
+
+  const resetForm = () => {
+    setAmount('');
+    setDescription('');
+    setDate(new Date().toISOString().split('T')[0]);
+    setIncludeInExpenses(true);
+    setEditingId(null);
+  };
+
+  const handleCloseModal = () => {
+    resetForm();
+    setIsModalOpen(false);
   };
 
   // Filter Logic
@@ -174,7 +240,10 @@ const ThirdPartyCards: React.FC = () => {
           <h1 className="text-xl font-bold text-[#111814] dark:text-white">Veículos</h1>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            resetForm();
+            setIsModalOpen(true);
+          }}
           className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-[#111814] shadow-lg hover:scale-110 active:scale-95 transition-all"
         >
           <span className="material-symbols-outlined font-bold">add</span>
@@ -240,7 +309,11 @@ const ThirdPartyCards: React.FC = () => {
               <p className="text-center text-gray-400 dark:text-gray-500 py-4 text-sm">Nenhum gasto neste período.</p>
             ) : (
               filteredHistory.map((item) => (
-                <div key={item.id} className="flex items-center p-3 bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-white/5">
+                <div
+                  key={item.id}
+                  onClick={() => handleEdit(item)}
+                  className="flex items-center p-3 bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-white/5 active:scale-[0.98] transition-all cursor-pointer hover:border-primary/50"
+                >
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${item.type === 'fuel' ? 'bg-primary/10 text-primary-dark dark:text-primary' : 'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400'}`}>
                     <span className="material-symbols-outlined">{item.type === 'fuel' ? 'local_gas_station' : 'build'}</span>
                   </div>
@@ -265,13 +338,25 @@ const ThirdPartyCards: React.FC = () => {
           <div className="relative w-full max-w-md bg-white dark:bg-background-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
 
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Nova Despesa</h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <span className="material-symbols-outlined text-gray-500">close</span>
-              </button>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                {editingId ? 'Editar Despesa' : 'Nova Despesa'}
+              </h2>
+              <div className="flex items-center gap-2">
+                {editingId && (
+                  <button
+                    onClick={() => setIsConfirmOpen(true)}
+                    className="p-2 rounded-full text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  >
+                    <span className="material-symbols-outlined">delete</span>
+                  </button>
+                )}
+                <button
+                  onClick={handleCloseModal}
+                  className="p-2 -mr-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-gray-500">close</span>
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-col gap-6">
@@ -371,12 +456,23 @@ const ThirdPartyCards: React.FC = () => {
                 className="w-full h-14 mt-2 bg-primary hover:bg-primary-dark active:scale-[0.98] text-text-main font-bold text-lg rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <span className="material-symbols-outlined">{loading ? 'hourglass_empty' : 'save'}</span>
-                {loading ? 'Salvando...' : 'Salvar Despesa'}
+                {loading ? 'Salvando...' : (editingId ? 'Salvar Alterações' : 'Salvar Despesa')}
               </button>
             </div>
           </div>
         </div>
       )}
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="Excluir Despesa?"
+        description="Esta ação não pode ser desfeita."
+        confirmText="Sim, excluir"
+        cancelText="Cancelar"
+        isDestructive={true}
+        isLoading={deleteLoading}
+      />
     </div>
   );
 };

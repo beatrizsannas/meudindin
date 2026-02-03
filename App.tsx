@@ -19,6 +19,7 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import ForgotPassword from './components/ForgotPassword';
 import ResetConfirmation from './components/ResetConfirmation';
+import Notifications from './components/Notifications';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Create Context for Menu Control
@@ -130,7 +131,9 @@ const App: React.FC = () => {
                   <Route path="/expenses" element={<ProtectedRoute><ViewExpenses /></ProtectedRoute>} />
                   <Route path="/income" element={<ProtectedRoute><ViewIncome /></ProtectedRoute>} />
                   <Route path="/scan" element={<ProtectedRoute><ScanReceipt /></ProtectedRoute>} />
+                  <Route path="/scan" element={<ProtectedRoute><ScanReceipt /></ProtectedRoute>} />
                   <Route path="/all-transactions" element={<ProtectedRoute><AllTransactions /></ProtectedRoute>} />
+                  <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
                 </Routes>
               </div>
 

@@ -9,6 +9,7 @@ export interface CreditCard {
     limit: number;
     due_day: number;
     usage_rating: number;
+    brand: string;
     created_at: string;
 }
 
