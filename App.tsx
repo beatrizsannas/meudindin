@@ -12,6 +12,7 @@ import SideMenu from './components/SideMenu';
 import ScanReceipt from './components/ScanReceipt';
 import ReceivablesDetails from './components/ReceivablesDetails';
 import AllPurchases from './components/AllPurchases';
+import YourCards from './components/YourCards';
 import AllTransactions from './components/AllTransactions';
 import EditProfile from './components/EditProfile';
 import Login from './components/Login';
@@ -123,6 +124,7 @@ const App: React.FC = () => {
                   <Route path="/wallet/register" element={<ProtectedRoute><RegisterPurchase /></ProtectedRoute>} />
                   <Route path="/wallet/details" element={<ProtectedRoute><ReceivablesDetails /></ProtectedRoute>} />
                   <Route path="/wallet/all" element={<ProtectedRoute><AllPurchases /></ProtectedRoute>} />
+                  <Route path="/credit-cards" element={<ProtectedRoute><YourCards /></ProtectedRoute>} />
                   <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                   <Route path="/settings/profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
                   <Route path="/expenses" element={<ProtectedRoute><ViewExpenses /></ProtectedRoute>} />
