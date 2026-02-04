@@ -76,8 +76,13 @@ const YourCards: React.FC = () => {
     const [dueDay, setDueDay] = useState('');
     const [usageRating, setUsageRating] = useState(50);
     const [brand, setBrand] = useState('Outros');
+    const [annualFee, setAnnualFee] = useState('');
+    const [isAnnualFeeExempt, setIsAnnualFeeExempt] = useState(false);
     const [saving, setSaving] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+
+    // Search State
+    const [searchTerm, setSearchTerm] = useState('');
 
     const openModal = (card?: CreditCard) => {
         if (card) {
@@ -87,6 +92,8 @@ const YourCards: React.FC = () => {
             setDueDay(card.due_day.toString());
             setUsageRating(card.usage_rating);
             setBrand(card.brand || 'Outros');
+            setAnnualFee((card.annual_fee || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+            setIsAnnualFeeExempt(card.is_annual_fee_exempt || false);
         } else {
             setEditingCard(null);
             setName('');
@@ -94,6 +101,8 @@ const YourCards: React.FC = () => {
             setDueDay('');
             setUsageRating(50);
             setBrand('Outros');
+            setAnnualFee('');
+            setIsAnnualFeeExempt(true);
         }
         setIsModalOpen(true);
     };
@@ -111,6 +120,7 @@ const YourCards: React.FC = () => {
 
         const limitValue = parseFloat(limit.replace(/\./g, '').replace(',', '.'));
         const dueDayValue = parseInt(dueDay, 10);
+        const annualFeeValue = isAnnualFeeExempt ? 0 : parseFloat(annualFee.replace(/\./g, '').replace(',', '.'));
 
         if (isNaN(limitValue) || isNaN(dueDayValue) || dueDayValue < 1 || dueDayValue > 31) {
             showToast("Dados inválidos. Verifique o limite e o dia de vencimento.", "warning");
@@ -119,24 +129,21 @@ const YourCards: React.FC = () => {
 
         setSaving(true);
         try {
+            const cardData = {
+                name,
+                limit: limitValue,
+                due_day: dueDayValue,
+                usage_rating: usageRating,
+                brand,
+                annual_fee: annualFeeValue,
+                is_annual_fee_exempt: isAnnualFeeExempt
+            };
+
             if (editingCard) {
-                await updateCard.mutateAsync({
-                    id: editingCard.id,
-                    name,
-                    limit: limitValue,
-                    due_day: dueDayValue,
-                    usage_rating: usageRating,
-                    brand
-                });
+                await updateCard.mutateAsync({ id: editingCard.id, ...cardData });
                 showToast("Cartão atualizado com sucesso!", "success");
             } else {
-                await addCard.mutateAsync({
-                    name,
-                    limit: limitValue,
-                    due_day: dueDayValue,
-                    usage_rating: usageRating,
-                    brand
-                });
+                await addCard.mutateAsync(cardData);
                 showToast("Cartão adicionado com sucesso!", "success");
             }
             closeModal();
@@ -163,12 +170,20 @@ const YourCards: React.FC = () => {
         return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
     };
 
+    // Sorting and Filtering
+    const sortedAndFilteredCards = React.useMemo(() => {
+        if (!cards) return [];
+        return cards
+            .filter(card => card.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            .sort((a, b) => a.due_day - b.due_day);
+    }, [cards, searchTerm]);
+
     // Dashboard Calculations
-    const totalCards = cards?.length || 0;
-    const totalLimit = cards?.reduce((acc, card) => acc + card.limit, 0) || 0;
+    const totalCards = sortedAndFilteredCards.length;
+    const totalLimit = sortedAndFilteredCards.reduce((acc, card) => acc + card.limit, 0);
 
     // Chart Data
-    const brandData = cards?.reduce((acc: any[], card) => {
+    const brandData = sortedAndFilteredCards.reduce((acc: any[], card) => {
         const existing = acc.find(item => item.name === (card.brand || 'Outros'));
         if (existing) {
             existing.value += 1;
@@ -254,6 +269,21 @@ const YourCards: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Search Bar - Only shown when cards exist */}
+                {cards && cards.length > 0 && (
+                    <div className="relative">
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                        <input
+                            type="text"
+                            placeholder="Buscar cartão..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full h-12 pl-12 pr-4 rounded-xl bg-surface-light dark:bg-surface-dark border-none focus:ring-2 focus:ring-primary/50 text-text-main dark:text-white placeholder:text-gray-400 font-medium shadow-sm outline-none"
+                        />
+                    </div>
+                )}
+
                 {isLoading ? (
                     <div className="flex flex-col gap-4">
                         {[1, 2].map(i => (
@@ -268,56 +298,65 @@ const YourCards: React.FC = () => {
                     </div>
                 ) : (
                     <div className="flex flex-col gap-4">
-                        {cards?.map((card) => (
+                        {sortedAndFilteredCards.map((card) => (
                             <div
                                 key={card.id}
-                                className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 dark:from-black dark:to-gray-900 rounded-2xl p-6 shadow-xl text-white group"
+                                className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 dark:from-black dark:to-gray-900 rounded-xl p-4 shadow-xl text-white group"
                             >
                                 {/* Background Decoration */}
                                 <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
 
-                                <div className="relative z-10 flex flex-col gap-4">
+                                <div className="relative z-10 flex flex-col gap-3">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <p className="text-sm text-gray-400 font-medium tracking-wider uppercase">Nome do Cartão</p>
-                                            <h3 className="text-xl font-bold tracking-wide flex items-center gap-2">
+                                            <p className="text-[10px] text-gray-400 font-medium tracking-wider uppercase">Nome do Cartão</p>
+                                            <h3 className="text-lg font-bold tracking-wide">
                                                 {card.name}
-                                                {card.brand && <span className="text-xs px-2 py-0.5 bg-white/20 rounded-full font-normal uppercase">{card.brand}</span>}
                                             </h3>
+                                            {card.brand && <p className="text-[10px] text-gray-400 mt-0.5">Bandeira: {card.brand}</p>}
                                         </div>
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => openModal(card)}
-                                                className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                                                className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
                                             >
-                                                <span className="material-symbols-outlined text-sm">edit</span>
+                                                <span className="material-symbols-outlined text-xs">edit</span>
                                             </button>
                                             <button
                                                 onClick={() => setShowDeleteConfirm(card.id)}
-                                                className="p-2 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors"
+                                                className="p-1.5 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors"
                                             >
-                                                <span className="material-symbols-outlined text-sm">delete</span>
+                                                <span className="material-symbols-outlined text-xs">delete</span>
                                             </button>
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-end mt-2">
+                                    <div className="flex justify-between items-end mt-1">
                                         <div>
-                                            <p className="text-xs text-gray-400 mb-1">Limite</p>
-                                            <p className="text-2xl font-bold text-primary">{formatCurrency(card.limit)}</p>
+                                            <p className="text-[10px] text-gray-400 mb-0.5">Limite</p>
+                                            <p className="text-xl font-bold text-primary">{formatCurrency(card.limit)}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-xs text-gray-400 mb-1">Dia do Vencimento</p>
-                                            <p className="text-lg font-bold">{card.due_day}</p>
+                                            <p className="text-[10px] text-gray-400 mb-0.5">Dia do Vencimento</p>
+                                            <p className="text-base font-bold">{card.due_day}</p>
                                         </div>
                                     </div>
 
-                                    <div className="mt-2">
-                                        <div className="flex justify-between text-xs text-gray-400 mb-1">
+                                    <div className="flex justify-between items-end border-t border-white/10 pt-2">
+                                        <div>
+                                            <p className="text-[10px] text-gray-400 mb-0.5">Anuidade</p>
+                                            <p className="text-xs font-bold text-white">
+                                                {card.is_annual_fee_exempt ? 'Isenta' : formatCurrency(card.annual_fee || 0)}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-1">
+                                        <div className="flex justify-between text-[10px] text-gray-400 mb-1">
                                             <span>Uso Frequente</span>
                                             <span>{card.usage_rating}%</span>
                                         </div>
-                                        <div className="h-2 w-full bg-gray-700 rounded-full overflow-hidden">
+                                        <div className="h-1.5 w-full bg-gray-700 rounded-full overflow-hidden">
                                             <div
                                                 className={`h-full rounded-full ${card.usage_rating > 70 ? 'bg-red-500' : card.usage_rating > 30 ? 'bg-yellow-500' : 'bg-green-500'}`}
                                                 style={{ width: `${card.usage_rating}%` }}
@@ -353,7 +392,7 @@ const YourCards: React.FC = () => {
                 isModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal}></div>
-                        <div className="relative w-full max-w-md bg-white dark:bg-background-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
+                        <div className="relative w-full max-w-md bg-white dark:bg-background-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800 max-h-[80vh] overflow-y-auto pb-10">
 
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">{editingCard ? 'Editar Cartão' : 'Novo Cartão'}</h2>
@@ -421,6 +460,43 @@ const YourCards: React.FC = () => {
                                         onChange={(e) => setDueDay(e.target.value)}
                                     />
                                 </label>
+
+                                {/* Annual Fee Section */}
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center justify-between ml-1">
+                                        <label className="text-text-main dark:text-white text-sm font-bold">Anuidade</label>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <div className="relative inline-flex items-center">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={isAnnualFeeExempt}
+                                                    onChange={(e) => setIsAnnualFeeExempt(e.target.checked)}
+                                                />
+                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                                            </div>
+                                            <span className={`text-xs font-bold ${isAnnualFeeExempt ? 'text-primary' : 'text-gray-400'}`}>Isenta</span>
+                                        </label>
+                                    </div>
+
+                                    {!isAnnualFeeExempt && (
+                                        <div className="relative animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <span className={`absolute left-4 top-1/2 -translate-y-1/2 font-bold text-lg transition-colors ${annualFee ? 'text-green-500' : 'text-gray-300 dark:text-gray-600'}`}>R$</span>
+                                            <input
+                                                type="text"
+                                                inputMode="numeric"
+                                                value={annualFee}
+                                                onChange={(e) => {
+                                                    const value = e.target.value.replace(/\D/g, '');
+                                                    const formatted = (Number(value) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                                                    setAnnualFee(formatted);
+                                                }}
+                                                placeholder="0,00"
+                                                className={`w-full h-14 pl-12 pr-4 bg-gray-50 dark:bg-surface-dark text-xl font-bold border-none rounded-xl focus:ring-0 outline-none transition-colors ${annualFee ? 'text-[#111814] dark:text-white placeholder:text-gray-300' : 'text-gray-300 dark:text-gray-600'}`}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
 
                                 {/* Usage Rating Slider */}
                                 <div className="flex flex-col gap-2">

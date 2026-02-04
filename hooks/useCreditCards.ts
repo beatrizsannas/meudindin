@@ -10,6 +10,8 @@ export interface CreditCard {
     due_day: number;
     usage_rating: number;
     brand: string;
+    annual_fee: number;
+    is_annual_fee_exempt: boolean;
     created_at: string;
 }
 
