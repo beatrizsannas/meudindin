@@ -42,48 +42,60 @@ export const useNotifications = (userId: string | undefined) => {
         const today = new Date();
         const currentYear = today.getFullYear();
         const currentMonth = today.getMonth(); // 0-indexed
+        const currentDay = today.getDate();
 
-        const targetDate = new Date(today);
-        targetDate.setDate(today.getDate() + 2); // Check 2 days ahead
-        const targetDay = targetDate.getDate();
-
-        // Generate notifications
+        // Generate notifications for the current month
         const active: NotificationItem[] = [];
 
         cards.forEach(card => {
-            if (card.due_day === targetDay) {
-                // Construct a unique ID for this specific monthly occurrence
-                // Format: cardId-year-month
-                // Example: 123-2024-1 (February 2024)
-                // Note: using targetDate's year/month to be precise about WHICH bill works best
-                const notifId = `${card.id}-${targetDate.getFullYear()}-${targetDate.getMonth()}`;
+            const dueDay = card.due_day;
+
+            // Calculate how many days until/since the due date this month
+            const daysUntilDue = dueDay - currentDay;
+
+            // Only show notifications for due dates that:
+            // 1. Are within 2 days in the future (daysUntilDue <= 2 and daysUntilDue >= 0)
+            // 2. OR have already passed this month (daysUntilDue < 0) and haven't been marked as read
+
+            // Construct notification ID for this month's occurrence
+            const notifId = `${card.id}-${currentYear}-${currentMonth}`;
+            const isRead = readIds.has(notifId);
+
+            // Show if: (upcoming within 2 days) OR (already passed this month AND not marked as read)
+            if ((daysUntilDue >= 0 && daysUntilDue <= 2) || (daysUntilDue < 0 && !isRead)) {
+                const dueDate = new Date(currentYear, currentMonth, dueDay);
 
                 active.push({
                     id: notifId,
                     type: 'due_date',
-                    title: 'Fatura Vencendo',
-                    message: `A fatura do cartão ${card.name} vence em 2 dias.`,
-                    date: `Dia ${card.due_day}`,
+                    title: daysUntilDue < 0 ? 'Fatura Vencida' : 'Fatura Vencendo',
+                    message: daysUntilDue < 0
+                        ? `A fatura do cartão ${card.name} venceu há ${Math.abs(daysUntilDue)} dia(s).`
+                        : daysUntilDue === 0
+                            ? `A fatura do cartão ${card.name} vence hoje.`
+                            : `A fatura do cartão ${card.name} vence em ${daysUntilDue} dia(s).`,
+                    date: `Dia ${dueDay}`,
                     cardId: card.id,
-                    isRead: readIds.has(notifId),
-                    timestamp: targetDate.getTime()
+                    isRead: isRead,
+                    timestamp: dueDate.getTime()
                 });
             }
         });
 
-        return active;
+        // Sort by timestamp (oldest first)
+        return active.sort((a, b) => a.timestamp - b.timestamp);
     }, [cards, readIds]);
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
     const markAsRead = (id: string) => {
-        const newSet = new Set(readIds);
+        const newSet = new Set<string>(readIds);
         newSet.add(id);
         saveReadIds(newSet);
     };
 
     const markAllAsRead = () => {
-        const newSet = new Set(readIds);
+        const newSet = new Set<string>(readIds);
         notifications.forEach(n => newSet.add(n.id));
         saveReadIds(newSet);
     };
