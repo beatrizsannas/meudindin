@@ -177,7 +177,7 @@ const Settings: React.FC = () => {
             <div className="flex items-center justify-center rounded-xl bg-green-50 dark:bg-primary/10 shrink-0 size-10 text-green-600 dark:text-primary group-hover:scale-110 transition-transform">
               <span className="material-symbols-outlined icon-filled text-[20px]">credit_card</span>
             </div>
-            <p className="text-gray-900 dark:text-white text-sm font-bold flex-1 text-left">Cartões de Terceiros</p>
+            <p className="text-gray-900 dark:text-white text-sm font-bold flex-1 text-left">Compras de Terceiros</p>
             <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">chevron_right</span>
           </Link>
           {/* Item 4: Export */}
