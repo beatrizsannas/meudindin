@@ -56,8 +56,6 @@ const Dashboard: React.FC = () => {
       // Exclude excluded global
       if (t.exclude_from_global) return;
 
-      if (t.exclude_from_global) return;
-
       const match = t.description.match(installmentRegex);
       if (match) {
         const baseDesc = match[1];
@@ -270,11 +268,12 @@ const Dashboard: React.FC = () => {
             <div className="flex flex-col gap-1">
               <div className="flex items-center gap-2 text-primary">
                 <span className="material-symbols-outlined text-lg">account_balance_wallet</span>
-                <p className="text-sm font-medium tracking-wide opacity-90">Saldo Atual</p>
+                <p className="text-sm font-medium tracking-wide opacity-90">Saldo Acumulado</p>
               </div>
               <div className="flex items-baseline gap-1">
                 <h1 className="text-4xl font-bold tracking-tight">{formatCurrency(balance)}</h1>
               </div>
+              <p className="text-[11px] text-primary/60 font-medium">Total histórico de todas as entradas e saídas</p>
             </div>
 
             <div className="flex gap-3">
@@ -300,26 +299,27 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats — Este Mês */}
         <div className="flex gap-4">
           <Link to="/income" className="flex-1 flex flex-col gap-1 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-card hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer border border-transparent hover:border-green-100 dark:hover:border-green-900/30">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1">
               <div className="flex items-center justify-center size-8 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">
                 <span className="material-symbols-outlined text-lg">trending_up</span>
               </div>
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Receitas</p>
             </div>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium -mt-0.5 mb-1">Este mês</p>
             <p className="text-lg font-bold text-[#111814] dark:text-white">{formatCurrency(incomeTotal)}</p>
-            {/* Placeholder stats */}
             <p className="text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/10 self-start px-1.5 py-0.5 rounded">-- vs mês ant.</p>
           </Link>
           <Link to="/expenses" className="flex-1 flex flex-col gap-1 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-card hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer border border-transparent hover:border-red-100 dark:hover:border-red-900/30">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-1">
               <div className="flex items-center justify-center size-8 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
                 <span className="material-symbols-outlined text-lg">trending_down</span>
               </div>
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400">Despesas</p>
             </div>
+            <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium -mt-0.5 mb-1">Este mês</p>
             <p className="text-lg font-bold text-[#111814] dark:text-white">{formatCurrency(expenseTotal)}</p>
             <p className="text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 self-start px-1.5 py-0.5 rounded">-- vs mês ant.</p>
           </Link>

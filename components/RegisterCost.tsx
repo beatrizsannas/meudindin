@@ -21,6 +21,7 @@ const RegisterCost: React.FC = () => {
 
   const [transactionType, setTransactionType] = useState<'expense' | 'income'>('expense');
   const [editId, setEditId] = useState<string | null>(null);
+  const [excludeFromGlobal, setExcludeFromGlobal] = useState<boolean>(false);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState<string>('');
@@ -123,6 +124,8 @@ const RegisterCost: React.FC = () => {
         setDate(t.date);
         setTransactionType(t.type || 'expense');
         setCategoryId(t.category_id);
+        // ✅ Preserve exclude_from_global so it doesn't get reset to false on save
+        setExcludeFromGlobal(t.exclude_from_global ?? false);
       }
       else {
         if (location.state.type) {
@@ -189,7 +192,7 @@ const RegisterCost: React.FC = () => {
     setLoading(true);
     try {
       if (editId) {
-        // Update existing
+        // Update existing — preserve all original fields including exclude_from_global
         const { error } = await supabase
           .from('transactions')
           .update({
@@ -198,7 +201,10 @@ const RegisterCost: React.FC = () => {
             type: transactionType,
             category_id: finalCategoryId,
             date,
-            account: 'Conta Corrente'
+            account: 'Conta Corrente',
+            // ✅ CRITICAL: preserve this field — if missing, defaults to false
+            // which wrongly includes previously excluded transactions in global totals
+            exclude_from_global: excludeFromGlobal
           })
           .eq('id', editId);
         if (error) throw error;

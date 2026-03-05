@@ -67,7 +67,7 @@ const Settings: React.FC = () => {
 
       await queryClient.invalidateQueries({ queryKey: ['transactions'] });
       await queryClient.invalidateQueries({ queryKey: ['third-party-purchases'] });
-      await queryClient.invalidateQueries({ queryKey: ['transaction-totals'] });
+      // Note: ['transactions'] already invalidates all sub-queries including totals
 
       showToast("Todos os dados foram apagados com sucesso!", "success");
       setIsDeleteModalOpen(false);
