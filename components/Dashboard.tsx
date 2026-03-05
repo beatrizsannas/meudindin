@@ -301,6 +301,7 @@ const Dashboard: React.FC = () => {
 
         {/* Stats — Este Mês */}
         <div className="flex gap-4">
+          {/* ... existing cards ... */}
           <Link to="/income" className="flex-1 flex flex-col gap-1 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-card hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer border border-transparent hover:border-green-100 dark:hover:border-green-900/30">
             <div className="flex items-center gap-2 mb-1">
               <div className="flex items-center justify-center size-8 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">
@@ -324,6 +325,8 @@ const Dashboard: React.FC = () => {
             <p className="text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 self-start px-1.5 py-0.5 rounded">-- vs mês ant.</p>
           </Link>
         </div>
+
+
 
         {/* Recent Transactions */}
         <div className="flex flex-col gap-4">
