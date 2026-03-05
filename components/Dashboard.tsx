@@ -34,6 +34,8 @@ const Dashboard: React.FC = () => {
   const { data: totals = { income: 0, expense: 0, balance: 0 }, isLoading: totalsLoading } = useTransactionTotals(session?.user?.id);
   const { cards } = useCreditCards(session?.user?.id); // Fetch cards for notifications
 
+  const [showBalanceModal, setShowBalanceModal] = useState(false); // Modal do Saldo Global
+
   // Filter for Dashboard: Recent 20, not hidden
   // Filter for Dashboard: Recent 20, not hidden, grouped installments
   const transactions = useMemo(() => {
@@ -210,6 +212,12 @@ const Dashboard: React.FC = () => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
 
+  const globalTransactions = useMemo(() => {
+    return allTransactions
+      .filter(t => !t.exclude_from_global)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [allTransactions]);
+
   return (
     <div className="flex flex-col gap-6 pt-2 pb-28">
       {/* Header */}
@@ -260,7 +268,10 @@ const Dashboard: React.FC = () => {
 
       <div className="flex flex-col gap-6 px-6">
         {/* Balance Card */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#102217] to-[#1c3326] dark:from-[#1c3326] dark:to-[#102217] p-6 shadow-lg text-white">
+        <div
+          onClick={() => setShowBalanceModal(true)}
+          className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#102217] to-[#1c3326] dark:from-[#1c3326] dark:to-[#102217] p-6 shadow-lg text-white cursor-pointer hover:brightness-110 transition-all active:scale-[0.98]"
+        >
           <div className="absolute -right-12 -top-12 size-40 rounded-full bg-primary/10 blur-2xl"></div>
           <div className="absolute -left-12 -bottom-12 size-32 rounded-full bg-primary/5 blur-xl"></div>
 
@@ -556,6 +567,77 @@ const Dashboard: React.FC = () => {
           </div>
         )
       }
+
+      {/* Modal de Detalhes do Saldo Global */}
+      {showBalanceModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={() => setShowBalanceModal(false)}>
+          <div
+            className="bg-white dark:bg-surface-dark rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom sm:slide-in-from-bottom-8 duration-300"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Drag Handle (Mobile) */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
+              <div className="w-12 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            </div>
+
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center size-10 rounded-full bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">
+                  <span className="material-symbols-outlined icon-filled">account_balance_wallet</span>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-[#111814] dark:text-white">Formação do Saldo</h2>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Todas as entradas e saídas do Acumulado</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowBalanceModal(false)}
+                className="flex items-center justify-center size-8 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <div className="p-6 bg-gray-50 dark:bg-[#102217]/50 border-b border-gray-100 dark:border-gray-800">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 text-center mb-1">Cálculo Total</p>
+              <h3 className={`text-3xl font-bold text-center ${balance < 0 ? 'text-red-500' : 'text-[#111814] dark:text-white'}`}>
+                {formatCurrency(balance)}
+              </h3>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-hide">
+              {globalTransactions.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <p>Nenhuma transação encontrada no saldo acumulado.</p>
+                </div>
+              ) : (
+                globalTransactions.map(t => (
+                  <div key={t.id} className="flex justify-between items-center bg-white dark:bg-surface-dark p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                    <div className="flex-1 min-w-0 pr-3">
+                      <p className="text-sm font-bold text-[#111814] dark:text-white truncate">{t.description}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{new Date(t.date + 'T12:00:00').toLocaleDateString('pt-BR')} • {t.type === 'income' ? 'Receita' : 'Despesa'}</p>
+                    </div>
+                    <div className="text-right whitespace-nowrap">
+                      <p className={`text-sm font-bold ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                        {t.type === 'income' ? '+' : '-'} {formatCurrency(Number(t.amount))}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="p-4 border-t border-gray-100 dark:border-gray-800">
+              <button
+                onClick={() => setShowBalanceModal(false)}
+                className="w-full bg-primary text-[#102217] py-3.5 rounded-xl font-bold font-display shadow-md hover:scale-[1.02] active:scale-[0.98] transition-transform"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div >
   );
