@@ -114,10 +114,17 @@ const Dashboard: React.FC = () => {
   const { balance } = totals; // Keep balance from global totals
 
   // Calculate Monthly Totals for Dashboard
-  const { incomeTotal, expenseTotal } = useMemo(() => {
+  const { incomeTotal, expenseTotal, prevIncomeTotal, prevExpenseTotal } = useMemo(() => {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
+
+    let prevMonth = currentMonth - 1;
+    let prevYear = currentYear;
+    if (prevMonth < 0) {
+      prevMonth = 11;
+      prevYear = currentYear - 1;
+    }
 
     return allTransactions.reduce(
       (acc, t) => {
@@ -125,21 +132,46 @@ const Dashboard: React.FC = () => {
 
         // Parse transaction date (YYYY-MM-DD string)
         const [tYear, tMonth] = t.date.split('-').map(Number);
+        const txMonthIndex = tMonth - 1;
 
         // Check if transaction is in current month/year
-        // specific check: tMonth is 1-indexed in date string, currentMonth is 0-indexed
-        if (tYear === currentYear && (tMonth - 1) === currentMonth) {
+        if (tYear === currentYear && txMonthIndex === currentMonth) {
           if (t.type === 'income') {
             acc.incomeTotal += Number(t.amount);
           } else if (t.type === 'expense') {
             acc.expenseTotal += Number(t.amount);
           }
         }
+        // Check if transaction is in previous month/year
+        else if (tYear === prevYear && txMonthIndex === prevMonth) {
+          if (t.type === 'income') {
+            acc.prevIncomeTotal += Number(t.amount);
+          } else if (t.type === 'expense') {
+            acc.prevExpenseTotal += Number(t.amount);
+          }
+        }
         return acc;
       },
-      { incomeTotal: 0, expenseTotal: 0 }
+      { incomeTotal: 0, expenseTotal: 0, prevIncomeTotal: 0, prevExpenseTotal: 0 }
     );
   }, [allTransactions]);
+
+  const currentBalance = incomeTotal - expenseTotal;
+
+  const calculatePercentage = (current: number, previous: number) => {
+    if (previous === 0) {
+      if (current === 0) return '0%';
+      return '+100%';
+    }
+    const ratio = ((current - previous) / previous) * 100;
+    const sign = ratio > 0 ? '+' : '';
+    return `${sign}${ratio.toFixed(0)}%`;
+  };
+
+  const incomePercentage = calculatePercentage(incomeTotal, prevIncomeTotal);
+  const expensePercentage = calculatePercentage(expenseTotal, prevExpenseTotal);
+  const incomeTrendUp = incomeTotal >= prevIncomeTotal;
+  const expenseTrendUp = expenseTotal >= prevExpenseTotal;
 
   // Modal State
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -282,9 +314,9 @@ const Dashboard: React.FC = () => {
                 <p className="text-sm font-medium tracking-wide opacity-90">Saldo Acumulado</p>
               </div>
               <div className="flex items-baseline gap-1">
-                <h1 className="text-4xl font-bold tracking-tight">{formatCurrency(balance)}</h1>
+                <h1 className="text-4xl font-bold tracking-tight">{formatCurrency(currentBalance)}</h1>
               </div>
-              <p className="text-[11px] text-primary/60 font-medium">Total histórico de todas as entradas e saídas</p>
+              <p className="text-[11px] text-primary/60 font-medium">Clique aqui para acessar o histórico completo</p>
             </div>
 
             <div className="flex gap-3">
@@ -322,7 +354,9 @@ const Dashboard: React.FC = () => {
             </div>
             <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium -mt-0.5 mb-1">Este mês</p>
             <p className="text-lg font-bold text-[#111814] dark:text-white">{formatCurrency(incomeTotal)}</p>
-            <p className="text-[10px] font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/10 self-start px-1.5 py-0.5 rounded">-- vs mês ant.</p>
+            <p className={`text-[10px] font-bold ${incomeTrendUp ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/10' : 'text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/10'} self-start px-1.5 py-0.5 rounded`}>
+              {incomePercentage} vs mês ant.
+            </p>
           </Link>
           <Link to="/expenses" className="flex-1 flex flex-col gap-1 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-card hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer border border-transparent hover:border-red-100 dark:hover:border-red-900/30">
             <div className="flex items-center gap-2 mb-1">
@@ -333,7 +367,9 @@ const Dashboard: React.FC = () => {
             </div>
             <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium -mt-0.5 mb-1">Este mês</p>
             <p className="text-lg font-bold text-[#111814] dark:text-white">{formatCurrency(expenseTotal)}</p>
-            <p className="text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10 self-start px-1.5 py-0.5 rounded">-- vs mês ant.</p>
+            <p className={`text-[10px] font-bold ${expenseTrendUp ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/10' : 'text-green-500 dark:text-green-400 bg-green-50 dark:bg-green-900/10'} self-start px-1.5 py-0.5 rounded`}>
+              {expensePercentage} vs mês ant.
+            </p>
           </Link>
         </div>
 
@@ -570,7 +606,7 @@ const Dashboard: React.FC = () => {
 
       {/* Modal de Detalhes do Saldo Global */}
       {showBalanceModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={() => setShowBalanceModal(false)}>
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={() => setShowBalanceModal(false)}>
           <div
             className="bg-white dark:bg-surface-dark rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom sm:slide-in-from-bottom-8 duration-300"
             onClick={e => e.stopPropagation()}
@@ -601,7 +637,7 @@ const Dashboard: React.FC = () => {
             <div className="p-6 bg-gray-50 dark:bg-[#102217]/50 border-b border-gray-100 dark:border-gray-800">
               <p className="text-sm font-medium text-gray-500 dark:text-gray-400 text-center mb-1">Cálculo Total</p>
               <h3 className={`text-3xl font-bold text-center ${balance < 0 ? 'text-red-500' : 'text-[#111814] dark:text-white'}`}>
-                {formatCurrency(balance)}
+                {formatCurrency(currentBalance)}
               </h3>
             </div>
 

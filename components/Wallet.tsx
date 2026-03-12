@@ -31,61 +31,59 @@ const Wallet: React.FC = () => {
   const years = [2023, 2024, 2025, 2026];
 
   const handleTogglePaid = async (id: string, currentPaid: number, total: number, isCurrentlyPaid: boolean) => {
-    // If checking (marking as paid)
-    // For single installment logic in the UI, this usually implies marking THIS month's installment as paid?
-    // Or marking the whole thing? The HTML shows "Marcar como Pago" (Mark as Paid) and "Pago" (Paid) badge.
-    // The previous logic was: increment paid count.
+    // If it's already paid and we are unchecking
+    if (isCurrentlyPaid) {
+      if (currentPaid <= 0) return; // Prevent going below 0
 
-    // Let's stick to the previous logic: if clicked, we increment/pay.
-    // However, the UI uses a checkbox. If user unchecks, we should probably revert?
-    // Complexity: Managing "paid" state per installment vs global "is_paid".
-    // For now, let's assume the Checkbox completes the payment for the CURRENT installment.
+      const newPaidCount = currentPaid - 1;
+      const isFullyPaid = newPaidCount >= total;
 
-    // Simplified logic for this specific design which seems to track "Recente" vs "Pendente" vs "Pago".
-    // If we follow the "installments" logic strictly:
-    // If not full, increment. If full, set is_paid.
-    // But the checkbox implies a toggle. 
-    // Let's make the checkbox toggle the `is_paid` status of the WHOLE purchase for simplicity 
-    // OR if we want to be granular, we just increment.
-    // Given the UI shows "Parcelas (3/10)", the checkbox likely marks the *current* month as handled, 
-    // but our DB schema might just have `installments_paid`.
+      try {
+        const { error } = await supabase
+          .from('third_party_purchases')
+          .update({
+            installments_paid: newPaidCount,
+            is_paid: isFullyPaid
+          })
+          .eq('id', id);
 
-    // Let's implement: Click checkbox -> Advances payment by 1.
-    // But what if they uncheck?
-    // Let's keep it simple: The checkbox reflects if the item is FULLY paid?
-    // Or maybe just "Mark this month as paid".
-    // Let's assume the user wants to mark the WHOLE thing as paid if they click the big checkbox? 
-    // Actually, looking at the design "Marcar como Pago", it probably means "Mark this month's installment".
+        if (error) throw error;
 
-    // Let's stick to: Click -> Increment `installments_paid`.
-    if (currentPaid >= total) return;
-
-    const newPaidCount = currentPaid + 1;
-    const isFullyPaid = newPaidCount >= total;
-
-    try {
-      const { error } = await supabase
-        .from('third_party_purchases')
-        .update({
-          installments_paid: newPaidCount,
-          is_paid: isFullyPaid
-        })
-        .eq('id', id);
-
-      if (error) throw error;
-
-      if (error) throw error;
-
-      await queryClient.invalidateQueries({ queryKey: ['third-party-purchases'] });
-
-      if (isFullyPaid) {
-        showToast("Compra totalmente paga!", "success");
-      } else {
-        showToast("Parcela marcada como paga.", "success");
+        await queryClient.invalidateQueries({ queryKey: ['third-party-purchases'] });
+        showToast("Parcela marcada como pendente.", "success");
+      } catch (error) {
+        console.error(error);
+        showToast("Erro ao atualizar", "error");
       }
-    } catch (error) {
-      console.error(error);
-      showToast("Erro ao atualizar", "error");
+    } else {
+      // We are checking (marking as paid)
+      if (currentPaid >= total) return; // Prevent exceeding total
+
+      const newPaidCount = currentPaid + 1;
+      const isFullyPaid = newPaidCount >= total;
+
+      try {
+        const { error } = await supabase
+          .from('third_party_purchases')
+          .update({
+            installments_paid: newPaidCount,
+            is_paid: isFullyPaid
+          })
+          .eq('id', id);
+
+        if (error) throw error;
+
+        await queryClient.invalidateQueries({ queryKey: ['third-party-purchases'] });
+
+        if (isFullyPaid) {
+          showToast("Compra totalmente paga!", "success");
+        } else {
+          showToast("Parcela marcada como paga.", "success");
+        }
+      } catch (error) {
+        console.error(error);
+        showToast("Erro ao atualizar", "error");
+      }
     }
   };
 
@@ -291,7 +289,7 @@ const Wallet: React.FC = () => {
                   <div className="h-px w-full bg-gray-200 dark:bg-white/10 my-1"></div>
 
                   <div className="flex items-center justify-between gap-3 mt-1">
-                    <label className={`flex items-center gap-2 cursor-pointer group/check ${item.isPaidThisMonth ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <label className="flex items-center gap-2 cursor-pointer group/check">
                       <div className="relative flex items-center">
                         <input
                           type="checkbox"
