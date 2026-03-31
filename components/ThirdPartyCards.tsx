@@ -43,9 +43,11 @@ const ThirdPartyCards: React.FC = () => {
   // React Query
   const { data: allTransactions = [] } = useTransactions(session?.user?.id);
 
-  // Filter State - Default to 'Todos'
-  const [selectedMonth, setSelectedMonth] = useState<number | 'Todos'>('Todos');
-  const [selectedYear, setSelectedYear] = useState<number | 'Todos'>('Todos');
+  // Filter State - Default to current month/year
+  const now = new Date();
+  const [selectedMonth, setSelectedMonth] = useState<number | 'Todos'>(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState<number | 'Todos'>(now.getFullYear());
+  const [selectedCategory, setSelectedCategory] = useState<'Todos' | 'fuel' | 'maintenance'>('Todos');
 
   const months = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -221,7 +223,8 @@ const ThirdPartyCards: React.FC = () => {
     const d = e.dateObj;
     const matchMonth = selectedMonth === 'Todos' || d.getMonth() === selectedMonth;
     const matchYear = selectedYear === 'Todos' || d.getFullYear() === selectedYear;
-    return matchMonth && matchYear;
+    const matchCategory = selectedCategory === 'Todos' || e.type === selectedCategory;
+    return matchMonth && matchYear && matchCategory;
   });
 
   const totalAmount = filteredHistory.reduce((acc, curr) => acc + curr.amount, 0);
@@ -269,7 +272,7 @@ const ThirdPartyCards: React.FC = () => {
               </select>
               <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">expand_more</span>
             </div>
-            <div className="relative w-32">
+            <div className="relative w-28">
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value === 'Todos' ? 'Todos' : Number(e.target.value))}
@@ -277,13 +280,34 @@ const ThirdPartyCards: React.FC = () => {
                 style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
               >
                 <option value="Todos">Todos</option>
-                <option value={2026}>2026</option>
-                <option value={2025}>2025</option>
-                <option value={2024}>2024</option>
-                <option value={2023}>2023</option>
+                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
               </select>
               <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">expand_more</span>
             </div>
+          </div>
+
+          {/* Category filter chips */}
+          <div className="flex gap-2 mt-1">
+            {(['Todos', 'fuel', 'maintenance'] as const).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all ${
+                  selectedCategory === cat
+                    ? 'bg-primary text-[#003314] shadow-sm'
+                    : 'bg-surface-light dark:bg-surface-dark text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/10'
+                }`}
+              >
+                {cat !== 'Todos' && (
+                  <span className="material-symbols-outlined text-[16px]">
+                    {cat === 'fuel' ? 'local_gas_station' : 'build'}
+                  </span>
+                )}
+                {cat === 'Todos' ? 'Todos' : cat === 'fuel' ? 'Combustível' : 'Manutenção'}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -295,7 +319,9 @@ const ThirdPartyCards: React.FC = () => {
           </div>
           <span className="text-4xl font-extrabold text-text-main dark:text-white tracking-tight">{formatCurrency(totalAmount)}</span>
           <div className="mt-2 text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
-            {selectedMonth === 'Todos' || selectedYear === 'Todos' ? 'Todo o Período' : `Referente a ${months[selectedMonth]}/${selectedYear}`}
+            {selectedMonth === 'Todos' || selectedYear === 'Todos'
+              ? 'Todo o Período'
+              : `${months[selectedMonth as number]}/${selectedYear}${selectedCategory !== 'Todos' ? ` · ${selectedCategory === 'fuel' ? 'Combustível' : 'Manutenção'}` : ''}`}
           </div>
         </div>
 
