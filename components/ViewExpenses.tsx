@@ -55,6 +55,9 @@ const ViewExpenses: React.FC = () => {
   const [showDeleteFixedModal, setShowDeleteFixedModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Detail modal state
+  const [selectedExpense, setSelectedExpense] = useState<Transaction | null>(null);
+
   const toggleSelectionMode = () => {
     setIsSelectionMode(!isSelectionMode);
     setSelectedIds(new Set());
@@ -416,7 +419,11 @@ const ViewExpenses: React.FC = () => {
                 {groupedTransactions[dateStr].map(transaction => {
                   const style = getCategoryStyle(transaction.category?.name);
                   return (
-                    <div key={transaction.id} className="relative group flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
+                    <div
+                      key={transaction.id}
+                      onClick={() => !isSelectionMode && setSelectedExpense(transaction as Transaction)}
+                      className={`relative group flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm ${!isSelectionMode ? 'cursor-pointer active:scale-[0.98]' : ''}`}
+                    >
                       <div className={`flex items-center justify-center size-12 rounded-full ${style.bgClass} ${style.colorClass} shrink-0`}>
                         <span className="material-symbols-outlined">{style.icon}</span>
                       </div>
@@ -461,12 +468,13 @@ const ViewExpenses: React.FC = () => {
                           <Link
                             to="/register"
                             state={{ transaction, type: 'expense' }}
+                            onClick={(e) => e.stopPropagation()}
                             className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-300 transition-colors"
                           >
                             <span className="material-symbols-outlined text-[18px]">edit</span>
                           </Link>
                           <button
-                            onClick={() => handleDeleteClick(transaction as Transaction)}
+                            onClick={(e) => { e.stopPropagation(); handleDeleteClick(transaction as Transaction); }}
                             className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
                           >
                             <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -516,6 +524,95 @@ const ViewExpenses: React.FC = () => {
         confirmText="Clonar"
         cancelText="Cancelar"
       />
+
+      {/* Expense Detail Bottom Sheet */}
+      {selectedExpense && (() => {
+        const exp = selectedExpense;
+        const style = getCategoryStyle(exp.category?.name);
+        const expDate = new Date(exp.date + 'T12:00:00');
+        const formattedDate = expDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        return (
+          <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setSelectedExpense(null)}>
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
+            <div
+              className="relative w-full max-w-md bg-white dark:bg-[#1c2e24] rounded-t-3xl shadow-2xl border-t border-gray-100 dark:border-gray-800 p-6 pb-10 animate-in slide-in-from-bottom-4 duration-300"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6" />
+
+              <div className="flex items-center gap-4 mb-6">
+                <div className={`flex items-center justify-center size-14 rounded-2xl ${style.bgClass} ${style.colorClass} shrink-0`}>
+                  <span className="material-symbols-outlined text-[28px]">{style.icon}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xl font-extrabold text-[#111814] dark:text-white truncate">{exp.description}</p>
+                  <p className="text-2xl font-bold text-red-500 dark:text-red-400 mt-0.5">- {formatCurrency(exp.amount)}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 bg-gray-50 dark:bg-background-dark rounded-2xl p-4 mb-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px]">calendar_today</span>
+                    Data
+                  </span>
+                  <span className="text-sm font-bold text-[#111814] dark:text-white capitalize">{formattedDate}</span>
+                </div>
+                <div className="h-px bg-gray-200 dark:bg-white/5" />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px]">category</span>
+                    Categoria
+                  </span>
+                  <span className="text-sm font-bold text-[#111814] dark:text-white">{exp.category?.name || '—'}</span>
+                </div>
+                <div className="h-px bg-gray-200 dark:bg-white/5" />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[16px]">account_balance</span>
+                    Conta
+                  </span>
+                  <span className="text-sm font-bold text-[#111814] dark:text-white">{exp.account || 'Conta Corrente'}</span>
+                </div>
+                {exp.is_fixed && (
+                  <>
+                    <div className="h-px bg-gray-200 dark:bg-white/5" />
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[16px]">repeat</span>
+                        Tipo
+                      </span>
+                      <span className="text-sm font-bold text-primary flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">repeat</span>
+                        Despesa Fixa
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  to="/register"
+                  state={{ transaction: exp, type: 'expense' }}
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  onClick={() => setSelectedExpense(null)}
+                >
+                  <span className="material-symbols-outlined text-[18px]">edit</span>
+                  Editar
+                </Link>
+                <button
+                  onClick={() => { setSelectedExpense(null); handleDeleteClick(exp); }}
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors"
+                >
+                  <span className="material-symbols-outlined text-[18px]">delete</span>
+                  Apagar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

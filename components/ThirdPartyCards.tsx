@@ -28,7 +28,7 @@ const ThirdPartyCards: React.FC = () => {
   const [categoryType, setCategoryType] = useState<'fuel' | 'maintenance'>('fuel');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
-  const [includeInExpenses, setIncludeInExpenses] = useState(true);
+  const [includeInExpenses, setIncludeInExpenses] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 

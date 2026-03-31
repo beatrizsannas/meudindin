@@ -62,6 +62,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
     { path: '/third-party', icon: 'directions_car', label: 'Veículo' },
     { path: '/wallet', icon: 'account_balance_wallet', label: 'Terceiros' },
     { path: '/credit-cards', icon: 'credit_card', label: 'Seus cartões' },
+    { path: '/imoveis', icon: 'apartment', label: 'Imóveis', color: 'text-blue-500' },
     { path: '/settings', icon: 'settings', label: 'Ajustes' },
   ];
 

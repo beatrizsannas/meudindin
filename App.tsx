@@ -20,6 +20,8 @@ import Signup from './components/Signup';
 import ForgotPassword from './components/ForgotPassword';
 import ResetConfirmation from './components/ResetConfirmation';
 import Notifications from './components/Notifications';
+import Imoveis from './components/Imoveis';
+import ImovelDetail from './components/ImovelDetail';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Create Context for Menu Control
@@ -134,6 +136,8 @@ const App: React.FC = () => {
                   <Route path="/scan" element={<ProtectedRoute><ScanReceipt /></ProtectedRoute>} />
                   <Route path="/all-transactions" element={<ProtectedRoute><AllTransactions /></ProtectedRoute>} />
                   <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+                  <Route path="/imoveis" element={<ProtectedRoute><Imoveis /></ProtectedRoute>} />
+                  <Route path="/imoveis/:id" element={<ProtectedRoute><ImovelDetail /></ProtectedRoute>} />
                 </Routes>
               </div>
 
