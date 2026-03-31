@@ -154,16 +154,7 @@ const Settings: React.FC = () => {
         </div>
         <div className="mx-6 flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-card">
           {/* Item 1 */}
-          <button
-            onClick={() => handleAction("Gerenciar categorias")}
-            className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 group"
-          >
-            <div className="flex items-center justify-center rounded-xl bg-green-50 dark:bg-primary/10 shrink-0 size-10 text-green-600 dark:text-primary group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined icon-filled text-[20px]">category</span>
-            </div>
-            <p className="text-gray-900 dark:text-white text-sm font-bold flex-1 text-left">Categorias de Gastos</p>
-            <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">chevron_right</span>
-          </button>
+
           {/* Item 2 */}
           <Link to="/third-party" className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 group">
             <div className="flex items-center justify-center rounded-xl bg-green-50 dark:bg-primary/10 shrink-0 size-10 text-green-600 dark:text-primary group-hover:scale-110 transition-transform">
@@ -211,31 +202,7 @@ const Settings: React.FC = () => {
             </label>
           </div>
           {/* Toggle Item 2 */}
-          <div className="flex items-center gap-4 px-5 py-4 w-full border-b border-gray-50 dark:border-gray-800 last:border-0 group">
-            <div className="flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 shrink-0 size-10 text-gray-500 dark:text-gray-400 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined icon-filled text-[20px]">dark_mode</span>
-            </div>
-            <p className="text-gray-900 dark:text-white text-sm font-bold flex-1">Modo Escuro</p>
-            {/* Toggle Switch */}
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" value="" className="sr-only peer toggle-checkbox" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 toggle-label transition-colors"></div>
-            </label>
-          </div>
-          {/* Item 3 */}
-          <button
-            onClick={() => handleAction("Configurar FaceID")}
-            className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
-          >
-            <div className="flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 shrink-0 size-10 text-gray-500 dark:text-gray-400 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined icon-filled text-[20px]">lock</span>
-            </div>
-            <p className="text-gray-900 dark:text-white text-sm font-bold flex-1 text-left">Segurança (FaceID)</p>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Ativado</span>
-              <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">chevron_right</span>
-            </div>
-          </button>
+
         </div>
 
         {/* Section: Sobre */}
@@ -243,34 +210,32 @@ const Settings: React.FC = () => {
           <h3 className="text-gray-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-widest pl-2">Sobre</h3>
         </div>
         <div className="mx-6 flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-card mb-8">
-          <button
-            onClick={() => handleAction("Abrir Central de Ajuda")}
-            className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 group"
+          <a
+            href="https://wa.me/5581997332279?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20o%20Meu%20Dindin!"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 group cursor-pointer"
           >
-            <div className="flex items-center justify-center rounded-xl bg-orange-50 dark:bg-orange-900/20 shrink-0 size-10 text-orange-500 dark:text-orange-400 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined icon-filled text-[20px]">help</span>
+            <div className="flex items-center justify-center rounded-xl bg-green-50 dark:bg-green-900/20 shrink-0 size-10 text-green-500 dark:text-green-400 group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined icon-filled text-[20px]">support_agent</span>
             </div>
-            <p className="text-gray-900 dark:text-white text-sm font-bold flex-1 text-left">Ajuda e Suporte</p>
-            <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">chevron_right</span>
-          </button>
-          <button
-            onClick={() => handleAction("Avaliar na loja")}
-            className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors border-b border-gray-50 dark:border-gray-800 last:border-0 group"
-          >
-            <div className="flex items-center justify-center rounded-xl bg-yellow-50 dark:bg-yellow-900/20 shrink-0 size-10 text-yellow-500 dark:text-yellow-400 group-hover:scale-110 transition-transform">
-              <span className="material-symbols-outlined icon-filled text-[20px]">star</span>
+            <div className="flex-1 text-left">
+              <p className="text-gray-900 dark:text-white text-sm font-bold">Ajuda e Suporte</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Precisa de ajuda? Fale com a gente no WhatsApp!</p>
             </div>
-            <p className="text-gray-900 dark:text-white text-sm font-bold flex-1 text-left">Avaliar o App</p>
-            <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">chevron_right</span>
-          </button>
+            <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">open_in_new</span>
+          </a>
           <button
             onClick={() => handleAction("Ver Termos de Uso")}
-            className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
+            className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group cursor-pointer"
           >
             <div className="flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 shrink-0 size-10 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform">
               <span className="material-symbols-outlined icon-filled text-[20px]">description</span>
             </div>
-            <p className="text-gray-900 dark:text-white text-sm font-bold flex-1 text-left">Termos de Uso</p>
+            <div className="flex-1 text-left">
+              <p className="text-gray-900 dark:text-white text-sm font-bold">Termos de Uso</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Conheça as regras e políticas do aplicativo.</p>
+            </div>
             <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">chevron_right</span>
           </button>
         </div>
