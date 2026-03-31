@@ -64,7 +64,7 @@ const BottomNav = () => {
   ];
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 z-50 bg-surface-light dark:bg-surface-dark px-6 pb-6 pt-3 shadow-nav rounded-t-3xl border-t border-gray-100 dark:border-gray-800">
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 bg-surface-light dark:bg-surface-dark px-6 pb-6 pt-3 shadow-nav rounded-t-3xl border-t border-gray-100 dark:border-gray-800">
       <div className="flex justify-around items-end relative">
         {navItems.map((item) => {
           const active = isActive(item.path);

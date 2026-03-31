@@ -33,6 +33,7 @@ const RegisterCost: React.FC = () => {
   const [installments, setInstallments] = useState(1);
   const [paymentStartDate, setPaymentStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [isInstallment, setIsInstallment] = useState(false);
+  const [isFixed, setIsFixed] = useState(false);
   const [isScanner, setIsScanner] = useState(false);
 
   const [description, setDescription] = useState('');
@@ -126,6 +127,8 @@ const RegisterCost: React.FC = () => {
         setCategoryId(t.category_id);
         // ✅ Preserve exclude_from_global so it doesn't get reset to false on save
         setExcludeFromGlobal(t.exclude_from_global ?? false);
+        // Preserve is_fixed on edit (readonly — cannot change fixed status when editing)
+        setIsFixed(t.is_fixed ?? false);
       }
       else {
         if (location.state.type) {
@@ -246,6 +249,33 @@ const RegisterCost: React.FC = () => {
           }
 
           const { error } = await supabase.from('transactions').insert(transactionsToInsert);
+          if (error) throw error;
+        } else if (isFixed) {
+          // Fixed expense — create 12 monthly entries with shared group ID
+          const groupId = crypto.randomUUID();
+          const fixedTransactions = [];
+          const [y, m, d] = date.split('-').map(Number);
+
+          for (let i = 0; i < 12; i++) {
+            const targetMonthIndex = (m - 1) + i;
+            const dateObj = new Date(Date.UTC(y, targetMonthIndex, d));
+            if (dateObj.getUTCDate() !== d) {
+              dateObj.setUTCDate(0);
+            }
+            fixedTransactions.push({
+              user_id: session?.user.id,
+              description,
+              amount: valueToSave,
+              type: transactionType,
+              category_id: finalCategoryId,
+              date: dateObj.toISOString().split('T')[0],
+              account: 'Conta Corrente',
+              is_fixed: true,
+              fixed_group_id: groupId,
+            });
+          }
+
+          const { error } = await supabase.from('transactions').insert(fixedTransactions);
           if (error) throw error;
         } else {
           // Single
@@ -378,19 +408,39 @@ const RegisterCost: React.FC = () => {
 
           {/* Transaction Type Specific Fields */}
           {transactionType === 'expense' && (
-            <div className={`flex items-center justify-between py-2 ${isScanner ? 'opacity-50 pointer-events-none' : ''}`}>
-              <div className="flex flex-col">
-                <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Parcelar?</span>
-                {isScanner && <span className="text-xs text-red-400">Indisponível via Scanner</span>}
+            <>
+              {/* Parcelar toggle */}
+              <div className={`flex items-center justify-between py-2 ${isScanner || isFixed ? 'opacity-50 pointer-events-none' : ''}`}>
+                <div className="flex flex-col">
+                  <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Parcelar?</span>
+                  {isScanner && <span className="text-xs text-red-400">Indisponível via Scanner</span>}
+                </div>
+                <button
+                  disabled={isScanner || isFixed}
+                  onClick={() => setIsInstallment(!isInstallment)}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${isInstallment ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
+                >
+                  <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${isInstallment ? 'translate-x-6' : ''}`} />
+                </button>
               </div>
-              <button
-                disabled={isScanner}
-                onClick={() => setIsInstallment(!isInstallment)}
-                className={`w-12 h-6 rounded-full relative transition-colors ${isInstallment ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
-              >
-                <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${isInstallment ? 'translate-x-6' : ''}`} />
-              </button>
-            </div>
+
+              {/* Despesa Fixa toggle — only for new expenses */}
+              {!editId && (
+                <div className={`flex items-center justify-between py-2 ${isInstallment ? 'opacity-50 pointer-events-none' : ''}`}>
+                  <div className="flex flex-col">
+                    <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Despesa Fixa?</span>
+                    {isFixed && <span className="text-xs text-primary">Repete por 12 meses</span>}
+                  </div>
+                  <button
+                    disabled={isInstallment}
+                    onClick={() => setIsFixed(!isFixed)}
+                    className={`w-12 h-6 rounded-full relative transition-colors ${isFixed ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
+                  >
+                    <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${isFixed ? 'translate-x-6' : ''}`} />
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
           {/* Installments Extra Fields */}

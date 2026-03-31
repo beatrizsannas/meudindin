@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import ConfirmModal from './ConfirmModal';
+import DeleteFixedModal from './DeleteFixedModal';
 
 import { useTransactions } from '../hooks/useTransactions';
 import { useQueryClient } from '@tanstack/react-query';
@@ -18,6 +19,8 @@ interface Transaction {
   category: {
     name: string;
   } | null;
+  is_fixed?: boolean;
+  fixed_group_id?: string | null;
 }
 
 interface Category {
@@ -45,6 +48,12 @@ const ViewExpenses: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [cloning, setCloning] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+
+  // Delete modal state
+  const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteFixedModal, setShowDeleteFixedModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const toggleSelectionMode = () => {
     setIsSelectionMode(!isSelectionMode);
@@ -216,18 +225,53 @@ const ViewExpenses: React.FC = () => {
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Apagar despesa?")) return;
+  const handleDeleteClick = (transaction: Transaction) => {
+    setDeleteTarget(transaction);
+    if (transaction.is_fixed) {
+      setShowDeleteFixedModal(true);
+    } else {
+      setShowDeleteModal(true);
+    }
+  };
+
+  const handleDeleteSingle = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      const { error } = await supabase.from('transactions').delete().eq('id', id);
+      const { error } = await supabase.from('transactions').delete().eq('id', deleteTarget.id);
       if (error) throw error;
-
       await queryClient.invalidateQueries({ queryKey: ['transactions'] });
-
       showToast("Despesa apagada com sucesso!", "success");
     } catch (error) {
       console.error(error);
       showToast("Erro ao apagar despesa!", "error");
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
+      setShowDeleteFixedModal(false);
+      setDeleteTarget(null);
+    }
+  };
+
+  const handleDeleteAllFuture = async () => {
+    if (!deleteTarget || !deleteTarget.fixed_group_id) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('fixed_group_id', deleteTarget.fixed_group_id)
+        .gte('date', deleteTarget.date);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      showToast("Despesas fixas apagadas com sucesso!", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Erro ao apagar despesas!", "error");
+    } finally {
+      setDeleting(false);
+      setShowDeleteFixedModal(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -387,9 +431,17 @@ const ViewExpenses: React.FC = () => {
                       </div>
                       <div className="text-right flex flex-col items-end">
                         <p className="text-base font-bold text-red-600 dark:text-red-400">- {formatCurrency(transaction.amount)}</p>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
-                          {transaction.category?.name}
-                        </span>
+                        <div className="flex items-center gap-1 flex-wrap justify-end">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
+                            {transaction.category?.name}
+                          </span>
+                          {(transaction as Transaction).is_fixed && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-bold flex items-center gap-0.5">
+                              <span className="material-symbols-outlined" style={{ fontSize: '10px' }}>repeat</span>
+                              Fixa
+                            </span>
+                          )}
+                        </div>
 
                         {/* Action Buttons (Below Category) */}
                         <div className="flex items-center gap-1 mt-2">
@@ -414,7 +466,7 @@ const ViewExpenses: React.FC = () => {
                             <span className="material-symbols-outlined text-[18px]">edit</span>
                           </Link>
                           <button
-                            onClick={() => handleDelete(transaction.id)}
+                            onClick={() => handleDeleteClick(transaction as Transaction)}
                             className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
                           >
                             <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -431,7 +483,29 @@ const ViewExpenses: React.FC = () => {
         <div className="h-6"></div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Delete Confirmation Modal (normal expense) */}
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => { setShowDeleteModal(false); setDeleteTarget(null); }}
+        onConfirm={handleDeleteSingle}
+        isLoading={deleting}
+        isDestructive
+        title="Apagar Despesa"
+        description="Tem certeza que deseja apagar esta despesa? Esta ação não pode ser desfeita."
+        confirmText="Apagar"
+        cancelText="Cancelar"
+      />
+
+      {/* Delete Fixed Expense Modal */}
+      <DeleteFixedModal
+        isOpen={showDeleteFixedModal}
+        onClose={() => { setShowDeleteFixedModal(false); setDeleteTarget(null); }}
+        onDeleteSingle={handleDeleteSingle}
+        onDeleteAll={handleDeleteAllFuture}
+        isLoading={deleting}
+      />
+
+      {/* Confirmation Modal (clone) */}
       <ConfirmModal
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}

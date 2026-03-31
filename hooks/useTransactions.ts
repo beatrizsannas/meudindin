@@ -16,6 +16,8 @@ export interface Transaction {
         color_theme: string;
     } | null;
     exclude_from_global?: boolean;
+    is_fixed?: boolean;
+    fixed_group_id?: string | null;
     installmentCount?: number;
     originalDescription?: string; // Used for editing grouped installments
 }
@@ -38,6 +40,8 @@ export const useTransactions = (userId: string | undefined) => {
           account,
           category_id,
           exclude_from_global,
+          is_fixed,
+          fixed_group_id,
           category:categories (
             name,
             icon,
@@ -68,7 +72,9 @@ export const useTransactions = (userId: string | undefined) => {
                 account: t.account,
                 category_id: t.category_id,
                 category: t.category,
-                exclude_from_global: t.exclude_from_global
+                exclude_from_global: t.exclude_from_global,
+                is_fixed: t.is_fixed,
+                fixed_group_id: t.fixed_group_id
             })) as Transaction[];
         },
         enabled: !!userId,
