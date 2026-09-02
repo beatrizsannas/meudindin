@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { MenuContext } from '../App';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
@@ -32,6 +33,7 @@ const ViewExpenses: React.FC = () => {
   const { session } = useAuth();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const { openMenu } = useContext(MenuContext);
 
   // States
   const [selectedYear, setSelectedYear] = useState<number | 'Todos'>(new Date().getFullYear());
@@ -279,19 +281,16 @@ const ViewExpenses: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col bg-background-light dark:bg-background-dark font-display min-h-full">
+    <div className="flex flex-col min-h-full bg-background-light dark:bg-background-dark font-display">
       {/* Header */}
-      <div className="sticky top-0 z-30 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm px-4 py-3 flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+      <div className="sticky top-0 z-30 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm p-4 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link
-            to="/"
-            className="cursor-pointer mr-1 p-2 -ml-2 rounded-full hover:bg-surface-variant-light dark:hover:bg-surface-variant-dark text-[#111814] dark:text-white transition-colors"
-          >
+          <Link to="/" className="cursor-pointer mr-1 p-2 -ml-2 rounded-full hover:bg-surface-variant-light dark:hover:bg-surface-variant-dark text-[#111814] dark:text-white transition-colors">
             <span className="material-symbols-outlined">arrow_back</span>
           </Link>
-          <h1 className="text-lg font-bold text-[#111814] dark:text-white">Ver Despesas</h1>
+          <h2 className="text-xl font-bold leading-tight tracking-tight text-[#111814] dark:text-white">Despesas</h2>
         </div>
-
+        
         <div className="flex items-center gap-2">
           {isSelectionMode && selectedIds.size > 0 && (
             <button
@@ -312,96 +311,107 @@ const ViewExpenses: React.FC = () => {
           >
             {isSelectionMode ? 'Cancelar' : 'Selecionar'}
           </button>
+          <button
+            onClick={openMenu}
+            className="cursor-pointer flex items-center justify-center rounded-full size-10 hover:bg-surface-variant-light dark:hover:bg-surface-variant-dark transition-colors relative"
+          >
+            <span className="material-symbols-outlined text-gray-700 dark:text-gray-200">menu</span>
+          </button>
         </div>
       </div>
 
       <div className="flex flex-col gap-0 pt-4 px-4 pb-24">
         {/* Filters & Summary */}
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
-
-            {/* Year Filter */}
-            <div className="relative shrink-0">
-              <div className="flex items-center gap-2 bg-[#111814] text-white dark:bg-white dark:text-[#111814] px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap shadow-md">
-                <span>{selectedYear}</span>
-                <span className="material-symbols-outlined text-sm">expand_more</span>
-              </div>
-              <select
-                value={selectedYear}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setSelectedYear(val === 'Todos' ? 'Todos' : Number(val));
-                }}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none"
-              >
-                <option value="Todos">Todos</option>
-                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Month Filter */}
-            {selectedYear !== 'Todos' && (
-              <div className="relative shrink-0">
-                <div className="flex items-center gap-2 bg-surface-light dark:bg-surface-dark text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-surface-variant-dark transition-colors">
-                  <span>{selectedMonthIndex === -1 ? 'Todos os Meses' : months[selectedMonthIndex]}</span>
-                  <span className="material-symbols-outlined text-sm">expand_more</span>
+        {/* Main Card */}
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-[#2d1114] to-[#401217] dark:from-[#351518] dark:to-[#220d0f] p-6 shadow-lg text-white mb-6">
+          <div className="absolute -right-12 -top-12 size-40 rounded-full bg-red-500/10 blur-2xl"></div>
+          <div className="absolute -left-12 -bottom-12 size-32 rounded-full bg-red-500/5 blur-xl"></div>
+          <div className="relative z-10 flex flex-col gap-6">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[#ffb3b8]">
+                  <span className="material-symbols-outlined text-lg">calendar_today</span>
+                  {/* WCAG: #ffb3b8 sobre #2d1114 = contraste alto ✅ */}
+                  <p className="text-xs font-semibold tracking-widest uppercase">Total de saídas</p>
                 </div>
-                <select
-                  value={selectedMonthIndex}
-                  onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none"
-                >
-                  <option value={-1}>Todos os Meses</option>
-                  {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                </select>
               </div>
-            )}
-
-            {/* Category Filter */}
-            <div className="relative shrink-0">
-              <div className="flex items-center gap-2 bg-surface-light dark:bg-surface-dark text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-surface-variant-dark transition-colors">
-                <span>{selectedCategory}</span>
-                <span className="material-symbols-outlined text-sm">expand_more</span>
+              <div className="flex items-baseline gap-1 mt-2">
+                <h1 className="text-4xl font-bold tracking-tight">{formatCurrency(totalAmount)}</h1>
               </div>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none"
-              >
-                <option value="Categoria">Categoria</option>
-                <option value="Todas">Todas</option>
-                {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-              </select>
             </div>
-
-            <div className="w-1"></div>
+            <button
+              onClick={() => navigate('/register', { state: { type: 'expense' } })}
+              className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold py-2.5 px-4 rounded-xl transition-colors text-sm shadow-md shadow-red-500/20"
+            >
+              <span className="material-symbols-outlined text-xl icon-filled">add</span>
+              <span>Nova Despesa</span>
+            </button>
           </div>
-
-          <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total de saídas</p>
-              <h2 className="text-2xl font-bold text-[#111814] dark:text-white">{formatCurrency(totalAmount)}</h2>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <div className="size-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-red-500 dark:text-red-400">
-                <span className="material-symbols-outlined">trending_down</span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => navigate('/register', { state: { type: 'expense' } })}
-            className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 rounded-xl transition-colors text-sm shadow-md shadow-red-500/20"
-          >
-            <span className="material-symbols-outlined text-xl icon-filled">add</span>
-            <span>Nova Despesa</span>
-          </button>
         </div>
 
-        {/* Transactions Groups */}
-        <div className="flex flex-col gap-6">
+        {/* Filters */}
+        <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 mb-2">
+          {/* Year Filter */}
+          <div className="relative shrink-0">
+            <select
+              value={selectedYear}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedYear(val === 'Todos' ? 'Todos' : Number(val));
+              }}
+              className="appearance-none bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full py-2 pl-4 pr-10 text-sm font-bold shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-white"
+            >
+              <option value="Todos">Todos (Ano)</option>
+              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-lg">expand_more</span>
+          </div>
+
+          {/* Month Filter */}
+          {selectedYear !== 'Todos' && (
+            <div className="relative shrink-0">
+              <select
+                value={selectedMonthIndex}
+                onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
+                className="appearance-none bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full py-2 pl-4 pr-10 text-sm font-medium shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-white"
+              >
+                <option value={-1}>Todos os Meses</option>
+                {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
+              </select>
+              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-lg">expand_more</span>
+            </div>
+          )}
+
+          {/* Category Filter */}
+          <div className="relative shrink-0">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="appearance-none bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full py-2 pl-4 pr-10 text-sm font-medium shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-white"
+            >
+              <option value="Categoria">Categoria</option>
+              <option value="Todas">Todas</option>
+              {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+            </select>
+            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-lg">expand_more</span>
+          </div>
+          
+          <div className="w-1"></div>
+        </div>
+
+        {/* List Section */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-bold leading-tight text-[#111814] dark:text-white">Histórico</h3>
+            <div className="flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400">
+              <span>Ordenado por data</span>
+              <span className="material-symbols-outlined text-sm">arrow_downward</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-6">
           {loading ? (
             <p className="text-center text-gray-500">Carregando...</p>
           ) : sortedDates.length === 0 ? (
@@ -487,6 +497,7 @@ const ViewExpenses: React.FC = () => {
               </div>
             ))
           )}
+        </div>
         </div>
         <div className="h-6"></div>
       </div>
