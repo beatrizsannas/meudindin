@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from './Button';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
@@ -28,6 +28,16 @@ const Settings: React.FC = () => {
 
   // Export Modal State
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+  // Abre o modal de exportação automaticamente se vier do Dashboard
+  const location = useLocation();
+  useEffect(() => {
+    if ((location.state as { openExport?: boolean })?.openExport) {
+      setIsExportModalOpen(true);
+      // Limpa o state para não reabrir em navegações futuras
+      window.history.replaceState({}, '');
+    }
+  }, [location.state]);
 
   const handleOpenDeleteModal = () => {
     setIsDeleteModalOpen(true);

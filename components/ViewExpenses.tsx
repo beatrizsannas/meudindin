@@ -439,11 +439,11 @@ const ViewExpenses: React.FC = () => {
                       <div className="text-right flex flex-col items-end">
                         <p className="text-base font-bold text-red-600 dark:text-red-400">- {formatCurrency(transaction.amount)}</p>
                         <div className="flex items-center gap-1 flex-wrap justify-end">
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-medium">
+                          <span className="text-[11px] px-1.5 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold">
                             {transaction.category?.name}
                           </span>
                           {(transaction as Transaction).is_fixed && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-bold flex items-center gap-0.5">
+                            <span className="text-[11px] px-1.5 py-0.5 rounded-lg bg-primary/15 text-emerald-800 dark:text-primary font-bold flex items-center gap-0.5">
                               <span className="material-symbols-outlined" style={{ fontSize: '10px' }}>repeat</span>
                               Fixa
                             </span>
@@ -457,7 +457,7 @@ const ViewExpenses: React.FC = () => {
                               onClick={() => !isInstallment(transaction.description) && toggleSelect(transaction.id)}
                               disabled={isInstallment(transaction.description)}
                               className={`size-[30px] flex items-center justify-center rounded-full transition-colors border ${selectedIds.has(transaction.id)
-                                ? 'bg-primary border-primary text-[#102217]'
+                                ? 'bg-primary border-primary text-[#0a2018]'
                                 : 'bg-transparent border-gray-300 dark:border-gray-600 text-transparent'
                                 } disabled:opacity-30 disabled:cursor-not-allowed`}
                             >

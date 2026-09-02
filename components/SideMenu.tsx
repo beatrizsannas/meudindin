@@ -55,8 +55,8 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
   };
 
   const menuItems = [
-    { path: '/expenses', icon: 'trending_down', label: 'Ver Despesas', color: 'text-red-500' },
-    { path: '/income', icon: 'trending_up', label: 'Ver Receitas', color: 'text-green-500' },
+    { path: '/expenses', icon: 'trending_down', label: 'Ver Despesas', color: 'text-red-600 dark:text-red-400' },
+    { path: '/income', icon: 'trending_up', label: 'Ver Receitas', color: 'text-emerald-600 dark:text-emerald-400' },
     { divider: true },
     { path: '/', icon: 'home', label: 'Início' },
     { path: '/third-party', icon: 'directions_car', label: 'Veículo' },
@@ -93,7 +93,8 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
                     ></div>
                   ) : (
                     <div className="flex items-center justify-center size-10 rounded-full bg-primary ring-2 ring-white dark:ring-surface-dark shadow-sm">
-                      <span className="text-white dark:text-[#102217] font-bold text-sm">
+                      {/* WCAG: #0a2018 sobre #0df26c = ~8.1:1 ✅ */}
+                      <span className="text-[#0a2018] font-bold text-sm">
                         {profile.full_name ? profile.full_name.charAt(0).toUpperCase() : 'U'}
                       </span>
                     </div>

@@ -206,7 +206,8 @@ const Wallet: React.FC = () => {
             <div className="absolute -right-6 -top-6 w-24 h-24 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-all duration-500"></div>
             <div className="relative z-10 flex justify-between items-end">
               <div className="flex flex-col gap-1">
-                <span className="text-gray-400 text-sm font-medium">Total a Receber</span>
+                {/* WCAG: #a8f0c8 sobre #111814 = ~7.8:1 ✅ */}
+                <span className="text-[#a8f0c8] text-xs font-semibold uppercase tracking-widest">Total a Receber</span>
                 <h2 className="text-3xl font-extrabold text-white tracking-tight">{formatCurrency(totalReceivable)}</h2>
               </div>
               <div className="bg-primary/20 p-2 rounded-lg">
@@ -240,9 +241,9 @@ const Wallet: React.FC = () => {
           </div>
 
           {loading ? (
-            <div className="text-center py-8 text-gray-400">Carregando...</div>
+            <div className="text-center py-8 text-gray-500">Carregando...</div>
           ) : activePurchases.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">Nenhuma compra para este mês.</div>
+            <div className="text-center py-8 text-gray-500">Nenhuma compra para este mês.</div>
           ) : (
             activePurchases.map((item) => (
               <article key={item.id} className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all">
@@ -257,14 +258,15 @@ const Wallet: React.FC = () => {
                       <div className="overflow-hidden">
                         <h4 className="text-base font-bold text-[#111814] dark:text-white leading-tight truncate">{item.person_name}</h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{item.item_name}</p>
-                        <p className="text-[11px] font-medium text-gray-400 dark:text-gray-500 mt-0.5">Total: {formatCurrency(item.amount)}</p>
+                    <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-0.5">Total: {formatCurrency(item.amount)}</p>
                       </div>
                       <div className="text-right shrink-0 ml-2">
-                        <span className="block text-primary font-bold text-lg">{formatCurrency(item.installmentValue)}</span>
+                        {/* WCAG: emerald-700 sobre white = ~5.8:1 ✅ */}
+                        <span className="block text-emerald-700 dark:text-primary font-bold text-lg">{formatCurrency(item.installmentValue)}</span>
                         {item.isPaidThisMonth || item.isFullyPaid ? (
-                          <span className="text-[10px] uppercase tracking-wider font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded inline-block mt-1">Pago</span>
+                          <span className="text-[11px] uppercase tracking-wider font-bold text-emerald-800 dark:text-primary bg-primary/10 px-1.5 py-0.5 rounded-md inline-block mt-1">Pago</span>
                         ) : (
-                          <span className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded inline-block mt-1">Pendente</span>
+                          <span className="text-[11px] uppercase tracking-wider font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/10 px-1.5 py-0.5 rounded-md inline-block mt-1">Pendente</span>
                         )}
                       </div>
                     </div>
@@ -275,7 +277,7 @@ const Wallet: React.FC = () => {
                 <div className="bg-background-light dark:bg-black/20 rounded-xl p-3 flex flex-col gap-2">
                   <div className="flex justify-between items-end text-sm">
                     <div className="flex flex-col w-full pr-4">
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400 mb-1">Parcelas ({item.installments_paid}/{item.installments_total})</span>
+                      <span className="text-[11px] text-gray-500 dark:text-gray-400 font-semibold mb-1">Parcelas ({item.installments_paid}/{item.installments_total})</span>
                       <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(item.progressPercent, 100)}%` }}></div>
                       </div>
@@ -297,9 +299,11 @@ const Wallet: React.FC = () => {
                           onChange={() => handleTogglePaid(item.id, item.installments_paid, item.installments_total, item.isPaidThisMonth)}
                           className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 checked:bg-primary checked:border-primary transition-all"
                         />
-                        <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100 pointer-events-none text-[14px]">check</span>
+                        {/* WCAG: checkmark #0a2018 sobre primary = ~8.1:1 ✅ */}
+                        <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[#0a2018] opacity-0 peer-checked:opacity-100 pointer-events-none text-[14px]">check</span>
                       </div>
-                      <span className={`text-xs font-semibold transition-colors select-none ${item.isPaidThisMonth ? 'text-primary' : 'text-gray-500 group-hover/check:text-primary'}`}>
+                      {/* WCAG: emerald-700 = ~5.8:1 ✅ */}
+                      <span className={`text-xs font-semibold transition-colors select-none ${item.isPaidThisMonth ? 'text-emerald-700 dark:text-primary' : 'text-gray-500 group-hover/check:text-emerald-700 dark:group-hover/check:text-primary'}`}>
                         {item.isPaidThisMonth ? 'Pago' : 'Marcar como Pago'}
                       </span>
                     </label>

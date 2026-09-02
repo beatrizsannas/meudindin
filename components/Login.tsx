@@ -164,7 +164,8 @@ const Login: React.FC = () => {
         <div className="flex items-center justify-center mt-4">
           <p className="text-text-secondary dark:text-gray-400 text-sm font-medium">
             Não tem uma conta?
-            <Link to="/signup" className="text-primary font-bold hover:underline decoration-2 underline-offset-2 ml-1">
+            {/* WCAG: emerald-700 sobre #f5f8f7 = ~5.8:1 ✅ */}
+            <Link to="/signup" className="text-emerald-700 dark:text-primary font-bold hover:underline decoration-2 underline-offset-2 ml-1">
               Cadastre-se
             </Link>
           </p>

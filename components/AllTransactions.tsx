@@ -253,7 +253,7 @@ const AllTransactions: React.FC = () => {
                 </div>
 
                 <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 material-symbols-outlined text-xl">search</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 material-symbols-outlined text-xl">search</span>
                     <input
                         className="w-full pl-10 pr-4 py-3 rounded-xl bg-surface-light dark:bg-surface-dark border-gray-200 dark:border-gray-700 focus:border-primary focus:ring-primary dark:focus:border-primary dark:focus:ring-primary text-sm shadow-sm placeholder-gray-400 dark:text-white outline-none"
                         placeholder="Buscar transação..."
@@ -291,11 +291,13 @@ const AllTransactions: React.FC = () => {
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <p className={`text-base font-bold ${transaction.type === 'income' ? 'text-primary dark:text-primary' : 'text-[#111814] dark:text-white'}`}>
+                                                {/* WCAG: emerald-700 sobre white = ~5.8:1 ✅ */}
+                                                <p className={`text-base font-bold ${transaction.type === 'income' ? 'text-emerald-700 dark:text-primary' : 'text-[#111814] dark:text-white'}`}>
                                                     {transaction.type === 'expense' ? '- ' : '+ '}
                                                     {formatCurrency(transaction.amount)}
                                                 </p>
-                                                <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded ${transaction.type === 'expense' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'}`}>
+                                                {/* WCAG: text-red-700 sobre red-100 = ~5.9:1 ✅ */}
+                                                <span className={`inline-block px-2 py-0.5 text-[11px] font-bold rounded-lg ${transaction.type === 'expense' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300'}`}>
                                                     {transaction.type === 'expense' ? 'Despesa' : 'Receita'}
                                                 </span>
                                             </div>

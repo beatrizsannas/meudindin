@@ -24,7 +24,7 @@ const Notifications: React.FC = () => {
                 {unreadCount > 1 && (
                     <button
                         onClick={markAllAsRead}
-                        className="text-xs font-bold text-primary hover:text-primary-dark transition-colors px-3 py-1.5 rounded-lg hover:bg-primary/10"
+                        className="text-xs font-bold text-emerald-700 dark:text-primary hover:text-emerald-800 dark:hover:text-primary-dark transition-colors px-3 py-1.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-primary/10"
                     >
                         Marcar todas como lidas
                     </button>
@@ -33,9 +33,24 @@ const Notifications: React.FC = () => {
 
             <main className="px-6 pt-4 flex flex-col gap-4">
                 {notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 opacity-50">
-                        <span className="material-symbols-outlined text-6xl text-gray-400 mb-4">notifications_off</span>
-                        <p className="text-gray-500 font-medium">Nenhuma notificação nova</p>
+                    <div className="flex flex-col items-center justify-center py-16 px-2 gap-5">
+                        <div className="flex items-center justify-center size-20 rounded-full bg-orange-50 dark:bg-orange-900/20">
+                            <span className="material-symbols-outlined text-5xl text-orange-400 dark:text-orange-300">notifications_off</span>
+                        </div>
+                        <div className="flex flex-col gap-3 text-center">
+                            <p className="text-base font-bold text-[#111814] dark:text-white leading-snug">
+                                Nenhuma notificação por enquanto
+                            </p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                                As notificações são exclusivas dos seus cartões de crédito — só aparecerá aqui lembretes quando faltar <span className="font-bold text-orange-500 dark:text-orange-400">2 dias</span> para você pagar a sua fatura.
+                            </p>
+                        </div>
+                        <div className="flex items-start gap-3 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-900/40 rounded-2xl p-4 text-left w-full">
+                            <span className="material-symbols-outlined text-2xl text-primary shrink-0 mt-0.5 icon-filled">credit_card</span>
+                            <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                                Cadastre seus cartões na aba do <span className="font-bold text-[#111814] dark:text-white">menu lateral</span> para nunca mais esquecer de pagar 😊
+                            </p>
+                        </div>
                     </div>
                 ) : (
                     notifications.map(item => (
@@ -62,7 +77,8 @@ const Notifications: React.FC = () => {
                                 <p className={`text-sm mt-1 ${item.isRead ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300'}`}>
                                     {item.message}
                                 </p>
-                                <p className={`text-xs mt-2 font-medium ${item.isRead ? 'text-gray-400' : 'text-orange-500'}`}>
+                                {/* WCAG: orange-700 sobre white = ~4.8:1 ✅ */}
+                                <p className={`text-xs mt-2 font-bold ${item.isRead ? 'text-gray-500' : 'text-orange-700 dark:text-orange-400'}`}>
                                     Vencimento: {item.date}
                                 </p>
                             </div>
