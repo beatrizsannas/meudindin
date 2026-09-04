@@ -383,7 +383,7 @@ const ImovelDetail: React.FC = () => {
                       {date ? new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : 'Selecione a data'}
                     </p>
                   </div>
-                  <span className="pr-4 pointer-events-none text-primary">
+                  <span className="pr-4 pointer-events-none text-emerald-700 dark:text-primary">
                     <span className="material-symbols-outlined text-xl">calendar_month</span>
                   </span>
                   <input

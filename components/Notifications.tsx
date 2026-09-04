@@ -53,49 +53,57 @@ const Notifications: React.FC = () => {
                         </div>
                     </div>
                 ) : (
-                    notifications.map(item => (
-                        <div
-                            key={item.id}
-                            onClick={() => !item.isRead && markAsRead(item.id)}
-                            className={`p-4 rounded-xl shadow-sm border flex items-start gap-4 transition-all duration-300 cursor-pointer active:scale-[0.98] ${item.isRead
-                                    ? 'bg-gray-50 dark:bg-surface-dark/50 border-gray-100 dark:border-gray-800 opacity-60 grayscale'
-                                    : 'bg-white dark:bg-surface-dark border-orange-100 dark:border-orange-900/30'
-                                }`}
-                        >
-                            <div className={`flex items-center justify-center size-10 rounded-full shrink-0 ${item.isRead
-                                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-500'
-                                    : 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
-                                }`}>
-                                <span className="material-symbols-outlined">
-                                    {item.isRead ? 'notifications' : 'warning'}
-                                </span>
-                            </div>
-                            <div className="flex-1">
-                                <h3 className={`font-bold ${item.isRead ? 'text-gray-500 dark:text-gray-400' : 'text-[#111814] dark:text-white'}`}>
-                                    {item.title}
-                                </h3>
-                                <p className={`text-sm mt-1 ${item.isRead ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300'}`}>
-                                    {item.message}
-                                </p>
-                                {/* WCAG: orange-700 sobre white = ~4.8:1 ✅ */}
-                                <p className={`text-xs mt-2 font-bold ${item.isRead ? 'text-gray-500' : 'text-orange-700 dark:text-orange-400'}`}>
-                                    Vencimento: {item.date}
-                                </p>
-                            </div>
-                            {!item.isRead && (
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        markAsRead(item.id);
-                                    }}
-                                    className="p-1 rounded-full text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors"
-                                    title="Marcar como lida"
-                                >
-                                    <span className="material-symbols-outlined text-xl">check_circle</span>
-                                </button>
-                            )}
+                    <>
+                        <div className="flex items-start gap-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/40 rounded-2xl p-4 text-left w-full">
+                            <span className="material-symbols-outlined text-2xl text-emerald-700 dark:text-primary shrink-0 mt-0.5">info</span>
+                            <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed font-medium">
+                                Você sempre saberá 2 dias antes da data do vencimento quais cartões que você tem para pagar, não precisa mais gastar sua memória com isso :)
+                            </p>
                         </div>
-                    ))
+                        {notifications.map(item => (
+                            <div
+                                key={item.id}
+                                onClick={() => !item.isRead && markAsRead(item.id)}
+                                className={`p-4 rounded-xl shadow-sm border flex items-start gap-4 transition-all duration-300 cursor-pointer active:scale-[0.98] ${item.isRead
+                                        ? 'bg-gray-50 dark:bg-surface-dark/50 border-gray-100 dark:border-gray-800 opacity-60 grayscale'
+                                        : 'bg-white dark:bg-surface-dark border-orange-100 dark:border-orange-900/30'
+                                    }`}
+                            >
+                                <div className={`flex items-center justify-center size-10 rounded-full shrink-0 ${item.isRead
+                                        ? 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                                        : 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
+                                    }`}>
+                                    <span className="material-symbols-outlined">
+                                        {item.isRead ? 'notifications' : 'warning'}
+                                    </span>
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className={`font-bold ${item.isRead ? 'text-gray-500 dark:text-gray-400' : 'text-[#111814] dark:text-white'}`}>
+                                        {item.title}
+                                    </h3>
+                                    <p className={`text-sm mt-1 ${item.isRead ? 'text-gray-400 dark:text-gray-500' : 'text-gray-600 dark:text-gray-300'}`}>
+                                        {item.message}
+                                    </p>
+                                    {/* WCAG: orange-700 sobre white = ~4.8:1 ✅ */}
+                                    <p className={`text-xs mt-2 font-bold ${item.isRead ? 'text-gray-500' : 'text-orange-700 dark:text-orange-400'}`}>
+                                        Vencimento: {item.date}
+                                    </p>
+                                </div>
+                                {!item.isRead && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            markAsRead(item.id);
+                                        }}
+                                        className="p-1 rounded-full text-gray-400 hover:text-primary hover:bg-primary/10 transition-colors"
+                                        title="Marcar como lida"
+                                    >
+                                        <span className="material-symbols-outlined text-xl">check_circle</span>
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </>
                 )}
             </main>
         </div>

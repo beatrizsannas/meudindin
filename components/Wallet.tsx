@@ -5,6 +5,7 @@ import Button from './Button';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { CustomSelect } from './CustomSelect';
 
 import { useThirdPartyPurchases, Purchase } from '../hooks/useWallet';
 import { useQueryClient } from '@tanstack/react-query';
@@ -165,39 +166,20 @@ const Wallet: React.FC = () => {
       <main className="flex-1 px-4 py-4 space-y-6">
         {/* Filters */}
         <section className="flex gap-3">
-          <div className="relative flex-1 group">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="material-symbols-outlined text-gray-400 text-[20px]">calendar_month</span>
-            </div>
-            <select
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(Number(e.target.value))}
-              className="w-full h-12 pl-10 pr-10 bg-white dark:bg-surface-dark text-[#111814] dark:text-white rounded-xl border-none focus:ring-2 focus:ring-primary/50 appearance-none text-sm font-bold shadow-sm cursor-pointer transition-all outline-none bg-none"
-              style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
-            >
-              {months.map((m, i) => (
-                <option key={i} value={i}>{m}</option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <span className="material-symbols-outlined text-gray-400 text-[24px]">arrow_drop_down</span>
-            </div>
-          </div>
-          <div className="relative w-36 group">
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(Number(e.target.value))}
-              className="w-full h-12 pl-4 pr-10 bg-white dark:bg-surface-dark text-[#111814] dark:text-white rounded-xl border-none focus:ring-2 focus:ring-primary/50 appearance-none text-sm font-bold shadow-sm cursor-pointer transition-all outline-none bg-none"
-              style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
-            >
-              {years.map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <span className="material-symbols-outlined text-gray-400 text-[24px]">arrow_drop_down</span>
-            </div>
-          </div>
+          <CustomSelect
+            value={selectedMonth}
+            onChange={(val) => setSelectedMonth(Number(val))}
+            options={months.map((m, i) => ({ value: i, label: m }))}
+            icon="calendar_month"
+            className="flex-1"
+            minWidth=""
+          />
+          <CustomSelect
+            value={selectedYear}
+            onChange={(val) => setSelectedYear(Number(val))}
+            options={years.map(y => ({ value: y, label: String(y) }))}
+            minWidth="min-w-[90px]"
+          />
         </section>
 
         {/* Total Card */}

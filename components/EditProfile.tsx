@@ -143,8 +143,8 @@ const EditProfile: React.FC = () => {
                                 style={{ backgroundImage: `url("${formData.avatar_url}")` }}
                             ></div>
                         ) : (
-                            <div className="flex items-center justify-center h-28 w-28 rounded-full bg-primary/20 border-4 border-surface-light dark:border-surface-dark shadow-md">
-                                <span className="text-primary font-bold text-4xl">
+                            <div className="flex items-center justify-center h-28 w-28 rounded-full bg-emerald-100 dark:bg-primary/20 border-4 border-surface-light dark:border-surface-dark shadow-md">
+                                <span className="text-emerald-700 dark:text-primary font-bold text-4xl">
                                     {formData.name ? formData.name.charAt(0).toUpperCase() : 'U'}
                                 </span>
                             </div>
@@ -158,7 +158,7 @@ const EditProfile: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setIsAvatarModalOpen(true)}
-                            className="text-primary dark:text-primary font-bold text-sm hover:underline"
+                            className="text-emerald-700 dark:text-primary font-bold text-sm hover:underline"
                         >
                             Alterar foto
                         </button>
@@ -284,8 +284,8 @@ const EditProfile: React.FC = () => {
                                 >
                                     <img src={url} alt={`Avatar ${index + 1}`} className="w-full h-full rounded-full bg-gray-100 dark:bg-white/5" />
                                     {formData.avatar_url === url && (
-                                        <div className="absolute inset-0 bg-primary/20 rounded-full flex items-center justify-center">
-                                            <span className="material-symbols-outlined text-primary font-bold shadow-lg">check</span>
+                                        <div className="absolute inset-0 bg-emerald-100 dark:bg-primary/20 rounded-full flex items-center justify-center">
+                                            <span className="material-symbols-outlined text-emerald-700 dark:text-primary font-bold shadow-lg">check</span>
                                         </div>
                                     )}
                                 </button>

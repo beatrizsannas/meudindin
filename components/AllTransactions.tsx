@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { CustomSelect } from './CustomSelect';
 
 import { useTransactions, Transaction } from '../hooks/useTransactions';
 import { useQueryClient } from '@tanstack/react-query';
@@ -225,31 +226,25 @@ const AllTransactions: React.FC = () => {
 
                 {/* Date Filters */}
                 <div className="flex gap-3 mb-4 overflow-x-auto scrollbar-hide">
-                    <div className="relative shrink-0">
-                        <select
-                            value={selectedMonth}
-                            onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="bg-surface-variant-light dark:bg-surface-variant-dark border border-gray-200 dark:border-gray-700 rounded-xl py-2 pl-4 pr-8 text-sm font-bold shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-gray-200 outline-none"
-                        >
-                            <option value="Todos">Mês: Todos</option>
-                            {months.map(m => (
-                                <option key={m.value} value={m.value}>{m.label}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <CustomSelect
+                        value={selectedMonth}
+                        onChange={setSelectedMonth}
+                        options={[
+                            { value: 'Todos', label: 'Mês: Todos' },
+                            ...months.map(m => ({ value: m.value, label: m.label })),
+                        ]}
+                        minWidth="min-w-[130px]"
+                    />
 
-                    <div className="relative shrink-0">
-                        <select
-                            value={selectedYear}
-                            onChange={(e) => setSelectedYear(e.target.value)}
-                            className="bg-surface-variant-light dark:bg-surface-variant-dark border border-gray-200 dark:border-gray-700 rounded-xl py-2 pl-4 pr-8 text-sm font-bold shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-gray-200 outline-none"
-                        >
-                            <option value="Todos">Ano: Todos</option>
-                            {years.map(y => (
-                                <option key={y} value={y}>{y === 'Todos' ? 'Todos' : y}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <CustomSelect
+                        value={selectedYear}
+                        onChange={setSelectedYear}
+                        options={[
+                            { value: 'Todos', label: 'Ano: Todos' },
+                            ...years.filter(y => y !== 'Todos').map(y => ({ value: y, label: String(y) })),
+                        ]}
+                        minWidth="min-w-[110px]"
+                    />
                 </div>
 
                 <div className="relative">

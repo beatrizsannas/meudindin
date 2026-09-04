@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { useTransactions } from '../hooks/useTransactions';
 import ConfirmModal from './ConfirmModal';
+import { CustomSelect } from './CustomSelect';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Types
@@ -258,34 +259,25 @@ const ThirdPartyCards: React.FC = () => {
         <div className="flex flex-col gap-2">
           <label className="text-text-main dark:text-white text-sm font-bold ml-1">Filtrar Histórico</label>
           <div className="flex gap-3">
-            <div className="relative flex-1">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value === 'Todos' ? 'Todos' : Number(e.target.value))}
-                className="w-full h-12 appearance-none bg-surface-light dark:bg-surface-dark border-none rounded-xl pl-4 pr-10 text-text-main dark:text-white font-bold text-sm focus:ring-2 focus:ring-primary/50 shadow-sm outline-none bg-none"
-                style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
-              >
-                <option value="Todos">Todos</option>
-                {months.map((m, i) => (
-                  <option key={i} value={i}>{m}</option>
-                ))}
-              </select>
-              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">expand_more</span>
-            </div>
-            <div className="relative w-28">
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value === 'Todos' ? 'Todos' : Number(e.target.value))}
-                className="w-full h-12 appearance-none bg-surface-light dark:bg-surface-dark border-none rounded-xl pl-4 pr-10 text-text-main dark:text-white font-bold text-sm focus:ring-2 focus:ring-primary/50 shadow-sm outline-none bg-none"
-                style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none' }}
-              >
-                <option value="Todos">Todos</option>
-                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">expand_more</span>
-            </div>
+            <CustomSelect
+              value={selectedMonth}
+              onChange={(val) => setSelectedMonth(val === 'Todos' ? 'Todos' : Number(val))}
+              options={[
+                { value: 'Todos', label: 'Todos' },
+                ...months.map((m, i) => ({ value: i, label: m })),
+              ]}
+              className="flex-1"
+              minWidth=""
+            />
+            <CustomSelect
+              value={selectedYear}
+              onChange={(val) => setSelectedYear(val === 'Todos' ? 'Todos' : Number(val))}
+              options={[
+                { value: 'Todos', label: 'Todos' },
+                ...Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => ({ value: y, label: String(y) })),
+              ]}
+              minWidth="min-w-[90px]"
+            />
           </div>
 
           {/* Category filter chips */}
@@ -318,7 +310,7 @@ const ThirdPartyCards: React.FC = () => {
             <span className="text-text-secondary text-xs font-bold uppercase tracking-wider">Valor Total Gasto</span>
           </div>
           <span className="text-4xl font-extrabold text-text-main dark:text-white tracking-tight">{formatCurrency(totalAmount)}</span>
-          <div className="mt-2 text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
+          <div className="mt-2 text-xs font-semibold text-emerald-800 dark:text-primary bg-emerald-100 dark:bg-primary/10 px-3 py-1 rounded-full">
             {selectedMonth === 'Todos' || selectedYear === 'Todos'
               ? 'Todo o Período'
               : `${months[selectedMonth as number]}/${selectedYear}${selectedCategory !== 'Todos' ? ` · ${selectedCategory === 'fuel' ? 'Combustível' : 'Manutenção'}` : ''}`}
@@ -340,7 +332,7 @@ const ThirdPartyCards: React.FC = () => {
                   onClick={() => handleEdit(item)}
                   className="flex items-center p-3 bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-white/5 active:scale-[0.98] transition-all cursor-pointer hover:border-primary/50"
                 >
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${item.type === 'fuel' ? 'bg-primary/10 text-primary-dark dark:text-primary' : 'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400'}`}>
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${item.type === 'fuel' ? 'bg-emerald-100 dark:bg-primary/10 text-emerald-700 dark:text-primary' : 'bg-orange-100 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400'}`}>
                     <span className="material-symbols-outlined">{item.type === 'fuel' ? 'local_gas_station' : 'build'}</span>
                   </div>
                   <div className="ml-4 flex flex-col flex-1 min-w-0">

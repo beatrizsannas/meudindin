@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import ConfirmModal from './ConfirmModal';
+import { CustomSelect } from './CustomSelect';
 
 import { useTransactions } from '../hooks/useTransactions';
 import { useQueryClient } from '@tanstack/react-query';
@@ -249,20 +250,19 @@ const ViewIncome: React.FC = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
-          <div className="shrink-0 relative">
-            <select
-              value={selectedRange}
-              onChange={(e) => setSelectedRange(e.target.value)}
-              className="appearance-none bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full py-2 pl-4 pr-10 text-sm font-bold shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-white"
-            >
-              <option>Este Mês</option>
-              <option>Mês Seguinte</option>
-              <option>Mês Passado</option>
-              <option>Últimos 3 Meses</option>
-            </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-lg">calendar_month</span>
-          </div>
+        <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 mt-4">
+          <CustomSelect
+            value={selectedRange}
+            onChange={setSelectedRange}
+            options={[
+              { value: 'Este Mês', label: 'Este Mês' },
+              { value: 'Mês Seguinte', label: 'Mês Seguinte' },
+              { value: 'Mês Passado', label: 'Mês Passado' },
+              { value: 'Últimos 3 Meses', label: 'Últimos 3 Meses' },
+            ]}
+            icon="calendar_month"
+            minWidth="min-w-[150px]"
+          />
         </div>
 
         {/* List */}

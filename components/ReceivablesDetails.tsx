@@ -97,7 +97,7 @@ const ReceivablesDetails: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <span className="block text-[#111814] dark:text-white font-bold text-lg">R$ 300,00</span>
-                    <span className="text-[10px] uppercase tracking-wider font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Recebido</span>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-800 dark:text-primary bg-emerald-100 dark:bg-primary/10 px-1.5 py-0.5 rounded">Recebido</span>
                   </div>
                 </div>
               </div>
@@ -132,7 +132,7 @@ const ReceivablesDetails: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <span className="block text-[#111814] dark:text-white font-bold text-lg">R$ 89,90</span>
-                    <span className="text-[10px] uppercase tracking-wider font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded">Recebido</span>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-800 dark:text-primary bg-emerald-100 dark:bg-primary/10 px-1.5 py-0.5 rounded">Recebido</span>
                   </div>
                 </div>
               </div>

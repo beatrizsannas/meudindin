@@ -22,6 +22,7 @@ import ResetConfirmation from './components/ResetConfirmation';
 import Notifications from './components/Notifications';
 import Imoveis from './components/Imoveis';
 import ImovelDetail from './components/ImovelDetail';
+import Commitments from './components/Commitments';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Create Context for Menu Control
@@ -138,6 +139,7 @@ const App: React.FC = () => {
                   <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
                   <Route path="/imoveis" element={<ProtectedRoute><Imoveis /></ProtectedRoute>} />
                   <Route path="/imoveis/:id" element={<ProtectedRoute><ImovelDetail /></ProtectedRoute>} />
+                  <Route path="/commitments" element={<ProtectedRoute><Commitments /></ProtectedRoute>} />
                 </Routes>
               </div>
 

@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { CustomSelect } from './CustomSelect';
 
 const AllPurchases: React.FC = () => {
+  const [selectedMonth, setSelectedMonth] = useState('Dezembro');
+  const [selectedYear, setSelectedYear] = useState('2025');
   return (
     <div className="relative flex h-full min-h-screen w-full flex-col max-w-md mx-auto overflow-x-hidden shadow-2xl bg-background-light dark:bg-background-dark font-display text-[#111814] dark:text-white transition-colors duration-200">
       <header className="sticky top-0 z-10 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pt-6 pb-2">
@@ -16,39 +19,20 @@ const AllPurchases: React.FC = () => {
       
       <main className="flex-1 px-4 py-4 space-y-6 pb-24">
         <section className="flex gap-3">
-          <div className="relative flex-1 group">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="material-symbols-outlined text-gray-400 text-[20px]">calendar_month</span>
-            </div>
-            <select className="w-full h-12 pl-10 pr-10 bg-white dark:bg-surface-dark text-[#111814] dark:text-white rounded-xl border-none focus:ring-2 focus:ring-primary/50 appearance-none text-sm font-bold shadow-sm cursor-pointer transition-all">
-              <option>Janeiro</option>
-              <option>Fevereiro</option>
-              <option>Março</option>
-              <option>Abril</option>
-              <option>Maio</option>
-              <option>Junho</option>
-              <option>Julho</option>
-              <option>Agosto</option>
-              <option>Setembro</option>
-              <option>Outubro</option>
-              <option>Novembro</option>
-              <option selected>Dezembro</option>
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-2xl">arrow_drop_down</span>
-            </div>
-          </div>
-          <div className="relative w-36 group">
-            <select className="w-full h-12 pl-4 pr-10 bg-white dark:bg-surface-dark text-[#111814] dark:text-white rounded-xl border-none focus:ring-2 focus:ring-primary/50 appearance-none text-sm font-bold shadow-sm cursor-pointer transition-all">
-              <option>2023</option>
-              <option>2024</option>
-              <option selected>2025</option>
-              <option>2026</option>
-            </select>
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors text-2xl">arrow_drop_down</span>
-            </div>
-          </div>
+          <CustomSelect
+            value={selectedMonth}
+            onChange={setSelectedMonth}
+            options={['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'].map(m => ({ value: m, label: m }))}
+            icon="calendar_month"
+            className="flex-1"
+            minWidth=""
+          />
+          <CustomSelect
+            value={selectedYear}
+            onChange={setSelectedYear}
+            options={['2023','2024','2025','2026'].map(y => ({ value: y, label: y }))}
+            minWidth="min-w-[90px]"
+          />
         </section>
         
         <section>
@@ -63,7 +47,7 @@ const AllPurchases: React.FC = () => {
         <section className="space-y-4 pb-20">
           <div className="flex items-center justify-between px-1">
             <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Dezembro 2025</h3>
-            <span className="text-xs font-medium text-gray-400">5 compras</span>
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400">5 compras</span>
           </div>
           
           <article className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all hover:shadow-md">

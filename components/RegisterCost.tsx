@@ -345,7 +345,7 @@ const RegisterCost: React.FC = () => {
           <div className="flex flex-col gap-2">
             <label className="text-gray-500 dark:text-gray-400 text-sm font-medium">Valor</label>
             <div className="relative flex items-center">
-              <span className="absolute left-4 text-primary font-bold text-xl">R$</span>
+              <span className="absolute left-4 text-emerald-700 dark:text-primary font-bold text-xl">R$</span>
               <input
                 className="w-full bg-background-light dark:bg-background-dark rounded-lg h-16 pl-12 pr-4 text-2xl font-bold text-[#111814] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 border-none focus:ring-2 focus:ring-primary/50 transition-all outline-none"
                 inputMode="numeric"
@@ -397,7 +397,7 @@ const RegisterCost: React.FC = () => {
                   <button
                     key={cat.id}
                     onClick={() => setCategoryId(cat.id)}
-                    className={`px-4 py-2 shrink-0 rounded-full border border-gray-200 dark:border-white/5 bg-background-light dark:bg-background-dark text-sm font-medium transition-colors ${categoryId === cat.id ? 'bg-primary text-[#003314] border-primary font-bold' : 'text-gray-500 dark:text-gray-400'}`}
+                    className={`px-4 py-2 shrink-0 rounded-full border border-gray-200 dark:border-white/5 bg-background-light dark:bg-background-dark text-sm font-medium transition-colors ${categoryId === cat.id ? 'bg-primary text-[#003314] border-primary font-bold' : 'text-gray-600 dark:text-gray-400'}`}
                   >
                     {cat.name}
                   </button>
@@ -429,7 +429,7 @@ const RegisterCost: React.FC = () => {
                 <div className={`flex items-center justify-between py-2 ${isInstallment ? 'opacity-50 pointer-events-none' : ''}`}>
                   <div className="flex flex-col">
                     <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Despesa Fixa?</span>
-                    {isFixed && <span className="text-xs text-primary">Repete por 12 meses</span>}
+                    {isFixed && <span className="text-xs text-emerald-700 dark:text-primary">Repete por 12 meses</span>}
                   </div>
                   <button
                     disabled={isInstallment}

@@ -178,7 +178,7 @@ const Signup: React.FC = () => {
         <div className="flex items-center justify-center mt-6 mb-4">
           <p className="text-text-secondary dark:text-gray-400 text-sm font-medium">
             Já tenho uma conta?
-            <Link to="/login" className="text-primary font-bold hover:underline decoration-2 underline-offset-2 ml-1">
+            <Link to="/login" className="text-emerald-700 dark:text-primary font-bold hover:underline decoration-2 underline-offset-2 ml-1">
               Fazer Login
             </Link>
           </p>

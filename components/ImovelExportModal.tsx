@@ -203,7 +203,7 @@ const ImovelExportModal: React.FC<ImovelExportModalProps> = ({ isOpen, onClose, 
             <div className="flex gap-2">
               <button
                 onClick={() => setSelectedCats(new Set(CATEGORIES.map(c => c.key)))}
-                className="text-xs font-bold px-3 py-1.5 rounded-full bg-primary/10 text-primary"
+                className="text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-100 dark:bg-primary/10 text-emerald-800 dark:text-primary"
               >
                 Selecionar tudo
               </button>

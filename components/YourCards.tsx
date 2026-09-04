@@ -221,7 +221,7 @@ const YourCards: React.FC = () => {
                     </div>
                     <div className="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
                         <p className="text-sm text-gray-500 dark:text-gray-400">Limite Total</p>
-                        <p className="text-xl font-bold text-primary">{formatCurrency(totalLimit)}</p>
+                        <p className="text-xl font-bold text-emerald-700 dark:text-primary">{formatCurrency(totalLimit)}</p>
                     </div>
                 </div>
 
@@ -475,7 +475,7 @@ const YourCards: React.FC = () => {
                                                 />
                                                 <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                                             </div>
-                                            <span className={`text-xs font-bold ${isAnnualFeeExempt ? 'text-primary' : 'text-gray-400'}`}>Isenta</span>
+                                            <span className={`text-xs font-bold ${isAnnualFeeExempt ? 'text-emerald-700 dark:text-primary' : 'text-gray-500 dark:text-gray-400'}`}>Isenta</span>
                                         </label>
                                     </div>
 

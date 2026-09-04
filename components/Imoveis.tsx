@@ -144,7 +144,7 @@ const Imoveis: React.FC = () => {
 
       <main className="px-6 pt-4 flex flex-col gap-4">
         {loading ? (
-          <p className="text-center text-gray-400 py-12">Carregando...</p>
+          <p className="text-center text-gray-600 dark:text-gray-400 py-12">Carregando...</p>
         ) : properties.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-20 text-center">
             <div className="size-20 rounded-full bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
@@ -237,7 +237,7 @@ const Imoveis: React.FC = () => {
               <label className="flex flex-col gap-1.5">
                 <span className="text-sm font-bold text-gray-700 dark:text-gray-200">Valor do contrato</span>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-lg text-gray-400">R$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-lg text-gray-500 dark:text-gray-400">R$</span>
                   <input
                     type="text"
                     inputMode="numeric"

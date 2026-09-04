@@ -29,8 +29,8 @@ const ForgotPassword: React.FC = () => {
       <div className="flex-1 flex flex-col px-6 overflow-y-auto">
         {/* Hero Illustration */}
         <div className="flex justify-center pt-8 pb-6">
-          <div className="relative flex items-center justify-center size-24 bg-primary/20 rounded-full">
-            <span className="material-symbols-outlined text-primary text-[48px]">lock_reset</span>
+          <div className="relative flex items-center justify-center size-24 bg-emerald-100 dark:bg-primary/20 rounded-full">
+            <span className="material-symbols-outlined text-emerald-700 dark:text-primary text-[48px]">lock_reset</span>
           </div>
         </div>
 
@@ -40,7 +40,7 @@ const ForgotPassword: React.FC = () => {
         </h1>
 
         {/* BodyText */}
-        <p className="text-[#608a72] dark:text-gray-300 text-base font-normal leading-relaxed pb-8 text-center px-2">
+        <p className="text-gray-600 dark:text-gray-300 text-base font-normal leading-relaxed pb-8 text-center px-2">
           Não se preocupe! Informe o e-mail cadastrado e enviaremos um link para você criar uma nova senha.
         </p>
 
@@ -72,7 +72,7 @@ const ForgotPassword: React.FC = () => {
 
       {/* Footer Link */}
       <div className="p-6 pb-8 text-center">
-        <p className="text-[#608a72] dark:text-gray-400 text-sm font-medium">
+        <p className="text-gray-600 dark:text-gray-400 text-sm font-medium">
           Lembrou sua senha? 
           <Link to="/login" className="text-[#102217] dark:text-primary font-bold hover:underline ml-1">
             Entrar agora

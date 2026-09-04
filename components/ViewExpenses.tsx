@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import ConfirmModal from './ConfirmModal';
 import DeleteFixedModal from './DeleteFixedModal';
+import { CustomSelect } from './CustomSelect';
 
 import { useTransactions } from '../hooks/useTransactions';
 import { useQueryClient } from '@tanstack/react-query';
@@ -350,53 +351,42 @@ const ViewExpenses: React.FC = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 mb-2">
+        <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 mb-2 mt-4">
           {/* Year Filter */}
-          <div className="relative shrink-0">
-            <select
-              value={selectedYear}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSelectedYear(val === 'Todos' ? 'Todos' : Number(val));
-              }}
-              className="appearance-none bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full py-2 pl-4 pr-10 text-sm font-bold shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-white"
-            >
-              <option value="Todos">Todos (Ano)</option>
-              {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-lg">expand_more</span>
-          </div>
+          <CustomSelect
+            value={selectedYear}
+            onChange={(val) => setSelectedYear(val === 'Todos' ? 'Todos' : Number(val))}
+            options={[
+              { value: 'Todos', label: 'Todos (Ano)' },
+              ...Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(y => ({ value: y, label: String(y) })),
+            ]}
+            minWidth="min-w-[130px]"
+          />
 
           {/* Month Filter */}
           {selectedYear !== 'Todos' && (
-            <div className="relative shrink-0">
-              <select
-                value={selectedMonthIndex}
-                onChange={(e) => setSelectedMonthIndex(Number(e.target.value))}
-                className="appearance-none bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full py-2 pl-4 pr-10 text-sm font-medium shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-white"
-              >
-                <option value={-1}>Todos os Meses</option>
-                {months.map((m, i) => <option key={i} value={i}>{m}</option>)}
-              </select>
-              <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-lg">expand_more</span>
-            </div>
+            <CustomSelect
+              value={selectedMonthIndex}
+              onChange={(val) => setSelectedMonthIndex(Number(val))}
+              options={[
+                { value: -1, label: 'Todos os Meses' },
+                ...months.map((m, i) => ({ value: i, label: m })),
+              ]}
+              minWidth="min-w-[140px]"
+            />
           )}
 
           {/* Category Filter */}
-          <div className="relative shrink-0">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="appearance-none bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-full py-2 pl-4 pr-10 text-sm font-medium shadow-sm focus:border-primary focus:ring-primary text-gray-700 dark:text-white"
-            >
-              <option value="Categoria">Categoria</option>
-              <option value="Todas">Todas</option>
-              {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-            </select>
-            <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none text-lg">expand_more</span>
-          </div>
+          <CustomSelect
+            value={selectedCategory}
+            onChange={setSelectedCategory}
+            options={[
+              { value: 'Categoria', label: 'Categoria' },
+              { value: 'Todas', label: 'Todas' },
+              ...categories.map(c => ({ value: c.name, label: c.name })),
+            ]}
+            minWidth="min-w-[130px]"
+          />
           
           <div className="w-1"></div>
         </div>
