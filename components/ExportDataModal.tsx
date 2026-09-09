@@ -114,6 +114,67 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
         });
     };
 
+    // Helper: get the list of months covered by a filter period
+    const getMonthsForPeriod = (period: string): { month: number; year: number }[] => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+
+        if (period === 'current') {
+            return [{ month: currentMonth, year: currentYear }];
+        }
+        if (period === 'previous') {
+            const d = new Date(currentYear, currentMonth - 1, 1);
+            return [{ month: d.getMonth(), year: d.getFullYear() }];
+        }
+        if (period === 'last_3') {
+            const result: { month: number; year: number }[] = [];
+            for (let i = 2; i >= 0; i--) {
+                const d = new Date(currentYear, currentMonth - i, 1);
+                result.push({ month: d.getMonth(), year: d.getFullYear() });
+            }
+            return result;
+        }
+        return [{ month: currentMonth, year: currentYear }];
+    };
+
+    // Helper: filter third-party purchases by active installments in a period
+    // This mirrors the logic in Wallet.tsx's getInstallmentDetails
+    const filterThirdPartyByActiveInstallments = (purchases: any[], period: string) => {
+        const periodMonths = getMonthsForPeriod(period);
+        const result: any[] = [];
+
+        purchases.forEach(purchase => {
+            const startParts = (purchase.start_payment_date || purchase.purchase_date || '').split('-');
+            if (startParts.length < 2) return;
+            const startYear = parseInt(startParts[0]);
+            const startMonth = parseInt(startParts[1]) - 1; // 0-indexed
+
+            // Check if any month in the period has an active installment
+            for (const { month, year } of periodMonths) {
+                const diffMonths = (year - startYear) * 12 + (month - startMonth);
+                const installmentNumber = diffMonths + 1;
+
+                if (installmentNumber >= 1 && installmentNumber <= purchase.installments_total) {
+                    const installmentValue = purchase.amount / purchase.installments_total;
+                    const isPaidThisMonth = installmentNumber <= purchase.installments_paid;
+
+                    result.push({
+                        ...purchase,
+                        installmentNumber,
+                        installmentValue,
+                        isPaidThisMonth,
+                        displayMonth: month,
+                        displayYear: year,
+                    });
+                    break; // Avoid duplicate entries for the same purchase across months
+                }
+            }
+        });
+
+        return result;
+    };
+
     const handlePreview = async () => {
         setProcessedData(null);
         setIsExporting(true); // Reuse loading state
@@ -124,9 +185,11 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
             return;
         }
 
-        // 1. Filter by date First
+        // 1. Filter transactions by date
         const filteredTransactions = filterByPeriod(rawData.transactions, filterPeriod);
-        const filteredThirdParty = filterByPeriod(rawData.thirdParty, filterPeriod);
+
+        // 2. Filter third-party by active installments (same logic as Wallet.tsx)
+        const filteredThirdParty = filterThirdPartyByActiveInstallments(rawData.thirdParty, filterPeriod);
 
         if (filteredTransactions.length === 0 && filteredThirdParty.length === 0) {
             showToast("Nenhum dado encontrado para o período selecionado.", "warning");
@@ -134,7 +197,7 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
             return;
         }
 
-        // 2. Categorize
+        // 3. Categorize transactions
         const income: any[] = [];
         const expenses: any[] = [];
         const vehicleExpenses: any[] = [];
@@ -143,13 +206,10 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
         const catMap = new Map(categories.map(c => [c.id, c.name]));
 
         filteredTransactions.forEach(t => {
-            // Enrich with category name if missing or if only ID exists
-            // (Assuming t.category might be the name or null, and t.category_id is the ID)
             let catName = t.category;
             if (t.category_id && catMap.has(t.category_id)) {
                 catName = catMap.get(t.category_id);
             }
-            // Fallback
             if (!catName) catName = 'Outros';
 
             const enriched = { ...t, categoryName: catName };
@@ -157,7 +217,6 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
             if (t.type === 'income') {
                 income.push(enriched);
             } else {
-                // Expense
                 if (isVehicleExpense(catName)) {
                     vehicleExpenses.push(enriched);
                 } else {
@@ -166,18 +225,12 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
             }
         });
 
-        // Calculate Totals
+        // 4. Calculate Totals
         const totalIncome = income.reduce((acc, t) => acc + t.amount, 0);
-        const totalExpenses = expenses.reduce((acc, t) => acc + t.amount, 0); // General expenses only
+        const totalExpenses = expenses.reduce((acc, t) => acc + t.amount, 0);
         const totalVehicle = vehicleExpenses.reduce((acc, t) => acc + t.amount, 0);
-        const totalThirdParty = filteredThirdParty.reduce((acc: number, t: any) => acc + t.amount, 0);
-
-        // Note: For the "Sumário Geral", usually we subtract ALL outflows from inflows
-        // Or we strictly follow the user's design: "Receitas", "Despesas" (which implicitly means General), "Veículo" might be separate.
-        // Looking at the user HTML: 
-        // Summary has: "Receitas", "Despesas", "Saldo".
-        // Usually Despesas in Summary = All spending (General + Vehicle). Let's assume that for the Summary logic.
-        // But the breakdown tables show them separately.
+        // Use installment value (per-month amount) instead of full purchase amount
+        const totalThirdParty = filteredThirdParty.reduce((acc: number, t: any) => acc + (t.installmentValue || t.amount), 0);
 
         const summaryTotalExpenses = totalExpenses + totalVehicle;
         const balance = totalIncome - summaryTotalExpenses;
@@ -212,120 +265,208 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
             if (!jsPDF) { showToast("PDF lib missing", "error"); return; }
 
             const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 14;
+            const contentWidth = pageWidth - margin * 2;
 
-            // Helper for currency
+            // ACCESSIBLE COLOR PALETTE (WCAG AA+ compliant)
+            const colors = {
+                brandDark: [16, 34, 23] as [number, number, number],
+                brandAccent: [13, 191, 86] as [number, number, number],
+                textPrimary: [30, 30, 30] as [number, number, number],
+                textSecondary: [100, 100, 100] as [number, number, number],
+                textOnDark: [255, 255, 255] as [number, number, number],
+                sectionExpense: [185, 28, 28] as [number, number, number],
+                sectionIncome: [21, 128, 61] as [number, number, number],
+                sectionVehicle: [180, 83, 9] as [number, number, number],
+                sectionThirdParty: [109, 40, 180] as [number, number, number],
+                headerExpense: [153, 27, 27] as [number, number, number],
+                headerIncome: [20, 83, 45] as [number, number, number],
+                headerVehicle: [146, 64, 14] as [number, number, number],
+                headerThirdParty: [88, 28, 135] as [number, number, number],
+                bgAltRow: [245, 247, 250] as [number, number, number],
+                bgFooter: [232, 236, 241] as [number, number, number],
+                borderLight: [210, 218, 226] as [number, number, number],
+            };
+
             const formatCurrency = (val: number) => `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-            // Add Header
-            doc.setFontSize(22);
-            doc.setFont("helvetica", "bold");
-            doc.text("Meu Dindin", 14, 20);
+            // ── HEADER BAR (compact) ──
+            doc.setFillColor(...colors.brandDark);
+            doc.rect(0, 0, pageWidth, 28, 'F');
+            doc.setFillColor(...colors.brandAccent);
+            doc.rect(0, 28, pageWidth, 1, 'F');
 
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(...colors.textOnDark);
+            doc.text("Meu Dindin", margin, 12);
+
+            doc.setFontSize(7.5);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(180, 220, 200);
+            doc.text(`RELATÓRIO FINANCEIRO  ·  ${processedData.periodLabel}`, margin, 19);
+
+            doc.setFontSize(7.5);
+            doc.setTextColor(...colors.textOnDark);
+            doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 12, { align: 'right' });
+
+            let currentY = 36;
+
+            // ── SUMÁRIO GERAL (compact inline) ──
+            doc.setFillColor(...colors.brandAccent);
+            doc.rect(margin, currentY - 1, 2.5, 6, 'F');
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(...colors.textPrimary);
+            doc.text("Sumário Geral", margin + 5, currentY + 3.5);
+            currentY += 9;
+
+            const cardWidth = (contentWidth - 6) / 3;
+            const cardHeight = 16;
+
+            // Receitas card
+            doc.setFillColor(236, 253, 245);
+            doc.roundedRect(margin, currentY, cardWidth, cardHeight, 1.5, 1.5, 'F');
+            doc.setFontSize(6.5);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(...colors.sectionIncome);
+            doc.text("RECEITAS", margin + 4, currentY + 5.5);
             doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(100);
-            doc.text("RELATÓRIO FINANCEIRO", 14, 25);
-            doc.text(`Período: ${processedData.periodLabel}`, 14, 30);
-            doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 150, 20);
+            doc.text(formatCurrency(processedData.totals.income), margin + 4, currentY + 12.5);
 
-            let currentY = 40;
-
-            // 1. Summary Section (Custom draw)
-            doc.setFontSize(14);
-            doc.setTextColor(0);
-            doc.text("1. Sumário Geral", 14, currentY);
-            currentY += 10;
-
-            // Draw summary box
-            doc.setDrawColor(200);
-            doc.setFillColor(250);
-            doc.rect(14, currentY, 180, 20, 'FD');
-
+            // Despesas card
+            const card2X = margin + cardWidth + 3;
+            doc.setFillColor(254, 242, 242);
+            doc.roundedRect(card2X, currentY, cardWidth, cardHeight, 1.5, 1.5, 'F');
+            doc.setFontSize(6.5);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(...colors.sectionExpense);
+            doc.text("DESPESAS", card2X + 4, currentY + 5.5);
             doc.setFontSize(10);
-            doc.text("Receitas", 20, currentY + 6);
-            doc.setTextColor(0, 150, 0);
+            doc.text(formatCurrency(processedData.totals.summaryExpenses), card2X + 4, currentY + 12.5);
+
+            // Saldo card
+            const card3X = card2X + cardWidth + 3;
+            const balancePositive = processedData.totals.balance >= 0;
+            doc.setFillColor(balancePositive ? 236 : 254, balancePositive ? 253 : 242, balancePositive ? 245 : 242);
+            doc.roundedRect(card3X, currentY, cardWidth, cardHeight, 1.5, 1.5, 'F');
+            doc.setFontSize(6.5);
             doc.setFont("helvetica", "bold");
-            doc.text(formatCurrency(processedData.totals.income), 20, currentY + 14);
+            doc.setTextColor(...colors.textSecondary);
+            doc.text("SALDO", card3X + 4, currentY + 5.5);
+            doc.setFontSize(10);
+            doc.setTextColor(balancePositive ? 21 : 185, balancePositive ? 128 : 28, balancePositive ? 61 : 28);
+            doc.text(formatCurrency(processedData.totals.balance), card3X + 4, currentY + 12.5);
 
-            doc.setTextColor(0);
-            doc.setFont("helvetica", "normal");
-            doc.text("Despesas", 80, currentY + 6);
-            doc.setTextColor(200, 0, 0);
-            doc.setFont("helvetica", "bold");
-            doc.text(formatCurrency(processedData.totals.summaryExpenses), 80, currentY + 14);
+            currentY += cardHeight + 8;
 
-            doc.setTextColor(0);
-            doc.setFont("helvetica", "normal");
-            doc.text("Saldo", 140, currentY + 6);
-            doc.setTextColor(0);
-            doc.setFont("helvetica", "bold");
-            doc.text(formatCurrency(processedData.totals.balance), 140, currentY + 14);
+            // ── COMMON TABLE STYLES (compact) ──
+            const commonStyles = {
+                styles: {
+                    fontSize: 7.5,
+                    cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+                    lineColor: colors.borderLight,
+                    lineWidth: 0.15,
+                    textColor: colors.textPrimary,
+                    font: 'helvetica',
+                },
+                headStyles: {
+                    fillColor: colors.headerExpense,
+                    textColor: colors.textOnDark,
+                    fontStyle: 'bold' as const,
+                    fontSize: 7,
+                    halign: 'left' as const,
+                    cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+                },
+                alternateRowStyles: {
+                    fillColor: colors.bgAltRow,
+                },
+                footStyles: {
+                    fillColor: colors.bgFooter,
+                    textColor: colors.textPrimary,
+                    fontStyle: 'bold' as const,
+                    fontSize: 7.5,
+                    cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+                },
+                theme: 'striped' as const,
+                margin: { left: margin, right: margin },
+                tableLineColor: colors.borderLight,
+                tableLineWidth: 0,
+            };
 
-            currentY += 30;
+            // Helper: compact section title
+            const drawSectionTitle = (title: string, color: [number, number, number], y: number) => {
+                doc.setFillColor(...color);
+                doc.rect(margin, y - 0.5, 2.5, 5.5, 'F');
+                doc.setFontSize(8.5);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(...color);
+                doc.text(title, margin + 5, y + 3.5);
+            };
 
-            // Common table config
-            const tableTheme = 'grid';
-
-            // 2. Despesas (General)
+            // ── 2. DESPESAS ──
             if (processedData.expenses.length > 0) {
-                doc.setFontSize(12);
-                doc.setTextColor(220, 38, 38);
-                doc.text("2. Despesas", 14, currentY);
+                drawSectionTitle("Despesas", colors.sectionExpense, currentY);
                 // @ts-ignore
                 doc.autoTable({
-                    startY: currentY + 5,
-                    head: [['Data', 'Descrição', 'Categ.', 'Valor']],
+                    ...commonStyles,
+                    startY: currentY + 7,
+                    head: [['Data', 'Descrição', 'Categoria', 'Valor']],
                     body: processedData.expenses.map((t: any) => [
                         new Date(t.date).toLocaleDateString('pt-BR').slice(0, 5),
                         t.description,
                         t.categoryName,
                         formatCurrency(t.amount)
                     ]),
-                    theme: tableTheme,
-                    headStyles: { fillColor: [220, 38, 38] },
+                    headStyles: { ...commonStyles.headStyles, fillColor: colors.headerExpense },
+                    columnStyles: {
+                        0: { cellWidth: 18 },
+                        3: { halign: 'right', fontStyle: 'bold' },
+                    },
                     foot: [['', '', 'Total Despesas', formatCurrency(processedData.totals.generalExpenses)]],
-                    footStyles: { fillColor: [240, 240, 240], textColor: [220, 38, 38], fontStyle: 'bold' }
+                    footStyles: { ...commonStyles.footStyles, textColor: colors.sectionExpense },
                 });
                 // @ts-ignore
-                currentY = doc.lastAutoTable.finalY + 15;
+                currentY = doc.lastAutoTable.finalY + 8;
             }
 
-            // 3. Receitas
+            // ── 3. RECEITAS ──
             if (processedData.income.length > 0) {
-                // Check page break
                 if (currentY > 250) { doc.addPage(); currentY = 20; }
 
-                doc.setFontSize(12);
-                doc.setTextColor(13, 242, 108);
-                doc.text("3. Receitas", 14, currentY);
+                drawSectionTitle("Receitas", colors.sectionIncome, currentY);
                 // @ts-ignore
                 doc.autoTable({
-                    startY: currentY + 5,
+                    ...commonStyles,
+                    startY: currentY + 7,
                     head: [['Data', 'Descrição', 'Valor']],
                     body: processedData.income.map((t: any) => [
                         new Date(t.date).toLocaleDateString('pt-BR').slice(0, 5),
                         t.description,
                         formatCurrency(t.amount)
                     ]),
-                    theme: tableTheme,
-                    headStyles: { fillColor: [13, 242, 108], textColor: [0, 0, 0] },
+                    headStyles: { ...commonStyles.headStyles, fillColor: colors.headerIncome },
+                    columnStyles: {
+                        0: { cellWidth: 18 },
+                        2: { halign: 'right', fontStyle: 'bold' },
+                    },
                     foot: [['', 'Total Receitas', formatCurrency(processedData.totals.income)]],
-                    footStyles: { fillColor: [240, 240, 240], textColor: [0, 150, 0], fontStyle: 'bold' }
+                    footStyles: { ...commonStyles.footStyles, textColor: colors.sectionIncome },
                 });
                 // @ts-ignore
-                currentY = doc.lastAutoTable.finalY + 15;
+                currentY = doc.lastAutoTable.finalY + 8;
             }
 
-            // 4. Veículo
+            // ── 4. VEÍCULO ──
             if (processedData.vehicleExpenses.length > 0) {
                 if (currentY > 250) { doc.addPage(); currentY = 20; }
 
-                doc.setFontSize(12);
-                doc.setTextColor(255, 140, 0); // Orange
-                doc.text("4. Custos do Veículo", 14, currentY);
+                drawSectionTitle("Custos do Veículo", colors.sectionVehicle, currentY);
                 // @ts-ignore
                 doc.autoTable({
-                    startY: currentY + 5,
+                    ...commonStyles,
+                    startY: currentY + 7,
                     head: [['Data', 'Descrição', 'Tipo', 'Valor']],
                     body: processedData.vehicleExpenses.map((t: any) => [
                         new Date(t.date).toLocaleDateString('pt-BR').slice(0, 5),
@@ -333,42 +474,66 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
                         t.categoryName,
                         formatCurrency(t.amount)
                     ]),
-                    theme: tableTheme,
-                    headStyles: { fillColor: [255, 140, 0] },
+                    headStyles: { ...commonStyles.headStyles, fillColor: colors.headerVehicle },
+                    columnStyles: {
+                        0: { cellWidth: 18 },
+                        3: { halign: 'right', fontStyle: 'bold' },
+                    },
                     foot: [['', '', 'Total Veículo', formatCurrency(processedData.totals.vehicle)]],
-                    footStyles: { fillColor: [240, 240, 240], textColor: [200, 0, 0], fontStyle: 'bold' }
+                    footStyles: { ...commonStyles.footStyles, textColor: colors.sectionVehicle },
                 });
                 // @ts-ignore
-                currentY = doc.lastAutoTable.finalY + 15;
+                currentY = doc.lastAutoTable.finalY + 8;
             }
 
-            // 5. Terceiros
+            // ── 5. TERCEIROS ──
             if (processedData.thirdParty.length > 0) {
                 if (currentY > 250) { doc.addPage(); currentY = 20; }
 
-                doc.setFontSize(12);
-                doc.setTextColor(147, 51, 234); // Purple
-                doc.text("5. COMPRAS DE TERCEIROS", 14, currentY);
+                drawSectionTitle("Compras de Terceiros", colors.sectionThirdParty, currentY);
                 // @ts-ignore
                 doc.autoTable({
-                    startY: currentY + 5,
-                    head: [['Nome', 'Dt. Compra', 'Início Pag.', 'PARC. PAGAS', 'Valor']],
+                    ...commonStyles,
+                    startY: currentY + 7,
+                    head: [['Nome', 'Dt. Compra', 'Início Pag.', 'Parcelas', 'Valor']],
                     body: processedData.thirdParty.map((t: any) => [
                         t.person_name || 'Desconhecido',
                         new Date(t.purchase_date).toLocaleDateString('pt-BR'),
                         t.start_payment_date ? new Date(t.start_payment_date).toLocaleDateString('pt-BR') : '-',
                         `${t.installments_paid}/${t.installments_total}`,
-                        formatCurrency(t.amount)
+                        formatCurrency(t.installmentValue || t.amount)
                     ]),
-                    theme: tableTheme,
-                    headStyles: { fillColor: [147, 51, 234] },
+                    headStyles: { ...commonStyles.headStyles, fillColor: colors.headerThirdParty },
+                    columnStyles: {
+                        0: { fontStyle: 'bold' },
+                        4: { halign: 'right', fontStyle: 'bold' },
+                    },
                     foot: [['', '', '', 'Total a Receber', formatCurrency(processedData.totals.thirdParty)]],
-                    footStyles: { fillColor: [240, 240, 240], textColor: [0, 150, 0], fontStyle: 'bold' }
+                    footStyles: { ...commonStyles.footStyles, textColor: colors.sectionThirdParty },
                 });
             }
 
+            // ═══════════════════════════════════════════════════
+            // FOOTER
+            // ═══════════════════════════════════════════════════
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                const footerY = doc.internal.pageSize.getHeight() - 10;
+                // Footer line
+                doc.setDrawColor(...colors.borderLight);
+                doc.setLineWidth(0.3);
+                doc.line(margin, footerY - 4, pageWidth - margin, footerY - 4);
+                // Footer text
+                doc.setFontSize(7.5);
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(...colors.textSecondary);
+                doc.text("Documento gerado automaticamente pelo Meu Dindin", margin, footerY);
+                doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, footerY, { align: 'right' });
+            }
+
             const periodName = filterPeriod === 'current' ? 'Mes_Atual' : filterPeriod === 'previous' ? 'Mes_Anterior' : 'Ultimos_3_Meses';
-            doc.save(`MeuDindin_Relatorio_V2_${periodName}.pdf`);
+            doc.save(`MeuDindin_Relatorio_${periodName}.pdf`);
             showToast("PDF gerado com sucesso!", "success");
             onClose();
 
@@ -672,7 +837,7 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
                                                         <td className="py-2 px-1 font-bold text-purple-700">{t.person_name || 'Desconhecido'}</td>
                                                         <td className="py-2 px-1 text-gray-500">{new Date(t.purchase_date).toLocaleDateString('pt-BR').slice(0, 5)}</td>
                                                         <td className="py-2 px-1 text-gray-900 font-bold">{t.installments_paid}/{t.installments_total}</td>
-                                                        <td className="py-2 px-1 text-gray-900 text-right">{formatBRL(t.amount)}</td>
+                                                        <td className="py-2 px-1 text-gray-900 text-right">{formatBRL(t.installmentValue || t.amount)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
