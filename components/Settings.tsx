@@ -9,6 +9,7 @@ import { useUserProfile } from '../hooks/useProfile';
 
 import LogoutConfirmationModal from './LogoutConfirmationModal';
 import ExportDataModal from './ExportDataModal';
+import TermsModal from './TermsModal';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
@@ -28,6 +29,9 @@ const Settings: React.FC = () => {
 
   // Export Modal State
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+
+  // Terms Modal State
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   // Abre o modal de exportação automaticamente se vier do Dashboard
   const location = useLocation();
@@ -236,7 +240,7 @@ const Settings: React.FC = () => {
             <span className="material-symbols-outlined text-gray-300 dark:text-gray-600 text-xl">open_in_new</span>
           </a>
           <button
-            onClick={() => handleAction("Ver Termos de Uso")}
+            onClick={() => setIsTermsModalOpen(true)}
             className="flex items-center gap-4 px-5 py-4 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group cursor-pointer"
           >
             <div className="flex items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-900/20 shrink-0 size-10 text-blue-500 dark:text-blue-400 group-hover:scale-110 transition-transform">
@@ -273,8 +277,8 @@ const Settings: React.FC = () => {
             Sair da Conta
           </Button>
           <div className="text-center pb-4 pt-2">
-            <p className="text-xs text-gray-400 font-medium">Meu Dindin v1.0.0</p>
-            <p className="text-[10px] text-gray-300 mt-1">© 2023 Financeira App Ltda.</p>
+            <p className="text-xs text-gray-400 font-medium">Meu Dindin v3.7.9</p>
+            <p className="text-[10px] text-gray-300 mt-1">© 2026 Financeira App Ltda.</p>
           </div>
         </div>
       </div>
@@ -283,6 +287,12 @@ const Settings: React.FC = () => {
       <ExportDataModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
+      />
+
+      {/* Terms Modal */}
+      <TermsModal
+        isOpen={isTermsModalOpen}
+        onClose={() => setIsTermsModalOpen(false)}
       />
 
       {/* Logout Confirmation Modal */}

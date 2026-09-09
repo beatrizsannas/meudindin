@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { useToast } from '../contexts/ToastContext';
+import { CustomDatePicker } from './CustomDatePicker';
 
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -19,7 +20,11 @@ const EditProfile: React.FC = () => {
         dob: "",
         avatar_url: null as string | null
     });
-    const [loading, setLoading] = useState(true);
+    const [newPassword, setNewPassword] = useState("");
+    const [currentPassword, setCurrentPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [isFetching, setIsFetching] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
     useEffect(() => {
@@ -33,7 +38,7 @@ const EditProfile: React.FC = () => {
 
     const fetchProfile = async () => {
         try {
-            setLoading(true);
+            setIsFetching(true);
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
@@ -53,7 +58,7 @@ const EditProfile: React.FC = () => {
         } catch (error) {
             console.error('Error fetching profile:', error);
         } finally {
-            setLoading(false);
+            setIsFetching(false);
         }
     };
 
@@ -72,7 +77,7 @@ const EditProfile: React.FC = () => {
         if (!session?.user) return;
 
         try {
-            setLoading(true);
+            setIsSaving(true);
             // data to upsert
             const updates = {
                 id: session.user.id,
@@ -89,6 +94,28 @@ const EditProfile: React.FC = () => {
 
             if (error) throw error;
 
+            // If user provided a new password, update it via Auth API
+            if (newPassword.trim().length > 0) {
+                if (!currentPassword) {
+                    throw new Error("Para trocar a senha, informe sua senha atual.");
+                }
+
+                // Verify current password first
+                const { error: signInError } = await supabase.auth.signInWithPassword({
+                    email: session.user.email!,
+                    password: currentPassword
+                });
+
+                if (signInError) {
+                    throw new Error("Senha atual incorreta.");
+                }
+
+                const { error: authError } = await supabase.auth.updateUser({
+                    password: newPassword
+                });
+                if (authError) throw authError;
+            }
+
             // Invalidate profile query to update other components immediately
             await queryClient.invalidateQueries({ queryKey: ['profile', session.user.id] });
 
@@ -98,7 +125,7 @@ const EditProfile: React.FC = () => {
             console.error('Error updating profile:', error);
             showToast('Erro ao atualizar perfil: ' + error.message, 'error');
         } finally {
-            setLoading(false);
+            setIsSaving(false);
         }
     };
 
@@ -135,8 +162,34 @@ const EditProfile: React.FC = () => {
             </header>
 
             <main className="flex-1 px-4 py-6">
-                <div className="flex flex-col items-center mb-8">
-                    <div className="relative group cursor-pointer" onClick={() => setIsAvatarModalOpen(true)}>
+                {isFetching ? (
+                    <div className="animate-pulse flex flex-col items-center">
+                        <div className="h-28 w-28 bg-gray-200 dark:bg-gray-700 rounded-full mb-3"></div>
+                        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-8"></div>
+                        
+                        <div className="w-full space-y-5">
+                            <div className="space-y-2">
+                                <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                <div className="h-14 w-full bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="h-3 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                <div className="h-14 w-full bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                <div className="h-14 w-full bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                            </div>
+                            <div className="space-y-2">
+                                <div className="h-3 w-36 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                <div className="h-14 w-full bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <>
+                        <div className="flex flex-col items-center mb-8">
+                            <div className="relative group cursor-pointer" onClick={() => setIsAvatarModalOpen(true)}>
                         {formData.avatar_url ? (
                             <div
                                 className="bg-center bg-no-repeat aspect-square bg-cover rounded-full h-28 w-28 border-4 border-surface-light dark:border-surface-dark shadow-md"
@@ -237,28 +290,83 @@ const EditProfile: React.FC = () => {
                             Data de Nascimento
                         </label>
                         <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
-                                <span className="material-symbols-outlined text-[20px]">calendar_today</span>
-                            </div>
-                            <input
-                                className="w-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-xl py-3.5 pl-11 pr-4 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm font-medium [color-scheme:light] dark:[color-scheme:dark]"
-                                id="dob"
-                                name="dob"
-                                type="date"
+                            <CustomDatePicker
                                 value={formData.dob}
-                                onChange={handleChange}
+                                onChange={(val) => setFormData(prev => ({ ...prev, dob: val }))}
+                                className="w-full"
                             />
                         </div>
                     </div>
+
+                    <div className="space-y-2">
+                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1" htmlFor="currentPassword">
+                            Senha Atual
+                        </label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                <span className="material-symbols-outlined text-[20px]">key</span>
+                            </div>
+                            <input
+                                className="w-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-xl py-3.5 pl-11 pr-12 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm font-medium"
+                                id="currentPassword"
+                                name="currentPassword"
+                                placeholder="Sua senha atual"
+                                type={showPassword ? "text" : "password"}
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">
+                                    {showPassword ? "visibility_off" : "visibility"}
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider ml-1" htmlFor="newPassword">
+                            Nova Senha
+                        </label>
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                <span className="material-symbols-outlined text-[20px]">lock</span>
+                            </div>
+                            <input
+                                className="w-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 rounded-xl py-3.5 pl-11 pr-12 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm font-medium"
+                                id="newPassword"
+                                name="newPassword"
+                                placeholder="Nova senha (opcional)"
+                                type={showPassword ? "text" : "password"}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[20px]">
+                                    {showPassword ? "visibility_off" : "visibility"}
+                                </span>
+                            </button>
+                        </div>
+                    </div>
                 </form>
+                </>
+                )}
             </main>
             <div className="p-4 bg-background-light dark:bg-background-dark border-t border-gray-100 dark:border-gray-800 sticky bottom-0 z-20">
                 <button
                     onClick={() => handleSave()}
-                    className="w-full bg-primary text-surface-dark font-bold text-lg py-4 rounded-xl shadow-lg hover:bg-green-400 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                    disabled={isFetching || isSaving}
+                    className="w-full bg-primary text-surface-dark font-bold text-lg py-4 rounded-xl shadow-lg hover:bg-green-400 hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     <span className="material-symbols-outlined">save</span>
-                    {loading ? 'Salvando...' : 'Salvar Alterações'}
+                    {isSaving ? 'Salvando...' : 'Salvar Alterações'}
                 </button>
             </div>
 
