@@ -16,7 +16,7 @@ const ReceivablesDetails: React.FC = () => {
       
       <main className="flex-1 px-4 py-4 space-y-6 pb-24">
         <section className="flex flex-col items-center justify-center space-y-1">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-white/5">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-background-light dark:bg-surface-dark shadow-sm border border-gray-100 dark:border-white/5">
             <span className="material-symbols-outlined text-primary text-[18px]">calendar_month</span>
             <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Dezembro 2025</span>
           </div>
@@ -37,7 +37,7 @@ const ReceivablesDetails: React.FC = () => {
         </section>
         
         <section>
-          <div className="group flex w-full items-center rounded-xl bg-white dark:bg-surface-dark border border-transparent focus-within:border-primary/50 shadow-sm transition-all h-12">
+          <div className="group flex w-full items-center rounded-xl bg-background-light dark:bg-surface-dark border border-transparent focus-within:border-primary/50 shadow-sm transition-all h-12">
             <div className="pl-4 flex items-center justify-center text-gray-400">
               <span className="material-symbols-outlined text-[22px]">search</span>
             </div>
@@ -47,7 +47,7 @@ const ReceivablesDetails: React.FC = () => {
         
         <section className="space-y-4 pb-10">
           {/* Item 1 */}
-          <article className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden">
+          <article className="bg-background-light dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden">
             <div className="flex gap-4 mb-3">
               <div className="relative shrink-0">
                 <div className="size-12 rounded-full bg-cover bg-center ring-2 ring-primary/20" style={{backgroundImage: "url('https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80')"}}>
@@ -83,7 +83,7 @@ const ReceivablesDetails: React.FC = () => {
           </article>
           
           {/* Item 2 */}
-          <article className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden">
+          <article className="bg-background-light dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden">
             <div className="flex gap-4 mb-3">
               <div className="relative shrink-0">
                 <div className="size-12 rounded-full bg-cover bg-center ring-2 ring-primary/20" style={{backgroundImage: "url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80')"}}>
@@ -119,7 +119,7 @@ const ReceivablesDetails: React.FC = () => {
           </article>
           
           {/* Item 3 */}
-          <article className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden">
+          <article className="bg-background-light dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden">
             <div className="flex gap-4 mb-3">
               <div className="relative shrink-0 flex items-center justify-center size-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 font-bold text-lg ring-2 ring-indigo-200 dark:ring-indigo-800">
                 JP
@@ -154,7 +154,7 @@ const ReceivablesDetails: React.FC = () => {
           </article>
           
           {/* Item 4 */}
-          <article className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden">
+          <article className="bg-background-light dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden">
             <div className="flex gap-4 mb-3">
               <div className="relative shrink-0 flex items-center justify-center size-12 rounded-full bg-pink-100 dark:bg-pink-900/50 text-pink-600 dark:text-pink-300 font-bold text-lg ring-2 ring-pink-200 dark:ring-pink-800">
                 LM

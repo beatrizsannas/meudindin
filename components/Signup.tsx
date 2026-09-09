@@ -54,7 +54,7 @@ const Signup: React.FC = () => {
       <div className="w-full max-w-[400px] flex flex-col gap-6 my-auto">
 
         <div className="flex flex-col items-center gap-5 pt-4 pb-2">
-          <div className="relative flex items-center justify-center h-20 w-20 rounded-2xl bg-gradient-to-br from-[#0df26c] to-[#04c452] shadow-lg shadow-[#0df26c]/30">
+          <div className="relative flex items-center justify-center h-20 w-20 rounded-2xl bg-gradient-to-br from-[#228b3b] to-[#04c452] shadow-lg shadow-[#228b3b]/30">
             <span className="material-symbols-outlined text-white text-[40px]">account_balance_wallet</span>
           </div>
           <div className="flex flex-col items-center justify-center gap-1">
@@ -75,7 +75,7 @@ const Signup: React.FC = () => {
             <label className="text-text-main dark:text-gray-200 text-sm font-semibold leading-normal ml-1">Nome Completo</label>
             <div className="relative">
               <input
-                className="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-text-main dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-gray-700 bg-white dark:bg-surface-dark focus:border-primary h-12 placeholder:text-text-secondary/70 dark:placeholder:text-gray-500 pl-[48px] pr-4 text-base font-normal leading-normal transition-all"
+                className="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-text-main dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-gray-700 bg-background-light dark:bg-surface-dark focus:border-primary h-12 placeholder:text-text-secondary/70 dark:placeholder:text-gray-500 pl-[48px] pr-4 text-base font-normal leading-normal transition-all"
                 placeholder="Seu nome"
                 type="text"
                 value={fullName}
@@ -93,7 +93,7 @@ const Signup: React.FC = () => {
             <label className="text-text-main dark:text-gray-200 text-sm font-semibold leading-normal ml-1">E-mail</label>
             <div className="relative">
               <input
-                className="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-text-main dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-gray-700 bg-white dark:bg-surface-dark focus:border-primary h-12 placeholder:text-text-secondary/70 dark:placeholder:text-gray-500 pl-[48px] pr-4 text-base font-normal leading-normal transition-all"
+                className="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-text-main dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-gray-700 bg-background-light dark:bg-surface-dark focus:border-primary h-12 placeholder:text-text-secondary/70 dark:placeholder:text-gray-500 pl-[48px] pr-4 text-base font-normal leading-normal transition-all"
                 placeholder="seu@email.com"
                 type="email"
                 value={email}
@@ -111,7 +111,7 @@ const Signup: React.FC = () => {
             <label className="text-text-main dark:text-gray-200 text-sm font-semibold leading-normal ml-1">Senha</label>
             <div className="relative flex w-full items-stretch rounded-xl">
               <input
-                className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-text-main dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-gray-700 bg-white dark:bg-surface-dark focus:border-primary h-12 placeholder:text-text-secondary/70 dark:placeholder:text-gray-500 pl-[48px] pr-12 text-base font-normal leading-normal transition-all"
+                className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-text-main dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-gray-700 bg-background-light dark:bg-surface-dark focus:border-primary h-12 placeholder:text-text-secondary/70 dark:placeholder:text-gray-500 pl-[48px] pr-12 text-base font-normal leading-normal transition-all"
                 placeholder="Crie uma senha"
                 type={showPassword ? "text" : "password"}
                 value={password}
@@ -144,7 +144,7 @@ const Signup: React.FC = () => {
             <label className="text-text-main dark:text-gray-200 text-sm font-semibold leading-normal ml-1">Confirmar Senha</label>
             <div className="relative flex w-full items-stretch rounded-xl">
               <input
-                className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-text-main dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-gray-700 bg-white dark:bg-surface-dark focus:border-primary h-12 placeholder:text-text-secondary/70 dark:placeholder:text-gray-500 pl-[48px] pr-12 text-base font-normal leading-normal transition-all"
+                className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-xl text-text-main dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-gray-700 bg-background-light dark:bg-surface-dark focus:border-primary h-12 placeholder:text-text-secondary/70 dark:placeholder:text-gray-500 pl-[48px] pr-12 text-base font-normal leading-normal transition-all"
                 placeholder="Repita sua senha"
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}

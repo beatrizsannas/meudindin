@@ -37,7 +37,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options })
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)}></div>
-                    <div className="absolute top-full mt-2 w-full z-20 bg-white dark:bg-surface-dark rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    <div className="absolute top-full mt-2 w-full z-20 bg-background-light dark:bg-surface-dark rounded-xl shadow-xl border border-gray-100 dark:border-gray-800 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                         {options.map((option) => (
                             <button
                                 key={option}
@@ -204,7 +204,7 @@ const YourCards: React.FC = () => {
                 </div>
                 <button
                     onClick={() => openModal()}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-[#111814] shadow-lg hover:scale-110 active:scale-95 transition-all"
+                    className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white shadow-lg hover:scale-110 active:scale-95 transition-all"
                 >
                     <span className="material-symbols-outlined font-bold">add</span>
                 </button>
@@ -215,11 +215,11 @@ const YourCards: React.FC = () => {
             <main className="flex flex-col px-6 gap-6 pt-2">
                 {/* Dashboard Indicators */}
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                    <div className="bg-background-light dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
                         <p className="text-sm text-gray-500 dark:text-gray-400">Total de Cartões</p>
                         <p className="text-2xl font-bold text-[#111814] dark:text-white">{totalCards}</p>
                     </div>
-                    <div className="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
+                    <div className="bg-background-light dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800">
                         <p className="text-sm text-gray-500 dark:text-gray-400">Limite Total</p>
                         <p className="text-xl font-bold text-emerald-700 dark:text-primary">{formatCurrency(totalLimit)}</p>
                     </div>
@@ -227,7 +227,7 @@ const YourCards: React.FC = () => {
 
                 {/* Brand Chart */}
                 {cards && cards.length > 0 && (
-                    <div className="bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center">
+                    <div className="bg-background-light dark:bg-surface-dark p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center">
                         <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 w-full text-left mb-2">Distribuição por Bandeira</h3>
                         <div className="w-full h-32">
                             <div className="w-full overflow-x-auto flex justify-start">
@@ -375,7 +375,7 @@ const YourCards: React.FC = () => {
                 showDeleteConfirm && (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeleteConfirm(null)}></div>
-                        <div className="relative z-10 bg-white dark:bg-surface-dark rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="relative z-10 bg-background-light dark:bg-surface-dark rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Excluir Cartão?</h3>
                             <p className="text-gray-500 dark:text-gray-400 mb-6">Esta ação não pode ser desfeita.</p>
                             <div className="flex gap-3">
@@ -392,7 +392,7 @@ const YourCards: React.FC = () => {
                 isModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
                         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={closeModal}></div>
-                        <div className="relative w-full max-w-md bg-white dark:bg-background-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800 max-h-[80vh] overflow-y-auto pb-10">
+                        <div className="relative w-full max-w-md bg-background-light dark:bg-background-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800 max-h-[80vh] overflow-y-auto pb-10">
 
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">{editingCard ? 'Editar Cartão' : 'Novo Cartão'}</h2>
@@ -473,7 +473,7 @@ const YourCards: React.FC = () => {
                                                     checked={isAnnualFeeExempt}
                                                     onChange={(e) => setIsAnnualFeeExempt(e.target.checked)}
                                                 />
-                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                                                <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-background-light after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                                             </div>
                                             <span className={`text-xs font-bold ${isAnnualFeeExempt ? 'text-emerald-700 dark:text-primary' : 'text-gray-500 dark:text-gray-400'}`}>Isenta</span>
                                         </label>
@@ -524,7 +524,7 @@ const YourCards: React.FC = () => {
                                 <button
                                     onClick={handleSave}
                                     disabled={saving}
-                                    className="w-full h-14 mt-4 bg-primary hover:bg-primary-dark active:scale-[0.98] text-text-main font-bold text-lg rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    className="w-full h-14 mt-4 bg-primary hover:bg-primary-dark active:scale-[0.98] text-white font-bold text-lg rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     <span className="material-symbols-outlined">{saving ? 'hourglass_empty' : 'save'}</span>
                                     {saving ? 'Salvando...' : 'Salvar Cartão'}

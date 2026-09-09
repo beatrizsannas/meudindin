@@ -627,7 +627,7 @@ const Commitments: React.FC = () => {
 
             <button
               onClick={openAddModal}
-              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-[#0a2018] font-bold py-2.5 px-4 rounded-xl transition-all text-sm shadow-md shadow-primary/20 active:scale-95"
+              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2.5 px-4 rounded-xl transition-all text-sm shadow-md shadow-primary/20 active:scale-95"
             >
               <span className="material-symbols-outlined text-xl icon-filled">add</span>
               <span>Novo Compromisso</span>
@@ -641,7 +641,7 @@ const Commitments: React.FC = () => {
             onClick={() => setActiveTab('upcoming')}
             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'upcoming'
-                ? 'bg-white dark:bg-surface-variant-dark text-[#111814] dark:text-white shadow-sm'
+                ? 'bg-background-light dark:bg-surface-variant-dark text-[#111814] dark:text-white shadow-sm'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
@@ -652,7 +652,7 @@ const Commitments: React.FC = () => {
             onClick={() => setActiveTab('history')}
             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'history'
-                ? 'bg-white dark:bg-surface-variant-dark text-[#111814] dark:text-white shadow-sm'
+                ? 'bg-background-light dark:bg-surface-variant-dark text-[#111814] dark:text-white shadow-sm'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
             }`}
           >
@@ -1178,7 +1178,7 @@ const Commitments: React.FC = () => {
                   onChange={e => setRescheduleReason(e.target.value)}
                   rows={2}
                   placeholder="Ex: Imprevisto no trabalho, médico desmarcou a consulta, etc."
-                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 focus:outline-none resize-none"
+                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-background-light dark:bg-surface-dark text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 focus:outline-none resize-none"
                 />
               </div>
 
@@ -1193,7 +1193,7 @@ const Commitments: React.FC = () => {
                 <button
                   type="submit"
                   disabled={rescheduling}
-                  className="flex-1 h-11 bg-primary hover:bg-primary-dark text-[#0a2018] font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  className="flex-1 h-11 bg-primary hover:bg-primary-dark text-white font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
                 >
                   <span className="material-symbols-outlined text-base">save</span>
                   <span>{rescheduling ? 'Reagendando...' : 'Confirmar'}</span>
@@ -1247,7 +1247,7 @@ const Commitments: React.FC = () => {
                     value={customType}
                     onChange={e => setCustomType(e.target.value)}
                     placeholder="Ex: Consulta Veterinária, Detran Vistoria..."
-                    className="w-full h-11 px-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                    className="w-full h-11 px-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-background-light dark:bg-surface-dark text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 focus:outline-none"
                     required
                   />
                 </div>
@@ -1285,7 +1285,7 @@ const Commitments: React.FC = () => {
                   value={location}
                   onChange={e => setLocation(e.target.value)}
                   placeholder="Ex: Hospital Central, Posto Detran Centro..."
-                  className="w-full h-11 px-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                  className="w-full h-11 px-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-background-light dark:bg-surface-dark text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 focus:outline-none"
                 />
               </div>
 
@@ -1299,7 +1299,7 @@ const Commitments: React.FC = () => {
                   onChange={e => setNotes(e.target.value)}
                   rows={3}
                   placeholder="Ex: Levar RG, CPF, exames de sangue recentes, comprovante..."
-                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-surface-dark text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 focus:outline-none resize-none"
+                  className="w-full p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-background-light dark:bg-surface-dark text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 focus:outline-none resize-none"
                 />
               </div>
 
@@ -1314,7 +1314,7 @@ const Commitments: React.FC = () => {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex-1 h-11 bg-primary hover:bg-primary-dark text-[#0a2018] font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50"
+                  className="flex-1 h-11 bg-primary hover:bg-primary-dark text-white font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50"
                 >
                   {saving ? 'Salvando...' : 'Salvar'}
                 </button>

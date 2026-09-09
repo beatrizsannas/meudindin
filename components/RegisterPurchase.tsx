@@ -108,7 +108,7 @@ const RegisterPurchase: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-background-dark min-h-screen">
+    <div className="flex flex-col h-full bg-background-light dark:bg-background-dark min-h-screen">
       <header className="sticky top-0 z-20 bg-background-light/95 dark:bg-background-dark/95 backdrop-blur-md px-4 pt-6 pb-2">
         <div className="flex items-center justify-between">
           <Link to="/wallet" className="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
@@ -122,7 +122,7 @@ const RegisterPurchase: React.FC = () => {
       </header>
 
       <main className="flex-1 px-4 py-6 space-y-6">
-        <section className="bg-white dark:bg-surface-dark rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-white/5 flex flex-col items-center justify-center gap-2 relative overflow-hidden group">
+        <section className="bg-background-light dark:bg-surface-dark rounded-2xl p-8 shadow-sm border border-gray-100 dark:border-white/5 flex flex-col items-center justify-center gap-2 relative overflow-hidden group">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
           <label className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide" htmlFor="amount">Valor da Compra</label>
           <div className="relative flex items-center justify-center w-full">
@@ -153,7 +153,7 @@ const RegisterPurchase: React.FC = () => {
                 <span className="material-symbols-outlined text-gray-500 dark:text-gray-400 group-focus-within:text-emerald-700 dark:group-focus-within:text-primary transition-colors text-[20px]">person</span>
               </div>
               <input
-                className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
+                className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-background-light dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
                 placeholder="Ex: Carlos Silva"
                 type="text"
                 required
@@ -171,7 +171,7 @@ const RegisterPurchase: React.FC = () => {
                 <span className="material-symbols-outlined text-gray-500 dark:text-gray-400 group-focus-within:text-emerald-700 dark:group-focus-within:text-primary transition-colors text-[20px]">shopping_bag</span>
               </div>
               <input
-                className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
+                className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-background-light dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
                 placeholder="Ex: iPhone 14"
                 type="text"
                 value={itemName}
@@ -188,7 +188,7 @@ const RegisterPurchase: React.FC = () => {
                   <span className="material-symbols-outlined text-gray-500 dark:text-gray-400 group-focus-within:text-emerald-700 dark:group-focus-within:text-primary transition-colors text-[20px]">calendar_today</span>
                 </div>
                 <input
-                  className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-2 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm sm:text-sm sm:leading-6 transition-all"
+                  className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-2 text-[#111814] dark:text-white bg-background-light dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm sm:text-sm sm:leading-6 transition-all"
                   style={{ colorScheme: 'light dark' }}
                   type="date"
                   value={date}
@@ -203,7 +203,7 @@ const RegisterPurchase: React.FC = () => {
                   <span className="material-symbols-outlined text-gray-500 dark:text-gray-400 group-focus-within:text-emerald-700 dark:group-focus-within:text-primary transition-colors text-[20px]">event_upcoming</span>
                 </div>
                 <input
-                  className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-2 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm sm:text-sm sm:leading-6 transition-all"
+                  className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-2 text-[#111814] dark:text-white bg-background-light dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm sm:text-sm sm:leading-6 transition-all"
                   style={{ colorScheme: 'light dark' }}
                   type="date"
                   value={paymentStart}
@@ -215,7 +215,7 @@ const RegisterPurchase: React.FC = () => {
 
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Quantidade de Parcelas</label>
-            <div className="bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 rounded-xl p-1.5 flex items-center justify-between shadow-sm px-2">
+            <div className="bg-background-light dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 rounded-xl p-1.5 flex items-center justify-between shadow-sm px-2">
               <button
                 className="w-12 h-10 flex items-center justify-center rounded-lg bg-gray-50 dark:bg-white/5 text-[#111814] dark:text-white hover:bg-gray-100 dark:hover:bg-white/10 active:scale-95 transition-all"
                 type="button"
@@ -237,7 +237,7 @@ const RegisterPurchase: React.FC = () => {
                 </span>
               </div>
               <button
-                className="w-12 h-10 flex items-center justify-center rounded-lg bg-primary text-[#102217] shadow-sm hover:brightness-110 active:scale-95 transition-all"
+                className="w-12 h-10 flex items-center justify-center rounded-lg bg-primary text-white shadow-sm hover:brightness-110 active:scale-95 transition-all"
                 type="button"
                 onClick={handleIncrement}
               >
@@ -253,7 +253,7 @@ const RegisterPurchase: React.FC = () => {
                 <span className="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors" style={{ fontSize: '20px' }}>credit_card</span>
               </div>
               <input
-                className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-white dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
+                className="block w-full rounded-xl border-0 py-3.5 pl-10 pr-4 text-[#111814] dark:text-white bg-background-light dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 focus:ring-2 focus:ring-inset focus:ring-primary shadow-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 sm:text-sm sm:leading-6 transition-all"
                 placeholder="Ex: Nubank, Inter..."
                 type="text"
                 value={cardUsed}
@@ -266,7 +266,7 @@ const RegisterPurchase: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="group w-full bg-primary hover:brightness-110 active:scale-[0.98] text-[#102217] rounded-xl py-4 px-6 font-bold text-base shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2"
+              className="group w-full bg-primary hover:brightness-110 active:scale-[0.98] text-white rounded-xl py-4 px-6 font-bold text-base shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2"
             >
               <span className="material-symbols-outlined transition-transform group-hover:-translate-y-0.5" style={{ fontSize: '22px' }}>check_circle</span>
               {loading ? 'Salvando...' : 'Salvar Compra'}

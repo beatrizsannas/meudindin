@@ -66,7 +66,7 @@ const Notifications: React.FC = () => {
                                 onClick={() => !item.isRead && markAsRead(item.id)}
                                 className={`p-4 rounded-xl shadow-sm border flex items-start gap-4 transition-all duration-300 cursor-pointer active:scale-[0.98] ${item.isRead
                                         ? 'bg-gray-50 dark:bg-surface-dark/50 border-gray-100 dark:border-gray-800 opacity-60 grayscale'
-                                        : 'bg-white dark:bg-surface-dark border-orange-100 dark:border-orange-900/30'
+                                        : 'bg-background-light dark:bg-surface-dark border-orange-100 dark:border-orange-900/30'
                                     }`}
                             >
                                 <div className={`flex items-center justify-center size-10 rounded-full shrink-0 ${item.isRead

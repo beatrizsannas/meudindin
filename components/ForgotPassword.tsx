@@ -12,7 +12,7 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="relative flex h-screen w-full flex-col max-w-md mx-auto bg-white dark:bg-[#15281e] shadow-sm font-display text-[#111814] dark:text-white overflow-x-hidden">
+    <div className="relative flex h-screen w-full flex-col max-w-md mx-auto bg-background-light dark:bg-[#15281e] shadow-sm font-display text-[#111814] dark:text-white overflow-x-hidden">
       {/* TopAppBar */}
       <div className="flex items-center p-4 pb-2 justify-between">
         <button 
@@ -54,7 +54,7 @@ const ForgotPassword: React.FC = () => {
                 <span className="material-symbols-outlined text-[20px]">mail</span>
               </div>
               <input 
-                className="form-input flex w-full min-w-0 resize-none rounded-xl text-[#111814] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dbe6df] dark:border-gray-600 bg-white dark:bg-[#1a3324] focus:border-primary h-14 placeholder:text-[#a0b3a9] dark:placeholder:text-gray-500 pl-12 pr-4 text-base font-medium leading-normal transition-all" 
+                className="form-input flex w-full min-w-0 resize-none rounded-xl text-[#111814] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dbe6df] dark:border-gray-600 bg-background-light dark:bg-[#1a3324] focus:border-primary h-14 placeholder:text-[#a0b3a9] dark:placeholder:text-gray-500 pl-12 pr-4 text-base font-medium leading-normal transition-all" 
                 placeholder="seu.email@exemplo.com" 
                 type="email" 
                 value={email}
@@ -64,7 +64,7 @@ const ForgotPassword: React.FC = () => {
           </label>
 
           {/* Primary Action Button */}
-          <button className="flex w-full items-center justify-center rounded-xl bg-primary hover:bg-[#0be062] active:bg-[#09c455] text-[#102217] text-base font-bold h-14 transition-colors shadow-sm mt-2">
+          <button className="flex w-full items-center justify-center rounded-xl bg-primary hover:bg-[#0be062] active:bg-[#09c455] text-white text-base font-bold h-14 transition-colors shadow-sm mt-2">
             Redefinir Senha
           </button>
         </form>

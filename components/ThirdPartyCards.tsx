@@ -248,7 +248,7 @@ const ThirdPartyCards: React.FC = () => {
             resetForm();
             setIsModalOpen(true);
           }}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-[#111814] shadow-lg hover:scale-110 active:scale-95 transition-all"
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white shadow-lg hover:scale-110 active:scale-95 transition-all"
         >
           <span className="material-symbols-outlined font-bold">add</span>
         </button>
@@ -288,7 +288,7 @@ const ThirdPartyCards: React.FC = () => {
                 onClick={() => setSelectedCategory(cat)}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all ${
                   selectedCategory === cat
-                    ? 'bg-primary text-[#003314] shadow-sm'
+                    ? 'bg-primary text-white shadow-sm'
                     : 'bg-surface-light dark:bg-surface-dark text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/10'
                 }`}
               >
@@ -353,7 +353,7 @@ const ThirdPartyCards: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
-          <div className="relative w-full max-w-md bg-white dark:bg-background-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-md bg-background-light dark:bg-background-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-800 max-h-[90vh] overflow-y-auto">
 
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -405,7 +405,7 @@ const ThirdPartyCards: React.FC = () => {
                   <button
                     onClick={() => setCategoryType('fuel')}
                     className={`flex-1 flex items-center justify-center gap-2 h-12 rounded-lg font-bold text-sm transition-all ${categoryType === 'fuel'
-                      ? 'bg-white dark:bg-gray-700 text-[#111814] dark:text-white shadow-sm'
+                      ? 'bg-background-light dark:bg-gray-700 text-[#111814] dark:text-white shadow-sm'
                       : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                       }`}
                   >
@@ -415,7 +415,7 @@ const ThirdPartyCards: React.FC = () => {
                   <button
                     onClick={() => setCategoryType('maintenance')}
                     className={`flex-1 flex items-center justify-center gap-2 h-12 rounded-lg font-bold text-sm transition-all ${categoryType === 'maintenance'
-                      ? 'bg-white dark:bg-gray-700 text-[#111814] dark:text-white shadow-sm'
+                      ? 'bg-background-light dark:bg-gray-700 text-[#111814] dark:text-white shadow-sm'
                       : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
                       }`}
                   >
@@ -461,7 +461,7 @@ const ThirdPartyCards: React.FC = () => {
                       checked={includeInExpenses}
                       onChange={(e) => setIncludeInExpenses(e.target.checked)}
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-background-light after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                   </div>
                   <span className="text-sm font-bold text-text-main dark:text-white">Somar nas despesas gerais</span>
                 </label>
@@ -471,7 +471,7 @@ const ThirdPartyCards: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={loading}
-                className="w-full h-14 mt-2 bg-primary hover:bg-primary-dark active:scale-[0.98] text-text-main font-bold text-lg rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-14 mt-2 bg-primary hover:bg-primary-dark active:scale-[0.98] text-white font-bold text-lg rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <span className="material-symbols-outlined">{loading ? 'hourglass_empty' : 'save'}</span>
                 {loading ? 'Salvando...' : (editingId ? 'Salvar Alterações' : 'Salvar Despesa')}

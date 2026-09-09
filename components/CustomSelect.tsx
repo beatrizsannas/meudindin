@@ -133,7 +133,7 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
             width: coords.width,
             maxHeight: `${coords.maxHeight}px`,
           }}
-          className="z-[9999] bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-2xl shadow-xl overflow-y-auto custom-scrollbar animate-dropdown py-1"
+          className="z-[9999] bg-background-light dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-2xl shadow-xl overflow-y-auto custom-scrollbar animate-dropdown py-1"
           role="listbox"
         >
           {options.map(opt => {

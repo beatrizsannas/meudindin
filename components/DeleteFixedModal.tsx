@@ -26,7 +26,7 @@ const DeleteFixedModal: React.FC<DeleteFixedModalProps> = ({
             />
 
             {/* Modal */}
-            <div className="relative w-full max-w-sm bg-white dark:bg-[#1c2e24] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 p-6 transform transition-all animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-sm bg-background-light dark:bg-[#1c2e24] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 p-6 transform transition-all animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex flex-col items-center text-center gap-4">
                     {/* Icon */}
                     <div className="flex items-center justify-center size-12 rounded-full bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400">

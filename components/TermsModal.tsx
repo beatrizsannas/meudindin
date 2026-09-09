@@ -45,7 +45,7 @@ const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white dark:bg-surface-dark rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+      <div className="bg-background-light dark:bg-surface-dark rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
         
         {/* Header */}
         <div className="p-5 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50 dark:bg-white/5 shrink-0">
@@ -126,9 +126,9 @@ const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
                     type="checkbox"
                     checked={isChecked}
                     onChange={(e) => setIsChecked(e.target.checked)}
-                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 checked:bg-primary checked:border-primary transition-all"
+                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-gray-300 dark:border-white/20 bg-background-light dark:bg-white/5 checked:bg-primary checked:border-primary transition-all"
                   />
-                  <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[#0a2018] opacity-0 peer-checked:opacity-100 pointer-events-none text-[16px]">check</span>
+                  <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[#ffffff] opacity-0 peer-checked:opacity-100 pointer-events-none text-[16px]">check</span>
                 </div>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300 select-none group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
                   Li e concordo com os Termos de Uso do Meu Dindin.

@@ -143,7 +143,7 @@ export const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
             left: `${coords.left}px`,
             ...(coords.showAbove ? { bottom: `${coords.bottom}px` } : { top: `${coords.top}px` }),
           }}
-          className="z-[9999] w-60 bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl p-3 animate-dropdown"
+          className="z-[9999] w-60 bg-background-light dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl p-3 animate-dropdown"
         >
           <div className="text-center text-xs font-bold text-gray-700 dark:text-gray-200 pb-2 border-b border-gray-100 dark:border-gray-800">
             Definir Horário ({selectedHour}:{selectedMinute})
@@ -163,7 +163,7 @@ export const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
                     onClick={() => handleHourSelect(h)}
                     className={`h-8 rounded-lg text-xs font-bold transition-colors ${
                       selectedHour === h
-                        ? 'bg-primary text-[#0a2018] shadow-sm'
+                        ? 'bg-primary text-white shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-white/5 hover:text-emerald-700 dark:hover:text-primary'
                     }`}
                   >
@@ -186,7 +186,7 @@ export const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
                     onClick={() => handleMinuteSelect(m)}
                     className={`h-8 rounded-lg text-xs font-bold transition-colors ${
                       selectedMinute === m
-                        ? 'bg-primary text-[#0a2018] shadow-sm'
+                        ? 'bg-primary text-white shadow-sm'
                         : 'text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-white/5 hover:text-emerald-700 dark:hover:text-primary'
                     }`}
                   >
@@ -202,7 +202,7 @@ export const CustomTimePicker: React.FC<CustomTimePickerProps> = ({
             <button
               type="button"
               onClick={handleConfirm}
-              className="w-full h-8 bg-primary hover:bg-primary-dark text-[#0a2018] font-bold text-xs rounded-lg transition-colors shadow-sm"
+              className="w-full h-8 bg-primary hover:bg-primary-dark text-white font-bold text-xs rounded-lg transition-colors shadow-sm"
             >
               OK
             </button>

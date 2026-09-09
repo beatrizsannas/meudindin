@@ -206,19 +206,19 @@ const AllTransactions: React.FC = () => {
                 <div className="flex gap-2 mb-4 overflow-x-auto scrollbar-hide">
                     <button
                         onClick={() => setFilterType('all')}
-                        className={`flex h-9 shrink-0 items-center justify-center px-5 rounded-full font-bold text-sm shadow-sm transition-colors ${filterType === 'all' ? 'bg-[#111814] dark:bg-white text-white dark:text-[#111814]' : 'bg-surface-variant-light dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'}`}
+                        className={`flex h-9 shrink-0 items-center justify-center px-5 rounded-full font-bold text-sm shadow-sm transition-colors ${filterType === 'all' ? 'bg-[#111814] dark:bg-background-light text-white dark:text-[#111814]' : 'bg-surface-variant-light dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'}`}
                     >
                         Tudo
                     </button>
                     <button
                         onClick={() => setFilterType('income')}
-                        className={`flex h-9 shrink-0 items-center justify-center px-5 rounded-full font-bold text-sm shadow-sm transition-colors ${filterType === 'income' ? 'bg-[#111814] dark:bg-white text-white dark:text-[#111814]' : 'bg-surface-variant-light dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'}`}
+                        className={`flex h-9 shrink-0 items-center justify-center px-5 rounded-full font-bold text-sm shadow-sm transition-colors ${filterType === 'income' ? 'bg-[#111814] dark:bg-background-light text-white dark:text-[#111814]' : 'bg-surface-variant-light dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'}`}
                     >
                         Receitas
                     </button>
                     <button
                         onClick={() => setFilterType('expense')}
-                        className={`flex h-9 shrink-0 items-center justify-center px-5 rounded-full font-bold text-sm shadow-sm transition-colors ${filterType === 'expense' ? 'bg-[#111814] dark:bg-white text-white dark:text-[#111814]' : 'bg-surface-variant-light dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'}`}
+                        className={`flex h-9 shrink-0 items-center justify-center px-5 rounded-full font-bold text-sm shadow-sm transition-colors ${filterType === 'expense' ? 'bg-[#111814] dark:bg-background-light text-white dark:text-[#111814]' : 'bg-surface-variant-light dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'}`}
                     >
                         Despesas
                     </button>

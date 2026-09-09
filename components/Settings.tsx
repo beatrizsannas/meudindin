@@ -124,7 +124,7 @@ const Settings: React.FC = () => {
       <div className="pb-24">
         {/* Profile Header */}
         <section className="mt-6 px-6">
-          <Link to="/settings/profile" className="flex items-center gap-4 bg-white dark:bg-surface-dark p-5 rounded-2xl shadow-card transition-colors cursor-pointer group hover:bg-gray-50 dark:hover:bg-white/5">
+          <Link to="/settings/profile" className="flex items-center gap-4 bg-background-light dark:bg-surface-dark p-5 rounded-2xl shadow-card transition-colors cursor-pointer group hover:bg-gray-50 dark:hover:bg-white/5">
             <div className="relative">
               {isLoadingProfile ? (
                 <div className="h-14 w-14 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
@@ -166,7 +166,7 @@ const Settings: React.FC = () => {
         <div className="px-6 pb-2 pt-8">
           <h3 className="text-gray-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-widest pl-2">Gerenciamento</h3>
         </div>
-        <div className="mx-6 flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-card">
+        <div className="mx-6 flex flex-col overflow-hidden rounded-2xl bg-background-light dark:bg-surface-dark shadow-card">
           {/* Item 1 */}
 
           {/* Item 2 */}
@@ -202,7 +202,7 @@ const Settings: React.FC = () => {
         <div className="px-6 pb-2 pt-8">
           <h3 className="text-gray-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-widest pl-2">Preferências</h3>
         </div>
-        <div className="mx-6 flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-card">
+        <div className="mx-6 flex flex-col overflow-hidden rounded-2xl bg-background-light dark:bg-surface-dark shadow-card">
           {/* Toggle Item 1 */}
           <div className="flex items-center gap-4 px-5 py-4 w-full border-b border-gray-50 dark:border-gray-800 last:border-0 group">
             <div className="flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 shrink-0 size-10 text-gray-500 dark:text-gray-400 group-hover:scale-110 transition-transform">
@@ -212,7 +212,7 @@ const Settings: React.FC = () => {
             {/* Toggle Switch */}
             <label className="relative inline-flex items-center cursor-pointer">
               <input type="checkbox" value="" className="sr-only peer toggle-checkbox" defaultChecked />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 toggle-label transition-colors"></div>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-background-light after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 toggle-label transition-colors"></div>
             </label>
           </div>
           {/* Toggle Item 2 */}
@@ -223,7 +223,7 @@ const Settings: React.FC = () => {
         <div className="px-6 pb-2 pt-8">
           <h3 className="text-gray-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-widest pl-2">Sobre</h3>
         </div>
-        <div className="mx-6 flex flex-col overflow-hidden rounded-2xl bg-white dark:bg-surface-dark shadow-card mb-8">
+        <div className="mx-6 flex flex-col overflow-hidden rounded-2xl bg-background-light dark:bg-surface-dark shadow-card mb-8">
           <a
             href="https://wa.me/5581997332279?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20o%20Meu%20Dindin!"
             target="_blank"
@@ -261,7 +261,7 @@ const Settings: React.FC = () => {
             onClick={handleOpenDeleteModal}
             fullWidth
             variant="secondary"
-            className="bg-white dark:bg-surface-dark text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-card border border-transparent hover:border-red-100 h-14 rounded-2xl flex items-center justify-center gap-3"
+            className="bg-background-light dark:bg-surface-dark text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-card border border-transparent hover:border-red-100 h-14 rounded-2xl flex items-center justify-center gap-3"
             startIcon="delete_forever"
           >
             Apagar todos os dados
@@ -271,7 +271,7 @@ const Settings: React.FC = () => {
             onClick={handleLogoutClick}
             fullWidth
             variant="secondary"
-            className="bg-white dark:bg-surface-dark text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-card border border-transparent hover:border-red-100 h-14 rounded-2xl"
+            className="bg-background-light dark:bg-surface-dark text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 shadow-card border border-transparent hover:border-red-100 h-14 rounded-2xl"
             startIcon="logout"
           >
             Sair da Conta
@@ -312,7 +312,7 @@ const Settings: React.FC = () => {
           ></div>
 
           {/* Modal Content */}
-          <div className="relative w-full max-w-sm bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-sm bg-background-light dark:bg-surface-dark rounded-3xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="size-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-2">
                 <span className="material-symbols-outlined text-red-600 dark:text-red-500 text-3xl">warning</span>

@@ -448,12 +448,12 @@ const Wallet: React.FC = () => {
           <div className="flex items-center gap-2">
             <button
               onClick={openHistory}
-              className="flex size-10 items-center justify-center rounded-full bg-white dark:bg-surface-dark text-[#111814] dark:text-white border border-gray-200 dark:border-white/10 shadow-sm hover:border-primary dark:hover:border-primary transition-all"
+              className="flex size-10 items-center justify-center rounded-full bg-background-light dark:bg-surface-dark text-[#111814] dark:text-white border border-gray-200 dark:border-white/10 shadow-sm hover:border-primary dark:hover:border-primary transition-all"
               title="Histórico"
             >
               <span className="material-symbols-outlined text-[20px]">history</span>
             </button>
-            <Link to="/wallet/register" className="flex size-10 items-center justify-center rounded-full bg-primary text-[#102217] shadow-lg hover:brightness-110 transition-all">
+            <Link to="/wallet/register" className="flex size-10 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:brightness-110 transition-all">
               <span className="material-symbols-outlined text-[24px]">add</span>
             </Link>
           </div>
@@ -498,7 +498,7 @@ const Wallet: React.FC = () => {
 
         {/* Search */}
         <section>
-          <div className="group flex w-full items-center rounded-xl bg-white dark:bg-surface-dark border border-transparent focus-within:border-primary/50 shadow-sm transition-all h-12">
+          <div className="group flex w-full items-center rounded-xl bg-background-light dark:bg-surface-dark border border-transparent focus-within:border-primary/50 shadow-sm transition-all h-12">
             <div className="pl-4 flex items-center justify-center text-gray-400">
               <span className="material-symbols-outlined text-[22px]">search</span>
             </div>
@@ -524,7 +524,7 @@ const Wallet: React.FC = () => {
             <div className="text-center py-8 text-gray-500">Nenhuma compra para este mês.</div>
           ) : (
             activePurchases.map((item) => (
-              <article key={item.id} className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all">
+              <article key={item.id} className="bg-background-light dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all">
                 <div className="flex gap-4 mb-3">
                   <div className="relative shrink-0">
                     <div className="size-14 rounded-full bg-primary/10 flex items-center justify-center ring-2 ring-primary/20 text-primary-dark dark:text-primary font-bold text-xl">
@@ -575,10 +575,10 @@ const Wallet: React.FC = () => {
                           type="checkbox"
                           checked={item.isPaidThisMonth}
                           onChange={() => handleTogglePaid(item.id, item.installments_paid, item.installments_total, item.isPaidThisMonth)}
-                          className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 dark:border-white/20 bg-white dark:bg-white/5 checked:bg-primary checked:border-primary transition-all"
+                          className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 dark:border-white/20 bg-background-light dark:bg-white/5 checked:bg-primary checked:border-primary transition-all"
                         />
-                        {/* WCAG: checkmark #0a2018 sobre primary = ~8.1:1 ✅ */}
-                        <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[#0a2018] opacity-0 peer-checked:opacity-100 pointer-events-none text-[14px]">check</span>
+                        {/* WCAG: checkmark #ffffff sobre primary = ~8.1:1 ✅ */}
+                        <span className="material-symbols-outlined absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-[#ffffff] opacity-0 peer-checked:opacity-100 pointer-events-none text-[14px]">check</span>
                       </div>
                       {/* WCAG: emerald-700 = ~5.8:1 ✅ */}
                       <span className={`text-xs font-semibold transition-colors select-none ${item.isPaidThisMonth ? 'text-emerald-700 dark:text-primary' : 'text-gray-500 group-hover/check:text-emerald-700 dark:group-hover/check:text-primary'}`}>
@@ -616,7 +616,7 @@ const Wallet: React.FC = () => {
           <div className="relative flex min-h-screen w-full flex-col max-w-md mx-auto shadow-2xl bg-[#f5f8f7] dark:bg-[#102217]">
 
             {/* Modal Header */}
-            <header className="flex items-center bg-white dark:bg-[#1c2e24] p-4 pb-2 justify-between sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800 transition-colors">
+            <header className="flex items-center bg-background-light dark:bg-[#1c2e24] p-4 pb-2 justify-between sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800 transition-colors">
               <button
                 onClick={() => {
                   if (historyStep === 'preview') { setHistoryStep('filter'); }
@@ -646,13 +646,13 @@ const Wallet: React.FC = () => {
                   {(['current', 'previous', 'custom'] as const).map((p) => (
                     <label
                       key={p}
-                      className={`group relative flex items-center justify-between p-4 bg-white dark:bg-[#1c2e24] rounded-2xl border-2 cursor-pointer transition-all shadow-sm ${
+                      className={`group relative flex items-center justify-between p-4 bg-background-light dark:bg-[#1c2e24] rounded-2xl border-2 cursor-pointer transition-all shadow-sm ${
                         historyPeriod === p ? 'border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/30' : 'border-transparent hover:border-emerald-300/50'
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`flex items-center justify-center rounded-xl size-10 transition-colors ${
-                          historyPeriod === p ? 'bg-emerald-600 dark:bg-primary text-white dark:text-[#0a2018]' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                          historyPeriod === p ? 'bg-emerald-600 dark:bg-primary text-white dark:text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
                         }`}>
                           <span className="material-symbols-outlined text-[20px]">
                             {p === 'current' ? 'event_available' : p === 'previous' ? 'history' : 'date_range'}
@@ -699,7 +699,7 @@ const Wallet: React.FC = () => {
                 <div className="mt-auto pt-8 pb-4">
                   <button
                     onClick={handleHistoryPreview}
-                    className="w-full flex items-center justify-center gap-2 p-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-primary dark:hover:brightness-110 text-white dark:text-[#102217] font-bold text-lg shadow-lg shadow-emerald-700/20 transition-all active:scale-[0.98]"
+                    className="w-full flex items-center justify-center gap-2 p-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 dark:bg-primary dark:hover:brightness-110 text-white dark:text-white font-bold text-lg shadow-lg shadow-emerald-700/20 transition-all active:scale-[0.98]"
                   >
                     <span className="material-symbols-outlined text-[24px]">visibility</span>
                     Visualizar Relatório
@@ -711,7 +711,7 @@ const Wallet: React.FC = () => {
             {/* PREVIEW STEP */}
             {historyStep === 'preview' && historyData && (
               <main className="flex-1 p-4 bg-[#f5f8f7] overflow-y-auto">
-                <div className="bg-white text-gray-900 rounded-lg shadow-lg p-5 w-full text-[12px] leading-relaxed relative border-t-8 border-emerald-600 mb-6">
+                <div className="bg-background-light text-gray-900 rounded-lg shadow-lg p-5 w-full text-[12px] leading-relaxed relative border-t-8 border-emerald-600 mb-6">
 
                   {/* Preview Header */}
                   <div className="border-b-2 border-gray-100 mb-4 pb-3 flex justify-between items-end">
@@ -792,7 +792,7 @@ const Wallet: React.FC = () => {
                   <button
                     onClick={handleHistoryPDF}
                     disabled={isGenerating}
-                    className="flex items-center gap-2 bg-[#111814] dark:bg-primary text-white dark:text-[#102217] px-6 py-3 rounded-full font-bold text-sm shadow-xl hover:scale-105 transition-transform disabled:opacity-60"
+                    className="flex items-center gap-2 bg-[#111814] dark:bg-primary text-white dark:text-white px-6 py-3 rounded-full font-bold text-sm shadow-xl hover:scale-105 transition-transform disabled:opacity-60"
                   >
                     <span className="material-symbols-outlined text-[20px]">{isGenerating ? 'hourglass_empty' : 'print'}</span>
                     {isGenerating ? 'Gerando...' : 'Imprimir / Salvar PDF'}
@@ -804,7 +804,7 @@ const Wallet: React.FC = () => {
             {/* Loading Overlay */}
             {isGenerating && (
               <div className="absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-[2px] z-20 flex items-center justify-center">
-                <div className="bg-white dark:bg-[#1c2e24] p-4 rounded-xl shadow-xl flex items-center gap-3">
+                <div className="bg-background-light dark:bg-[#1c2e24] p-4 rounded-xl shadow-xl flex items-center gap-3">
                   <span className="size-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></span>
                   <span className="font-bold text-gray-900 dark:text-white">Gerando Relatório...</span>
                 </div>

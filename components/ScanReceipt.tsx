@@ -132,7 +132,7 @@ const ScanReceipt: React.FC = () => {
           <div className="text-white text-center p-6">
             <span className="material-symbols-outlined text-4xl mb-2 text-red-500">error</span>
             <p>{error}</p>
-            <button onClick={() => window.location.reload()} className="mt-4 bg-white text-black px-4 py-2 rounded-full font-bold">Tentar Novamente</button>
+            <button onClick={() => window.location.reload()} className="mt-4 bg-background-light text-black px-4 py-2 rounded-full font-bold">Tentar Novamente</button>
           </div>
         ) : (
           <video 
@@ -182,7 +182,7 @@ const ScanReceipt: React.FC = () => {
           disabled={isProcessing || !!error}
           className="size-20 rounded-full border-4 border-white p-1 flex items-center justify-center group active:scale-95 transition-transform"
         >
-          <div className="w-full h-full bg-white rounded-full group-hover:scale-90 transition-transform duration-200"></div>
+          <div className="w-full h-full bg-background-light rounded-full group-hover:scale-90 transition-transform duration-200"></div>
         </button>
 
         <button className="p-4 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors">

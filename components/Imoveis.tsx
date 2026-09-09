@@ -136,7 +136,7 @@ const Imoveis: React.FC = () => {
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-[#111814] shadow-lg hover:scale-110 active:scale-95 transition-all"
+          className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white shadow-lg hover:scale-110 active:scale-95 transition-all"
         >
           <span className="material-symbols-outlined font-bold">add</span>
         </button>
@@ -203,7 +203,7 @@ const Imoveis: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4" onClick={() => setIsModalOpen(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-md bg-white dark:bg-[#1c2e24] rounded-3xl p-6 shadow-2xl border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-200"
+            className="relative w-full max-w-md bg-background-light dark:bg-[#1c2e24] rounded-3xl p-6 shadow-2xl border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-200"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
@@ -255,7 +255,7 @@ const Imoveis: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full h-12 mt-2 bg-primary hover:bg-primary-dark active:scale-[0.98] text-[#111814] font-bold rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                className="w-full h-12 mt-2 bg-primary hover:bg-primary-dark active:scale-[0.98] text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
               >
                 <span className="material-symbols-outlined">{saving ? 'hourglass_empty' : 'save'}</span>
                 {saving ? 'Salvando...' : (editTarget ? 'Salvar Alterações' : 'Cadastrar Imóvel')}

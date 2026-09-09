@@ -286,12 +286,12 @@ const Dashboard: React.FC = () => {
 
           {/* Stats cards skeleton */}
           <div className="flex gap-4">
-            <div className="flex-1 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-card flex flex-col gap-2">
+            <div className="flex-1 rounded-2xl bg-background-light dark:bg-surface-dark p-4 shadow-card flex flex-col gap-2">
               <div className="h-3 w-16 rounded-full bg-gray-200 dark:bg-gray-700" />
               <div className="h-6 w-24 rounded-full bg-gray-200 dark:bg-gray-700" />
               <div className="h-3 w-12 rounded-full bg-gray-200 dark:bg-gray-700" />
             </div>
-            <div className="flex-1 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-card flex flex-col gap-2">
+            <div className="flex-1 rounded-2xl bg-background-light dark:bg-surface-dark p-4 shadow-card flex flex-col gap-2">
               <div className="h-3 w-16 rounded-full bg-gray-200 dark:bg-gray-700" />
               <div className="h-6 w-24 rounded-full bg-gray-200 dark:bg-gray-700" />
               <div className="h-3 w-12 rounded-full bg-gray-200 dark:bg-gray-700" />
@@ -302,7 +302,7 @@ const Dashboard: React.FC = () => {
           <div className="flex flex-col gap-3">
             <div className="h-5 w-40 rounded-full bg-gray-200 dark:bg-gray-700" />
             {[1, 2, 3, 4].map(i => (
-              <div key={i} className="flex items-center gap-3 bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-card">
+              <div key={i} className="flex items-center gap-3 bg-background-light dark:bg-surface-dark p-4 rounded-2xl shadow-card">
                 <div className="size-10 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0" />
                 <div className="flex-1 flex flex-col gap-1.5">
                   <div className="h-3.5 w-3/4 rounded-full bg-gray-200 dark:bg-gray-700" />
@@ -338,8 +338,8 @@ const Dashboard: React.FC = () => {
                 ></div>
               ) : (
                 <div className="flex items-center justify-center size-12 rounded-full bg-primary ring-2 ring-white dark:ring-surface-dark shadow-sm">
-                  {/* WCAG fix: text-[#0a2018] sobre #0df26c = contraste ~8.1:1 ✅ */}
-                  <span className="text-[#0a2018] font-bold text-lg">
+                  {/* WCAG fix: text-[#ffffff] sobre #228b3b = contraste ~8.1:1 ✅ */}
+                  <span className="text-[#ffffff] font-bold text-lg">
                     {userName ? userName.charAt(0).toUpperCase() : 'U'}
                   </span>
                 </div>
@@ -418,7 +418,7 @@ const Dashboard: React.FC = () => {
 
         {/* Stats — Este Mês */}
         <div className="flex gap-3">
-          <Link to="/income" className="flex-1 flex flex-col gap-2 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-card hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-100 dark:border-gray-800 hover:border-green-200 dark:hover:border-green-800/50 group">
+          <Link to="/income" className="flex-1 flex flex-col gap-2 rounded-2xl bg-background-light dark:bg-surface-dark p-4 shadow-card hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-100 dark:border-gray-800 hover:border-green-200 dark:hover:border-green-800/50 group">
             <div className="flex items-center gap-2">
               <div className="flex items-center justify-center size-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/25 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-200">
                 <span className="material-symbols-outlined text-lg icon-filled">trending_up</span>
@@ -433,7 +433,7 @@ const Dashboard: React.FC = () => {
               {incomePercentage} vs mês ant.
             </p>
           </Link>
-          <Link to="/expenses" className="flex-1 flex flex-col gap-2 rounded-2xl bg-white dark:bg-surface-dark p-4 shadow-card hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-100 dark:border-gray-800 hover:border-red-200 dark:hover:border-red-800/50 group">
+          <Link to="/expenses" className="flex-1 flex flex-col gap-2 rounded-2xl bg-background-light dark:bg-surface-dark p-4 shadow-card hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-100 dark:border-gray-800 hover:border-red-200 dark:hover:border-red-800/50 group">
             <div className="flex items-center gap-2">
               <div className="flex items-center justify-center size-9 rounded-xl bg-red-50 dark:bg-red-900/25 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform duration-200">
                 <span className="material-symbols-outlined text-lg icon-filled">trending_down</span>
@@ -463,7 +463,7 @@ const Dashboard: React.FC = () => {
             </Link>
           </div>
 
-          {/* WCAG: filtro ativo text-[#0a2018] sobre #0df26c = ~8.1:1 ✅ */}
+          {/* WCAG: filtro ativo text-[#ffffff] sobre #228b3b = ~8.1:1 ✅ */}
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             {(['Geral', 'Despesas', 'Receitas', 'Veículo Manutenção', 'Veículo Combustível'] as const).map(f => (
               <button
@@ -471,8 +471,8 @@ const Dashboard: React.FC = () => {
                 onClick={() => setFilter(f)}
                 className={`flex h-8 shrink-0 items-center justify-center px-4 rounded-full font-bold text-xs transition-all duration-200 ${
                   filter === f
-                    ? 'bg-primary text-[#0a2018] shadow-md shadow-primary/25 scale-[1.03]'
-                    : 'bg-white dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700'
+                    ? 'bg-primary text-white shadow-md shadow-primary/25 scale-[1.03]'
+                    : 'bg-background-light dark:bg-surface-variant-dark text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-100 dark:border-gray-700'
                 }`}
               >
                 {f}
@@ -530,7 +530,7 @@ const Dashboard: React.FC = () => {
                   <div
                     key={item.id}
                     onClick={() => handleTransactionClick(item)}
-                    className="flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-surface-dark shadow-card border border-gray-100/80 dark:border-gray-800/60 hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.98]"
+                    className="flex items-center gap-4 p-4 rounded-2xl bg-background-light dark:bg-surface-dark shadow-card border border-gray-100/80 dark:border-gray-800/60 hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.98]"
                   >
                     <div className={`flex items-center justify-center size-11 rounded-2xl shrink-0 ${style.bg} ${style.text}`}>
                       <span className="material-symbols-outlined icon-filled text-[20px]">{icon}</span>
@@ -666,7 +666,7 @@ const Dashboard: React.FC = () => {
                     }
                     navigate('/register', { state: { transaction: txToEdit, type: txToEdit.type } });
                   }}
-                  className="flex items-center justify-center gap-2 py-3 rounded-xl bg-primary hover:bg-primary-dark text-[#102217] font-bold text-sm shadow-lg shadow-primary/20 transition-colors"
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm shadow-lg shadow-primary/20 transition-colors"
                 >
                   <span className="material-symbols-outlined text-lg icon-filled">edit</span>
                   Editar
@@ -681,7 +681,7 @@ const Dashboard: React.FC = () => {
       {showBalanceModal && (
         <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={() => setShowBalanceModal(false)}>
           <div
-            className="bg-white dark:bg-surface-dark rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom sm:slide-in-from-bottom-8 duration-300"
+            className="bg-background-light dark:bg-surface-dark rounded-t-3xl sm:rounded-3xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom sm:slide-in-from-bottom-8 duration-300"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Drag Handle (Mobile) */}
@@ -721,7 +721,7 @@ const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 globalTransactions.map(t => (
-                  <div key={t.id} className="flex justify-between items-center bg-white dark:bg-surface-dark p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
+                  <div key={t.id} className="flex justify-between items-center bg-background-light dark:bg-surface-dark p-3 rounded-xl border border-gray-100 dark:border-gray-800 shadow-sm">
                     <div className="flex-1 min-w-0 pr-3">
                       <p className="text-sm font-bold text-[#111814] dark:text-white truncate">{t.description}</p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{new Date(t.date + 'T12:00:00').toLocaleDateString('pt-BR')} • {t.type === 'income' ? 'Receita' : 'Despesa'}</p>
@@ -739,7 +739,7 @@ const Dashboard: React.FC = () => {
             <div className="p-4 border-t border-gray-100 dark:border-gray-800">
               <button
                 onClick={() => setShowBalanceModal(false)}
-                className="w-full bg-primary text-[#102217] py-3.5 rounded-xl font-bold font-display shadow-md hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                className="w-full bg-primary text-white py-3.5 rounded-xl font-bold font-display shadow-md hover:scale-[1.02] active:scale-[0.98] transition-transform"
               >
                 Fechar
               </button>

@@ -297,7 +297,7 @@ const ViewExpenses: React.FC = () => {
             <button
               onClick={() => setShowConfirmModal(true)}
               disabled={cloning}
-              className="text-sm font-bold text-[#111814] bg-primary px-3 py-1.5 rounded-full shadow-sm hover:brightness-110 transition-all flex items-center gap-1"
+              className="text-sm font-bold text-white bg-primary px-3 py-1.5 rounded-full shadow-sm hover:brightness-110 transition-all flex items-center gap-1"
             >
               {cloning ? '...' : 'Clonar'}
               <span className="material-symbols-outlined text-[16px]">content_copy</span>
@@ -457,7 +457,7 @@ const ViewExpenses: React.FC = () => {
                               onClick={() => !isInstallment(transaction.description) && toggleSelect(transaction.id)}
                               disabled={isInstallment(transaction.description)}
                               className={`size-[30px] flex items-center justify-center rounded-full transition-colors border ${selectedIds.has(transaction.id)
-                                ? 'bg-primary border-primary text-[#0a2018]'
+                                ? 'bg-primary border-primary text-white'
                                 : 'bg-transparent border-gray-300 dark:border-gray-600 text-transparent'
                                 } disabled:opacity-30 disabled:cursor-not-allowed`}
                             >
@@ -536,7 +536,7 @@ const ViewExpenses: React.FC = () => {
           <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setSelectedExpense(null)}>
             <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
             <div
-              className="relative w-full max-w-md bg-white dark:bg-[#1c2e24] rounded-t-3xl shadow-2xl border-t border-gray-100 dark:border-gray-800 p-6 pb-10 animate-in slide-in-from-bottom-4 duration-300"
+              className="relative w-full max-w-md bg-background-light dark:bg-[#1c2e24] rounded-t-3xl shadow-2xl border-t border-gray-100 dark:border-gray-800 p-6 pb-10 animate-in slide-in-from-bottom-4 duration-300"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6" />

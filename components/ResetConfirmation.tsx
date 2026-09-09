@@ -7,7 +7,7 @@ const ResetConfirmation: React.FC = () => {
   const { showToast } = useToast();
 
   return (
-    <div className="relative flex h-screen w-full flex-col overflow-hidden bg-background-light dark:bg-background-dark font-display text-[#111814] dark:text-gray-100 antialiased selection:bg-primary selection:text-[#111814]">
+    <div className="relative flex h-screen w-full flex-col overflow-hidden bg-background-light dark:bg-background-dark font-display text-white dark:text-gray-100 antialiased selection:bg-primary selection:text-white">
       {/* TopAppBar */}
       <div className="flex items-center p-4 pb-2 justify-between shrink-0 z-10">
         <button

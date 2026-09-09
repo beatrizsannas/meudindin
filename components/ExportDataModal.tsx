@@ -558,7 +558,7 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
     // Use hardcoded colors to avoid issues with missing Tailwind config
     const overlayClasses = "fixed inset-0 z-[70] bg-[#f5f8f7] dark:bg-[#102217] overflow-y-auto";
     const containerClasses = "relative flex min-h-screen w-full flex-col max-w-md mx-auto shadow-2xl bg-[#f5f8f7] dark:bg-[#102217]";
-    const headerClasses = "flex items-center bg-white dark:bg-[#1c2e24] p-4 pb-2 justify-between sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800 transition-colors";
+    const headerClasses = "flex items-center bg-background-light dark:bg-[#1c2e24] p-4 pb-2 justify-between sticky top-0 z-10 border-b border-gray-100 dark:border-gray-800 transition-colors";
 
     const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -583,7 +583,7 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
                 {step === 'initial' && (
                     <main className="flex-1 p-4 flex flex-col pt-6">
                         <div className="mb-8 px-2 text-center">
-                            <div className="inline-flex items-center justify-center p-4 bg-[#0df26c]/10 dark:bg-[#0df26c]/20 rounded-full mb-4 text-[#0aad4c] dark:text-[#0df26c]">
+                            <div className="inline-flex items-center justify-center p-4 bg-[#228b3b]/10 dark:bg-[#228b3b]/20 rounded-full mb-4 text-[#1b6d2f] dark:text-[#228b3b]">
                                 <span className="material-symbols-outlined text-4xl">share</span>
                             </div>
                             <h3 className="text-gray-900 dark:text-white text-xl font-bold mb-2">Exportar Relatórios</h3>
@@ -595,7 +595,7 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
                         <div className="flex flex-col gap-4">
                             <button
                                 onClick={() => setStep('filter')}
-                                className="group relative flex items-center gap-4 p-5 w-full bg-white dark:bg-[#1c2e24] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-red-500 dark:hover:border-red-500 transition-all duration-300 active:scale-[0.98]"
+                                className="group relative flex items-center gap-4 p-5 w-full bg-background-light dark:bg-[#1c2e24] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-red-500 dark:hover:border-red-500 transition-all duration-300 active:scale-[0.98]"
                             >
                                 <div className="flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-900/20 shrink-0 size-14 text-red-600 dark:text-red-400 group-hover:bg-red-600 group-hover:text-white transition-colors duration-300">
                                     <span className="material-symbols-outlined text-[28px]">picture_as_pdf</span>
@@ -614,7 +614,7 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
                 {step === 'filter' && (
                     <main className="flex-1 p-6 flex flex-col">
                         <div className="mb-8 text-center">
-                            <div className="inline-flex items-center justify-center p-4 bg-[#0df26c]/10 dark:bg-[#0df26c]/20 rounded-full mb-4 text-[#0aad4c] dark:text-[#0df26c]">
+                            <div className="inline-flex items-center justify-center p-4 bg-[#228b3b]/10 dark:bg-[#228b3b]/20 rounded-full mb-4 text-[#1b6d2f] dark:text-[#228b3b]">
                                 <span className="material-symbols-outlined text-4xl">calendar_month</span>
                             </div>
                             <h3 className="text-gray-900 dark:text-white text-xl font-bold mb-2">Selecione o Período</h3>
@@ -622,21 +622,21 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
 
                         <div className="flex flex-col gap-4">
                             {['current', 'previous', 'last_3'].map((p) => (
-                                <label key={p} className={`group relative flex items-center justify-between p-4 bg-white dark:bg-[#1c2e24] rounded-2xl border-2 cursor-pointer transition-all shadow-sm ${filterPeriod === p ? 'border-[#0df26c] bg-[#0df26c]/5 dark:bg-[#0df26c]/10' : 'border-transparent hover:border-[#0df26c]/30'}`}>
+                                <label key={p} className={`group relative flex items-center justify-between p-4 bg-background-light dark:bg-[#1c2e24] rounded-2xl border-2 cursor-pointer transition-all shadow-sm ${filterPeriod === p ? 'border-[#228b3b] bg-[#228b3b]/5 dark:bg-[#228b3b]/10' : 'border-transparent hover:border-[#228b3b]/30'}`}>
                                     <div className="flex items-center gap-4">
-                                        <div className={`flex items-center justify-center rounded-xl size-10 transition-colors ${filterPeriod === p ? 'bg-[#0df26c] text-black' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
+                                        <div className={`flex items-center justify-center rounded-xl size-10 transition-colors ${filterPeriod === p ? 'bg-[#228b3b] text-black' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'}`}>
                                             <span className="material-symbols-outlined text-[20px]">
                                                 {p === 'current' ? 'event_available' : p === 'previous' ? 'history' : 'date_range'}
                                             </span>
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className={`font-bold transition-colors ${filterPeriod === p ? 'text-[#0aad4c] dark:text-[#0df26c]' : 'text-gray-900 dark:text-white'}`}>
+                                            <span className={`font-bold transition-colors ${filterPeriod === p ? 'text-[#1b6d2f] dark:text-[#228b3b]' : 'text-gray-900 dark:text-white'}`}>
                                                 {p === 'current' ? 'Mês Atual' : p === 'previous' ? 'Mês Anterior' : 'Últimos 3 Meses'}
                                             </span>
                                         </div>
                                     </div>
                                     <input
-                                        className="w-5 h-5 text-[#0df26c] border-gray-300 focus:ring-[#0df26c] focus:ring-2 bg-gray-50 dark:bg-gray-800 dark:border-gray-600"
+                                        className="w-5 h-5 text-[#228b3b] border-gray-300 focus:ring-[#228b3b] focus:ring-2 bg-gray-50 dark:bg-gray-800 dark:border-gray-600"
                                         name="filter_period"
                                         type="radio"
                                         value={p}
@@ -650,7 +650,7 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
                         <div className="mt-auto pt-10 pb-4 flex flex-col gap-3">
                             <button
                                 onClick={handlePreview}
-                                className="w-full flex items-center justify-center gap-2 p-4 rounded-xl bg-[#0df26c] hover:bg-[#0aad4c] text-black font-bold text-lg shadow-lg shadow-[#0df26c]/20 transition-all active:scale-[0.98]"
+                                className="w-full flex items-center justify-center gap-2 p-4 rounded-xl bg-[#228b3b] hover:bg-[#1b6d2f] text-black font-bold text-lg shadow-lg shadow-[#228b3b]/20 transition-all active:scale-[0.98]"
                             >
                                 <span className="material-symbols-outlined text-[24px]">visibility</span>
                                 Visualizar Relatório
@@ -662,7 +662,7 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
                 {/* Step 3: Preview Screen (Matches the User's HTML Structure) */}
                 {step === 'preview' && processedData && (
                     <main className="flex-1 p-4 bg-[#f5f8f7] overflow-y-auto">
-                        <div className="bg-white text-gray-900 rounded-lg shadow-lg p-5 w-full text-[12px] leading-relaxed relative border-t-8 border-[#0df26c] mb-6">
+                        <div className="bg-background-light text-gray-900 rounded-lg shadow-lg p-5 w-full text-[12px] leading-relaxed relative border-t-8 border-[#228b3b] mb-6">
 
                             {/* PDF Header */}
                             <div className="border-b-2 border-gray-100 mb-6 pb-4 flex justify-between items-end">
@@ -683,7 +683,7 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
                             {/* 1. Sumário Geral */}
                             <section className="mb-8">
                                 <h3 className="text-sm font-bold uppercase tracking-wider text-gray-800 mb-3 flex items-center gap-2">
-                                    <span className="size-2 rounded-full bg-[#0df26c]"></span>
+                                    <span className="size-2 rounded-full bg-[#228b3b]"></span>
                                     1. Sumário Geral
                                 </h3>
                                 <div className="grid grid-cols-3 gap-2 bg-gray-50 p-3 rounded-md border border-gray-100">
@@ -860,7 +860,7 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
                         <div className="mt-6 mb-8 flex justify-center pb-8">
                             <button
                                 onClick={handleGeneratePDF}
-                                className="flex items-center gap-2 bg-gray-900 dark:bg-[#0df26c] text-white dark:text-[#003314] px-6 py-3 rounded-full font-bold text-sm shadow-xl hover:scale-105 transition-transform"
+                                className="flex items-center gap-2 bg-gray-900 dark:bg-[#228b3b] text-white dark:text-[#ffffff] px-6 py-3 rounded-full font-bold text-sm shadow-xl hover:scale-105 transition-transform"
                             >
                                 <span className="material-symbols-outlined text-[20px]">print</span>
                                 Imprimir / Salvar PDF
@@ -873,8 +873,8 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
                 {/* Loading Overlay */}
                 {isExporting && (
                     <div className="absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-[2px] z-20 flex items-center justify-center">
-                        <div className="bg-white dark:bg-[#1c2e24] p-4 rounded-xl shadow-xl flex items-center gap-3">
-                            <span className="size-5 border-2 border-[#0df26c] border-t-transparent rounded-full animate-spin"></span>
+                        <div className="bg-background-light dark:bg-[#1c2e24] p-4 rounded-xl shadow-xl flex items-center gap-3">
+                            <span className="size-5 border-2 border-[#228b3b] border-t-transparent rounded-full animate-spin"></span>
                             <span className="font-bold text-gray-900 dark:text-white">Gerando Relatório...</span>
                         </div>
                     </div>

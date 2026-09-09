@@ -169,7 +169,7 @@ const ImovelExportModal: React.FC<ImovelExportModalProps> = ({ isOpen, onClose, 
     <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       <div
-        className="relative w-full max-w-md bg-white dark:bg-[#1c2e24] rounded-t-3xl shadow-2xl border-t border-gray-100 dark:border-gray-800 max-h-[92vh] flex flex-col"
+        className="relative w-full max-w-md bg-background-light dark:bg-[#1c2e24] rounded-t-3xl shadow-2xl border-t border-gray-100 dark:border-gray-800 max-h-[92vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         {/* Drag handle */}
@@ -256,7 +256,7 @@ const ImovelExportModal: React.FC<ImovelExportModalProps> = ({ isOpen, onClose, 
               <button
                 onClick={() => setStep('preview')}
                 disabled={selectedCats.size === 0 || filteredPayments.length === 0}
-                className="w-full h-12 bg-primary hover:bg-primary-dark active:scale-[0.98] text-[#111814] font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40"
+                className="w-full h-12 bg-primary hover:bg-primary-dark active:scale-[0.98] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-40"
               >
                 <span className="material-symbols-outlined">visibility</span>
                 Pré-visualizar
@@ -269,7 +269,7 @@ const ImovelExportModal: React.FC<ImovelExportModalProps> = ({ isOpen, onClose, 
         {step === 'preview' && (
           <div className="flex-1 p-4 bg-[#f5f8f7] overflow-y-auto pb-28">
             {/* Mini PDF card matching ExportDataModal */}
-            <div className="bg-white text-gray-900 rounded-lg shadow-lg p-5 w-full text-[12px] leading-relaxed relative border-t-8 border-[#0df26c] mb-6">
+            <div className="bg-background-light text-gray-900 rounded-lg shadow-lg p-5 w-full text-[12px] leading-relaxed relative border-t-8 border-[#228b3b] mb-6">
               
               {/* PDF Header */}
               <div className="border-b-2 border-gray-100 mb-6 pb-4 flex justify-between items-end">
@@ -290,7 +290,7 @@ const ImovelExportModal: React.FC<ImovelExportModalProps> = ({ isOpen, onClose, 
               {/* 1. SUMÁRIO GERAL */}
               <section className="mb-8">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-gray-800 mb-3 flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-[#0df26c]"></span>
+                  <span className="size-2 rounded-full bg-[#228b3b]"></span>
                   1. SUMÁRIO GERAL
                 </h3>
                 <div className="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-md border border-gray-100">
@@ -352,7 +352,7 @@ const ImovelExportModal: React.FC<ImovelExportModalProps> = ({ isOpen, onClose, 
               <button
                 onClick={handleGeneratePDF}
                 disabled={isExporting}
-                className="flex items-center gap-2 bg-gray-900 dark:bg-[#0df26c] text-white dark:text-[#003314] px-6 py-3 rounded-full font-bold text-sm shadow-xl hover:scale-105 transition-transform disabled:opacity-60"
+                className="flex items-center gap-2 bg-gray-900 dark:bg-[#228b3b] text-white dark:text-[#ffffff] px-6 py-3 rounded-full font-bold text-sm shadow-xl hover:scale-105 transition-transform disabled:opacity-60"
               >
                 <span className="material-symbols-outlined text-[20px]">{isExporting ? 'hourglass_empty' : 'print'}</span>
                 {isExporting ? 'Gerando...' : 'Imprimir / Salvar PDF'}

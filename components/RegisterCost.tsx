@@ -326,13 +326,13 @@ const RegisterCost: React.FC = () => {
           <div className="flex h-12 w-full items-center justify-center rounded-lg bg-gray-200 dark:bg-[#25382e] p-1">
             <button
               onClick={() => handleTransactionTypeChange('expense')}
-              className={`flex h-full grow items-center justify-center overflow-hidden rounded-md px-2 text-sm font-bold leading-normal transition-all ${transactionType === 'expense' ? 'bg-primary text-[#003314] shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
+              className={`flex h-full grow items-center justify-center overflow-hidden rounded-md px-2 text-sm font-bold leading-normal transition-all ${transactionType === 'expense' ? 'bg-primary text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
             >
               <span className="truncate">Despesa</span>
             </button>
             <button
               onClick={() => handleTransactionTypeChange('income')}
-              className={`flex h-full grow items-center justify-center overflow-hidden rounded-md px-2 text-sm font-bold leading-normal transition-all ${transactionType === 'income' ? 'bg-primary text-[#003314] shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
+              className={`flex h-full grow items-center justify-center overflow-hidden rounded-md px-2 text-sm font-bold leading-normal transition-all ${transactionType === 'income' ? 'bg-primary text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
             >
               <span className="truncate">Receita</span>
             </button>
@@ -340,7 +340,7 @@ const RegisterCost: React.FC = () => {
         </div>
 
         {/* Input Card */}
-        <div className="bg-white dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-200 dark:border-white/5 flex flex-col gap-5">
+        <div className="bg-background-light dark:bg-surface-dark rounded-xl p-4 shadow-sm border border-gray-200 dark:border-white/5 flex flex-col gap-5">
           {/* Amount Input (Large) */}
           <div className="flex flex-col gap-2">
             <label className="text-gray-500 dark:text-gray-400 text-sm font-medium">Valor</label>
@@ -397,7 +397,7 @@ const RegisterCost: React.FC = () => {
                   <button
                     key={cat.id}
                     onClick={() => setCategoryId(cat.id)}
-                    className={`px-4 py-2 shrink-0 rounded-full border border-gray-200 dark:border-white/5 bg-background-light dark:bg-background-dark text-sm font-medium transition-colors ${categoryId === cat.id ? 'bg-primary text-[#003314] border-primary font-bold' : 'text-gray-600 dark:text-gray-400'}`}
+                    className={`px-4 py-2 shrink-0 rounded-full border border-gray-200 dark:border-white/5 bg-background-light dark:bg-background-dark text-sm font-medium transition-colors ${categoryId === cat.id ? 'bg-primary text-white border-primary font-bold' : 'text-gray-600 dark:text-gray-400'}`}
                   >
                     {cat.name}
                   </button>
@@ -420,7 +420,7 @@ const RegisterCost: React.FC = () => {
                   onClick={() => setIsInstallment(!isInstallment)}
                   className={`w-12 h-6 rounded-full relative transition-colors ${isInstallment ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
                 >
-                  <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${isInstallment ? 'translate-x-6' : ''}`} />
+                  <div className={`absolute top-1 left-1 bg-background-light w-4 h-4 rounded-full transition-transform ${isInstallment ? 'translate-x-6' : ''}`} />
                 </button>
               </div>
 
@@ -436,7 +436,7 @@ const RegisterCost: React.FC = () => {
                     onClick={() => setIsFixed(!isFixed)}
                     className={`w-12 h-6 rounded-full relative transition-colors ${isFixed ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
                   >
-                    <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform ${isFixed ? 'translate-x-6' : ''}`} />
+                    <div className={`absolute top-1 left-1 bg-background-light w-4 h-4 rounded-full transition-transform ${isFixed ? 'translate-x-6' : ''}`} />
                   </button>
                 </div>
               )}
@@ -477,7 +477,7 @@ const RegisterCost: React.FC = () => {
                   </div>
                   <button
                     onClick={() => setInstallments(prev => Math.min(60, prev + 1))}
-                    className="size-10 flex items-center justify-center rounded-md bg-primary text-[#003314] shadow-sm hover:bg-[#0be062] transition-colors"
+                    className="size-10 flex items-center justify-center rounded-md bg-primary text-white shadow-sm hover:bg-[#0be062] transition-colors"
                   >
                     <span className="material-symbols-outlined">add</span>
                   </button>
@@ -491,7 +491,7 @@ const RegisterCost: React.FC = () => {
             onClick={handleSave}
             fullWidth
             disabled={loading}
-            className="h-12 text-[#003314] shadow-lg shadow-primary/20 mt-2"
+            className="h-12 text-[#ffffff] shadow-lg shadow-primary/20 mt-2"
             startIcon={loading ? undefined : "check"}
           >
             {loading ? 'Salvando...' : `Adicionar ${transactionType === 'expense' ? 'Despesa' : 'Receita'}`}

@@ -18,7 +18,7 @@ const LogoutConfirmationModal: React.FC<LogoutConfirmationModalProps> = ({ isOpe
             ></div>
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-sm bg-white dark:bg-surface-dark rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 scale-100">
+            <div className="relative w-full max-w-sm bg-background-light dark:bg-surface-dark rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 scale-100">
                 <div className="flex flex-col items-center gap-4 text-center">
                     <div className="size-16 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center mb-2">
                         <span className="material-symbols-outlined text-red-600 dark:text-red-500 text-3xl">logout</span>

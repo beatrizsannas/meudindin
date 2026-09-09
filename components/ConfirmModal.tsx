@@ -34,10 +34,10 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
             ></div>
 
             {/* Modal */}
-            <div className="relative w-full max-w-sm bg-white dark:bg-[#1c2e24] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 p-6 transform transition-all animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-sm bg-background-light dark:bg-[#1c2e24] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 p-6 transform transition-all animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex flex-col items-center text-center gap-4">
                     {/* Icon based on destructive or not */}
-                    <div className={`flex items-center justify-center size-12 rounded-full ${isDestructive ? 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400' : 'bg-[#0df26c]/10 text-[#0aad4c] dark:bg-[#0df26c]/20 dark:text-[#0df26c]'}`}>
+                    <div className={`flex items-center justify-center size-12 rounded-full ${isDestructive ? 'bg-red-100 text-red-600 dark:bg-red-900/20 dark:text-red-400' : 'bg-[#228b3b]/10 text-[#1b6d2f] dark:bg-[#228b3b]/20 dark:text-[#228b3b]'}`}>
                         <span className="material-symbols-outlined text-[24px]">
                             {isDestructive ? 'warning' : 'content_copy'}
                         </span>
@@ -65,7 +65,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                             disabled={isLoading}
                             className={`w-full py-3 px-4 rounded-xl font-bold text-sm text-white shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 ${isDestructive
                                     ? 'bg-red-500 hover:bg-red-600 shadow-red-500/20'
-                                    : 'bg-[#003314] dark:bg-[#0df26c] dark:text-[#003314] hover:bg-[#004d1f] dark:hover:bg-[#0be062] shadow-[#0df26c]/20'
+                                    : 'bg-[#ffffff] dark:bg-[#228b3b] dark:text-[#ffffff] hover:bg-[#004d1f] dark:hover:bg-[#0be062] shadow-[#228b3b]/20'
                                 }`}
                         >
                             {isLoading && <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>}

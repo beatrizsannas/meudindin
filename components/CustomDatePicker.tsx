@@ -200,7 +200,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
             left: `${coords.left}px`,
             ...(coords.showAbove ? { bottom: `${coords.bottom}px` } : { top: `${coords.top}px` }),
           }}
-          className="z-[9999] w-72 bg-white dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 animate-dropdown"
+          className="z-[9999] w-72 bg-background-light dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl p-4 animate-dropdown"
         >
           {/* Calendar Header */}
           <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100 dark:border-gray-800">
@@ -254,7 +254,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
                   onClick={() => handleSelectDay(day)}
                   className={`size-8 text-xs font-bold rounded-xl flex items-center justify-center transition-all ${
                     isSelected
-                      ? 'bg-primary text-[#0a2018] shadow-sm scale-105'
+                      ? 'bg-primary text-white shadow-sm scale-105'
                       : isToday
                       ? 'border border-primary text-emerald-700 dark:text-primary'
                       : 'text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-white/10 hover:text-emerald-700 dark:hover:text-primary'

@@ -195,7 +195,7 @@ const ViewIncome: React.FC = () => {
             <button
               onClick={() => setShowConfirmModal(true)}
               disabled={cloning}
-              className="text-sm font-bold text-[#111814] bg-primary px-3 py-1.5 rounded-full shadow-sm hover:brightness-110 transition-all flex items-center gap-1"
+              className="text-sm font-bold text-white bg-primary px-3 py-1.5 rounded-full shadow-sm hover:brightness-110 transition-all flex items-center gap-1"
             >
               {cloning ? '...' : 'Clonar'}
               <span className="material-symbols-outlined text-[16px]">content_copy</span>
@@ -241,7 +241,7 @@ const ViewIncome: React.FC = () => {
             </div>
             <button
               onClick={handleNewIncome}
-              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-[#0a2018] font-bold py-2.5 px-4 rounded-xl transition-colors text-sm shadow-md shadow-primary/20"
+              className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2.5 px-4 rounded-xl transition-colors text-sm shadow-md shadow-primary/20"
             >
               <span className="material-symbols-outlined text-xl icon-filled">add</span>
               <span>Nova Receita</span>
@@ -309,7 +309,7 @@ const ViewIncome: React.FC = () => {
                           onClick={() => !isInstallment(transaction.description) && toggleSelect(transaction.id)}
                           disabled={isInstallment(transaction.description)}
                           className={`size-[30px] flex items-center justify-center rounded-full transition-colors border ${selectedIds.has(transaction.id)
-                            ? 'bg-primary border-primary text-[#0a2018]'
+                            ? 'bg-primary border-primary text-white'
                             : 'bg-transparent border-gray-300 dark:border-gray-600 text-transparent'
                             } disabled:opacity-30 disabled:cursor-not-allowed`}
                         >

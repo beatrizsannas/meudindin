@@ -36,7 +36,7 @@ const AllPurchases: React.FC = () => {
         </section>
         
         <section>
-          <div className="group flex w-full items-center rounded-xl bg-white dark:bg-surface-dark border border-transparent focus-within:border-primary/50 shadow-sm transition-all h-12">
+          <div className="group flex w-full items-center rounded-xl bg-background-light dark:bg-surface-dark border border-transparent focus-within:border-primary/50 shadow-sm transition-all h-12">
             <div className="pl-4 flex items-center justify-center text-gray-400">
               <span className="material-symbols-outlined text-[22px]">search</span>
             </div>
@@ -50,7 +50,7 @@ const AllPurchases: React.FC = () => {
             <span className="text-xs font-medium text-gray-600 dark:text-gray-400">5 compras</span>
           </div>
           
-          <article className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all hover:shadow-md">
+          <article className="bg-background-light dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all hover:shadow-md">
             <div className="flex gap-4 items-center">
               <div className="relative shrink-0">
                 <div className="size-12 rounded-full bg-cover bg-center ring-2 ring-primary/20" style={{backgroundImage: "url('https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80')"}}>
@@ -65,7 +65,7 @@ const AllPurchases: React.FC = () => {
             </div>
           </article>
           
-          <article className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all hover:shadow-md">
+          <article className="bg-background-light dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all hover:shadow-md">
             <div className="flex gap-4 items-center">
               <div className="relative shrink-0">
                 <div className="size-12 rounded-full bg-cover bg-center ring-2 ring-gray-200 dark:ring-gray-700 grayscale" style={{backgroundImage: "url('https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80')"}}>
@@ -80,7 +80,7 @@ const AllPurchases: React.FC = () => {
             </div>
           </article>
           
-          <article className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all hover:shadow-md">
+          <article className="bg-background-light dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all hover:shadow-md">
             <div className="flex gap-4 items-center">
               <div className="relative shrink-0 flex items-center justify-center size-12 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 font-bold text-lg ring-2 ring-indigo-200 dark:ring-indigo-800">
                 JP
@@ -94,7 +94,7 @@ const AllPurchases: React.FC = () => {
             </div>
           </article>
           
-          <article className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all hover:shadow-md">
+          <article className="bg-background-light dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all hover:shadow-md">
             <div className="flex gap-4 items-center">
               <div className="relative shrink-0 flex items-center justify-center size-12 rounded-full bg-orange-100 dark:bg-orange-900/50 text-orange-600 dark:text-orange-300 font-bold text-lg ring-2 ring-orange-200 dark:ring-orange-800">
                 AL
@@ -108,7 +108,7 @@ const AllPurchases: React.FC = () => {
             </div>
           </article>
           
-          <article className="bg-white dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all hover:shadow-md">
+          <article className="bg-background-light dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 relative overflow-hidden transition-all hover:shadow-md">
             <div className="flex gap-4 items-center">
               <div className="relative shrink-0">
                 <div className="size-12 rounded-full bg-cover bg-center ring-2 ring-primary/20" style={{backgroundImage: "url('https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=100&q=80')"}}>

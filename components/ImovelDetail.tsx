@@ -200,7 +200,7 @@ const ImovelDetail: React.FC = () => {
           </button>
           <button
             onClick={openAdd}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-[#111814] shadow-lg hover:scale-110 active:scale-95 transition-all"
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white shadow-lg hover:scale-110 active:scale-95 transition-all"
           >
             <span className="material-symbols-outlined font-bold">add</span>
           </button>
@@ -247,7 +247,7 @@ const ImovelDetail: React.FC = () => {
           <button
             onClick={() => setFilterCat('all')}
             className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold transition-all ${
-              filterCat === 'all' ? 'bg-primary text-[#003314]' : 'bg-surface-light dark:bg-surface-dark text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/10'
+              filterCat === 'all' ? 'bg-primary text-white' : 'bg-surface-light dark:bg-surface-dark text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/10'
             }`}
           >
             Todos
@@ -257,7 +257,7 @@ const ImovelDetail: React.FC = () => {
               key={cat.key}
               onClick={() => setFilterCat(filterCat === cat.key ? 'all' : cat.key)}
               className={`shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold transition-all ${
-                filterCat === cat.key ? 'bg-primary text-[#003314]' : 'bg-surface-light dark:bg-surface-dark text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/10'
+                filterCat === cat.key ? 'bg-primary text-white' : 'bg-surface-light dark:bg-surface-dark text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-white/10'
               }`}
             >
               <span className="material-symbols-outlined text-[14px]">{cat.icon}</span>
@@ -320,7 +320,7 @@ const ImovelDetail: React.FC = () => {
       {isAddOpen && (
         <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => setIsAddOpen(false)}>
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-        <div className="relative w-full max-w-md bg-white dark:bg-[#1c2e24] rounded-t-3xl shadow-2xl border-t border-gray-100 dark:border-gray-800 p-6 pb-32 max-h-[90vh] overflow-y-auto"
+        <div className="relative w-full max-w-md bg-background-light dark:bg-[#1c2e24] rounded-t-3xl shadow-2xl border-t border-gray-100 dark:border-gray-800 p-6 pb-32 max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
             <div className="w-10 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6" />
@@ -409,7 +409,7 @@ const ImovelDetail: React.FC = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full h-12 bg-primary hover:bg-primary-dark active:scale-[0.98] text-[#111814] font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                className="w-full h-12 bg-primary hover:bg-primary-dark active:scale-[0.98] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-70"
               >
                 <span className="material-symbols-outlined">{saving ? 'hourglass_empty' : 'save'}</span>
                 {saving ? 'Salvando...' : (editTarget ? 'Salvar Alterações' : 'Registrar Pagamento')}
