@@ -120,6 +120,12 @@ const Commitments: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<Commitment | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  // Reopen Modal State (Reabrir compromisso concluído)
+  const [reopenTarget, setReopenTarget] = useState<Commitment | null>(null);
+  const [reopenDate, setReopenDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [reopenTime, setReopenTime] = useState('09:00');
+  const [reopening, setReopening] = useState(false);
+
   // History Filter State
   const [filterType, setFilterType] = useState('all');
   const [filterMonth, setFilterMonth] = useState(() => {
@@ -449,29 +455,99 @@ const Commitments: React.FC = () => {
     }
   };
 
-  const handleToggleStatus = async (item: Commitment) => {
-    const nextStatus: 'pending' | 'completed' = item.status === 'completed' ? 'pending' : 'completed';
+  const handleMarkCompleted = async (item: Commitment) => {
     try {
       if (session?.user?.id) {
         await supabase
           .from('commitments')
-          .update({ status: nextStatus })
+          .update({ status: 'completed' })
           .eq('id', item.id);
       }
 
       const updated = commitments.map(c =>
-        c.id === item.id ? { ...c, status: nextStatus } : c
+        c.id === item.id ? { ...c, status: 'completed' as const } : c
       );
       setCommitments(updated);
       localStorage.setItem(storageKey, JSON.stringify(updated));
-
-      if (nextStatus === 'completed') {
-        showToast('Compromisso concluído! Ele foi para o Histórico.', 'success');
-      } else {
-        showToast('Compromisso reaberto! Ele voltou para Próximos.', 'info');
-      }
+      showToast('Compromisso concluído! Ele foi para o Histórico.', 'success');
     } catch {
       showToast('Erro ao atualizar status.', 'error');
+    }
+  };
+
+  const openReopenModal = (item: Commitment) => {
+    setReopenTarget(item);
+    setReopenDate(new Date().toISOString().split('T')[0]);
+    setReopenTime('09:00');
+  };
+
+  const handleConfirmReopen = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reopenTarget) return;
+    if (!reopenDate || !reopenTime) {
+      showToast('Por favor, informe a nova data e horário.', 'warning');
+      return;
+    }
+
+    setReopening(true);
+
+    // Registrar no histórico de reagendamentos
+    const historyEntry: RescheduleHistoryItem = {
+      previous_date: reopenTarget.date,
+      previous_time: reopenTarget.time,
+      new_date: reopenDate,
+      new_time: reopenTime,
+      reason: 'Compromisso reaberto',
+      rescheduled_at: new Date().toISOString(),
+    };
+
+    const updatedHistory = [...(reopenTarget.reschedule_history || []), historyEntry];
+    const originalDate = reopenTarget.original_date || reopenTarget.date;
+    const originalTime = reopenTarget.original_time || reopenTarget.time;
+
+    try {
+      if (session?.user?.id) {
+        const { error } = await supabase
+          .from('commitments')
+          .update({
+            status: 'pending',
+            date: reopenDate,
+            time: reopenTime,
+            original_date: originalDate,
+            original_time: originalTime,
+            reschedule_history: updatedHistory,
+          })
+          .eq('id', reopenTarget.id);
+
+        if (error && error.code !== 'PGRST205') {
+          await supabase
+            .from('commitments')
+            .update({ status: 'pending', date: reopenDate, time: reopenTime })
+            .eq('id', reopenTarget.id);
+        }
+      }
+
+      const updated = commitments.map(c =>
+        c.id === reopenTarget.id
+          ? {
+              ...c,
+              status: 'pending' as const,
+              date: reopenDate,
+              time: reopenTime,
+              original_date: originalDate,
+              original_time: originalTime,
+              reschedule_history: updatedHistory,
+            }
+          : c
+      );
+      setCommitments(updated);
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+      showToast('Compromisso reaberto com nova data!', 'info');
+      setReopenTarget(null);
+    } catch {
+      showToast('Erro ao reabrir compromisso.', 'error');
+    } finally {
+      setReopening(false);
     }
   };
 
@@ -785,7 +861,7 @@ const Commitments: React.FC = () => {
                         </button>
 
                         <button
-                          onClick={() => handleToggleStatus(item)}
+                          onClick={() => handleMarkCompleted(item)}
                           className="text-xs font-bold text-emerald-700 dark:text-primary hover:underline flex items-center gap-1"
                         >
                           <span className="material-symbols-outlined text-base">check_circle</span>
@@ -912,7 +988,7 @@ const Commitments: React.FC = () => {
                         </div>
                       </div>
 
-                      {/* Ações superiores */}
+                      {/* Ações superiores — sem editar (compromisso concluído) */}
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           onClick={() => openViewModal(item)}
@@ -920,13 +996,6 @@ const Commitments: React.FC = () => {
                           title="Consultar compromisso"
                         >
                           <span className="material-symbols-outlined text-lg">visibility</span>
-                        </button>
-                        <button
-                          onClick={() => openEditModal(item)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                          title="Editar"
-                        >
-                          <span className="material-symbols-outlined text-lg">edit</span>
                         </button>
                         <button
                           onClick={() => setDeleteTarget(item)}
@@ -947,7 +1016,7 @@ const Commitments: React.FC = () => {
 
                     <div className="pt-2 border-t border-gray-100 dark:border-gray-800 flex justify-end">
                       <button
-                        onClick={() => handleToggleStatus(item)}
+                        onClick={() => openReopenModal(item)}
                         className="text-xs font-bold text-emerald-700 dark:text-primary hover:underline transition-colors flex items-center gap-1"
                       >
                         <span className="material-symbols-outlined text-sm">replay</span>
@@ -1317,6 +1386,90 @@ const Commitments: React.FC = () => {
                   className="flex-1 h-11 bg-primary hover:bg-primary-dark text-white font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50"
                 >
                   {saving ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Reabrir Compromisso */}
+      {reopenTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setReopenTarget(null)}>
+          <div
+            className="w-full max-w-md bg-surface-light dark:bg-surface-dark rounded-2xl shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-emerald-50 to-primary/10 dark:from-primary/20 dark:to-emerald-950/30 p-4 border-b border-gray-100 dark:border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="size-10 bg-primary/15 rounded-xl flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary text-xl">replay</span>
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-[#111814] dark:text-white">Reabrir Compromisso</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Informe a nova data para este compromisso</p>
+                </div>
+              </div>
+            </div>
+
+            <form onSubmit={handleConfirmReopen} className="p-4 flex flex-col gap-4">
+              {/* Info do compromisso atual */}
+              <div className="flex items-center gap-3 bg-surface-variant-light dark:bg-black/20 p-3 rounded-xl border border-gray-100 dark:border-white/5">
+                <div className="size-10 rounded-xl bg-emerald-50 dark:bg-primary/10 text-emerald-800 dark:text-primary flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-xl">{getTypeIcon(reopenTarget.type)}</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#111814] dark:text-white">{reopenTarget.type}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Concluído em {formatDateDisplay(reopenTarget.date)} às {reopenTarget.time}
+                  </p>
+                </div>
+              </div>
+
+              {/* Nova Data e Hora */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 block">
+                    Nova Data *
+                  </label>
+                  <CustomDatePicker
+                    value={reopenDate}
+                    onChange={setReopenDate}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 block">
+                    Nova Hora *
+                  </label>
+                  <CustomTimePicker
+                    value={reopenTime}
+                    onChange={setReopenTime}
+                  />
+                </div>
+              </div>
+
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
+                <span className="material-symbols-outlined text-xs align-middle mr-1">info</span>
+                Esta ação será registrada no histórico de reagendamentos do compromisso.
+              </p>
+
+              {/* Botões */}
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setReopenTarget(null)}
+                  className="flex-1 h-11 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={reopening}
+                  className="flex-1 h-11 bg-primary hover:bg-primary-dark text-white font-bold text-sm rounded-xl shadow-md active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-base">replay</span>
+                  {reopening ? 'Reabrindo...' : 'Reabrir'}
                 </button>
               </div>
             </form>

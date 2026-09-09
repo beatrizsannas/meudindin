@@ -31,27 +31,18 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="relative flex min-h-[100dvh] w-full flex-col overflow-hidden items-center justify-center px-8 py-12 bg-background-light dark:bg-background-dark font-display">
+    <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden items-center justify-center px-8 bg-[#f5f8f3] dark:bg-background-dark font-display">
       {/* Main Container */}
-      <div className="w-full max-w-[400px] flex flex-col gap-6">
+      <div className="w-full max-w-[400px] flex flex-col gap-4">
         {/* Header / Logo */}
-        <div className="flex flex-col items-center gap-5 pt-8 pb-4">
-          {/* Logo Graphic */}
-          <div className="relative flex items-center justify-center h-40 w-40" data-alt="Meu Dindin Mascot Logo">
+        <div className="flex flex-col items-center">
+          {/* Logo Graphic - fundo normalizado para #f5f8f3 */}
+          <div className="relative w-full max-w-[280px] flex items-center justify-center" data-alt="Meu Dindin Mascot Logo">
             <img 
-              src="/assets/mascot_logo.png" 
+              src="/assets/mascot_normalized.jpg" 
               alt="Meu Dindin Mascot" 
-              className="w-full h-full object-cover scale-[1.3] -translate-y-2 mix-blend-multiply"
-              style={{
-                maskImage: 'radial-gradient(circle at center, black 55%, transparent 75%)',
-                WebkitMaskImage: 'radial-gradient(circle at center, black 55%, transparent 75%)'
-              }}
+              className="w-full h-auto object-contain"
             />
-          </div>
-          {/* App Title */}
-          <div className="flex flex-col items-center justify-center gap-1">
-            <h1 className="text-3xl font-extrabold tracking-tight text-center text-text-main dark:text-white">Meu Dindin</h1>
-            <p className="text-text-secondary dark:text-gray-400 text-base font-medium text-center">Gerencie seu dinheiro com facilidade</p>
           </div>
         </div>
 

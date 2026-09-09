@@ -23,7 +23,17 @@ const RegisterCost: React.FC = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [excludeFromGlobal, setExcludeFromGlobal] = useState<boolean>(false);
 
-  const [categories, setCategories] = useState<Category[]>([]);
+  const CACHE_KEY = 'meudindin_categories_cache';
+
+  // Inicializa com cache local para aparecer instantaneamente
+  const [categories, setCategories] = useState<Category[]>(() => {
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [categoryId, setCategoryId] = useState<string>('');
 
   // Amount is a string to handle masked input: "1.234,56"
@@ -82,9 +92,10 @@ const RegisterCost: React.FC = () => {
         .select('id, name, type, icon, color_theme');
 
       if (error) throw error;
-      if (error) throw error;
       if (data) {
         setCategories(data);
+        // Salva no cache para próxima abertura ser instantânea
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify(data)); } catch {}
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -103,15 +114,12 @@ const RegisterCost: React.FC = () => {
   }, [categoryId, categories]);
   */
 
-  // Set default category
+  // Resetar categoria ao trocar tipo (e não preencher automaticamente)
   useEffect(() => {
-    if (availableCategories.length > 0 && !editId) {
-      const isValid = availableCategories.find(c => c.id === categoryId);
-      if (!isValid) {
-        setCategoryId(availableCategories[0].id);
-      }
+    if (!editId) {
+      setCategoryId('');
     }
-  }, [transactionType, categories, categoryId, editId]);
+  }, [transactionType]);
 
   // Check for navigation state
   useEffect(() => {
@@ -323,16 +331,24 @@ const RegisterCost: React.FC = () => {
       <main className="p-4 flex flex-col gap-6 pb-32">
         {/* Transaction Type Toggle */}
         <div className="w-full">
-          <div className="flex h-12 w-full items-center justify-center rounded-lg bg-gray-200 dark:bg-[#25382e] p-1">
+          <div className="flex h-12 w-full items-center justify-center rounded-lg bg-gray-200 dark:bg-[#2e2525] p-1">
             <button
               onClick={() => handleTransactionTypeChange('expense')}
-              className={`flex h-full grow items-center justify-center overflow-hidden rounded-md px-2 text-sm font-bold leading-normal transition-all ${transactionType === 'expense' ? 'bg-primary text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
+              className={`flex h-full grow items-center justify-center overflow-hidden rounded-md px-2 text-sm font-bold leading-normal transition-all ${
+                transactionType === 'expense'
+                  ? 'bg-[#c0392b] text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
             >
               <span className="truncate">Despesa</span>
             </button>
             <button
               onClick={() => handleTransactionTypeChange('income')}
-              className={`flex h-full grow items-center justify-center overflow-hidden rounded-md px-2 text-sm font-bold leading-normal transition-all ${transactionType === 'income' ? 'bg-primary text-white shadow-sm' : 'text-gray-500 dark:text-gray-400'}`}
+              className={`flex h-full grow items-center justify-center overflow-hidden rounded-md px-2 text-sm font-bold leading-normal transition-all ${
+                transactionType === 'income'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
             >
               <span className="truncate">Receita</span>
             </button>
@@ -345,9 +361,13 @@ const RegisterCost: React.FC = () => {
           <div className="flex flex-col gap-2">
             <label className="text-gray-500 dark:text-gray-400 text-sm font-medium">Valor</label>
             <div className="relative flex items-center">
-              <span className="absolute left-4 text-emerald-700 dark:text-primary font-bold text-xl">R$</span>
+              <span className={`absolute left-4 font-bold text-xl ${
+                transactionType === 'expense' ? 'text-[#c0392b]' : 'text-emerald-700 dark:text-primary'
+              }`}>R$</span>
               <input
-                className="w-full bg-background-light dark:bg-background-dark rounded-lg h-16 pl-12 pr-4 text-2xl font-bold text-[#111814] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 border-none focus:ring-2 focus:ring-primary/50 transition-all outline-none"
+                className={`w-full bg-background-light dark:bg-background-dark rounded-lg h-16 pl-12 pr-4 text-2xl font-bold text-[#111814] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 border-none transition-all outline-none ${
+                  transactionType === 'expense' ? 'focus:ring-2 focus:ring-[#c0392b]/50' : 'focus:ring-2 focus:ring-primary/50'
+                }`}
                 inputMode="numeric"
                 placeholder="0,00"
                 type="text"
@@ -388,7 +408,10 @@ const RegisterCost: React.FC = () => {
 
           {/* Category Selection */}
           <div className="flex flex-col gap-2">
-            <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Categoria</span>
+            <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+              Categoria
+              <span className="text-red-500 ml-1" title="Campo obrigatório">*</span>
+            </span>
             <div className="flex flex-wrap gap-2 pb-1">
               {availableCategories.length === 0 ? (
                 <p className="text-sm text-gray-400">Carregando categorias...</p>
@@ -397,7 +420,13 @@ const RegisterCost: React.FC = () => {
                   <button
                     key={cat.id}
                     onClick={() => setCategoryId(cat.id)}
-                    className={`px-4 py-2 shrink-0 rounded-full border border-gray-200 dark:border-white/5 bg-background-light dark:bg-background-dark text-sm font-medium transition-colors ${categoryId === cat.id ? 'bg-primary text-white border-primary font-bold' : 'text-gray-600 dark:text-gray-400'}`}
+                    className={`px-4 py-2 shrink-0 rounded-full border text-sm font-medium transition-colors ${
+                      categoryId === cat.id
+                        ? transactionType === 'expense'
+                          ? 'bg-[#c0392b] text-white border-[#c0392b] font-bold'
+                          : 'bg-primary text-white border-primary font-bold'
+                        : 'border-gray-200 dark:border-white/5 bg-background-light dark:bg-background-dark text-gray-600 dark:text-gray-400'
+                    }`}
                   >
                     {cat.name}
                   </button>
@@ -418,7 +447,7 @@ const RegisterCost: React.FC = () => {
                 <button
                   disabled={isScanner || isFixed}
                   onClick={() => setIsInstallment(!isInstallment)}
-                  className={`w-12 h-6 rounded-full relative transition-colors ${isInstallment ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
+                  className={`w-12 h-6 rounded-full relative transition-colors ${isInstallment ? 'bg-[#c0392b]' : 'bg-gray-300 dark:bg-gray-700'}`}
                 >
                   <div className={`absolute top-1 left-1 bg-background-light w-4 h-4 rounded-full transition-transform ${isInstallment ? 'translate-x-6' : ''}`} />
                 </button>
@@ -429,12 +458,12 @@ const RegisterCost: React.FC = () => {
                 <div className={`flex items-center justify-between py-2 ${isInstallment ? 'opacity-50 pointer-events-none' : ''}`}>
                   <div className="flex flex-col">
                     <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">Despesa Fixa?</span>
-                    {isFixed && <span className="text-xs text-emerald-700 dark:text-primary">Repete por 12 meses</span>}
+                    {isFixed && <span className="text-xs text-[#c0392b]">Repete por 12 meses</span>}
                   </div>
                   <button
                     disabled={isInstallment}
                     onClick={() => setIsFixed(!isFixed)}
-                    className={`w-12 h-6 rounded-full relative transition-colors ${isFixed ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-700'}`}
+                    className={`w-12 h-6 rounded-full relative transition-colors ${isFixed ? 'bg-[#c0392b]' : 'bg-gray-300 dark:bg-gray-700'}`}
                   >
                     <div className={`absolute top-1 left-1 bg-background-light w-4 h-4 rounded-full transition-transform ${isFixed ? 'translate-x-6' : ''}`} />
                   </button>
@@ -487,15 +516,18 @@ const RegisterCost: React.FC = () => {
           )}
 
           {/* Save Button */}
-          <Button
+          <button
             onClick={handleSave}
-            fullWidth
             disabled={loading}
-            className="h-12 text-[#ffffff] shadow-lg shadow-primary/20 mt-2"
-            startIcon={loading ? undefined : "check"}
+            className={`w-full h-12 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2 mt-2 transition-all shadow-lg ${
+              transactionType === 'expense'
+                ? 'bg-[#c0392b] hover:bg-[#a93226] shadow-[#c0392b]/25 focus:ring-2 focus:ring-[#c0392b]/50'
+                : 'bg-primary hover:bg-[#1b7330] shadow-primary/25 focus:ring-2 focus:ring-primary/50'
+            } disabled:opacity-60`}
           >
+            {!loading && <span className="material-symbols-outlined text-[18px]">check</span>}
             {loading ? 'Salvando...' : `Adicionar ${transactionType === 'expense' ? 'Despesa' : 'Receita'}`}
-          </Button>
+          </button>
         </div>
 
         <div className="flex flex-col gap-4">

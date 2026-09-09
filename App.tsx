@@ -111,42 +111,44 @@ const App: React.FC = () => {
             {/* Removed shadow-2xl to fix the "left shadow" issue on login screen */}
             <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden max-w-md mx-auto bg-background-light dark:bg-background-dark">
 
-              {/* Scrollable Content Area */}
-              <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-none scrollbar-hide w-full relative pb-28">
-                <Routes>
-                  {/* Public Auth Routes */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-confirmation" element={<ResetConfirmation />} />
+              <Routes>
+                {/* Public Auth Routes — sem wrapper de scroll, sem pb-28 */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-confirmation" element={<ResetConfirmation />} />
 
-                  {/* Protected App Routes */}
-                  <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                  <Route path="/third-party" element={<ProtectedRoute><ThirdPartyCards /></ProtectedRoute>} />
-                  <Route path="/register" element={<ProtectedRoute><RegisterCost /></ProtectedRoute>} />
-                  <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
-                  <Route path="/wallet/register" element={<ProtectedRoute><RegisterPurchase /></ProtectedRoute>} />
-                  <Route path="/wallet/details" element={<ProtectedRoute><ReceivablesDetails /></ProtectedRoute>} />
-                  <Route path="/wallet/all" element={<ProtectedRoute><AllPurchases /></ProtectedRoute>} />
-                  <Route path="/credit-cards" element={<ProtectedRoute><YourCards /></ProtectedRoute>} />
-                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                  <Route path="/settings/profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
-                  <Route path="/expenses" element={<ProtectedRoute><ViewExpenses /></ProtectedRoute>} />
-                  <Route path="/income" element={<ProtectedRoute><ViewIncome /></ProtectedRoute>} />
-                  <Route path="/scan" element={<ProtectedRoute><ScanReceipt /></ProtectedRoute>} />
-                  <Route path="/scan" element={<ProtectedRoute><ScanReceipt /></ProtectedRoute>} />
-                  <Route path="/all-transactions" element={<ProtectedRoute><AllTransactions /></ProtectedRoute>} />
-                  <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-                  <Route path="/imoveis" element={<ProtectedRoute><Imoveis /></ProtectedRoute>} />
-                  <Route path="/imoveis/:id" element={<ProtectedRoute><ImovelDetail /></ProtectedRoute>} />
-                  <Route path="/commitments" element={<ProtectedRoute><Commitments /></ProtectedRoute>} />
-                </Routes>
-              </div>
+                {/* Protected App Routes — dentro do scroll wrapper com nav e pb-28 */}
+                <Route path="/*" element={
+                  <>
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-y-none scrollbar-hide w-full relative pb-28 h-full">
+                      <Routes>
+                        <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                        <Route path="/third-party" element={<ProtectedRoute><ThirdPartyCards /></ProtectedRoute>} />
+                        <Route path="/register" element={<ProtectedRoute><RegisterCost /></ProtectedRoute>} />
+                        <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+                        <Route path="/wallet/register" element={<ProtectedRoute><RegisterPurchase /></ProtectedRoute>} />
+                        <Route path="/wallet/details" element={<ProtectedRoute><ReceivablesDetails /></ProtectedRoute>} />
+                        <Route path="/wallet/all" element={<ProtectedRoute><AllPurchases /></ProtectedRoute>} />
+                        <Route path="/credit-cards" element={<ProtectedRoute><YourCards /></ProtectedRoute>} />
+                        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                        <Route path="/settings/profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
+                        <Route path="/expenses" element={<ProtectedRoute><ViewExpenses /></ProtectedRoute>} />
+                        <Route path="/income" element={<ProtectedRoute><ViewIncome /></ProtectedRoute>} />
+                        <Route path="/scan" element={<ProtectedRoute><ScanReceipt /></ProtectedRoute>} />
+                        <Route path="/all-transactions" element={<ProtectedRoute><AllTransactions /></ProtectedRoute>} />
+                        <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+                        <Route path="/imoveis" element={<ProtectedRoute><Imoveis /></ProtectedRoute>} />
+                        <Route path="/imoveis/:id" element={<ProtectedRoute><ImovelDetail /></ProtectedRoute>} />
+                        <Route path="/commitments" element={<ProtectedRoute><Commitments /></ProtectedRoute>} />
+                      </Routes>
+                    </div>
 
-              <BottomNav />
-
-              {/* SideMenu placed here to overlay everything within the app frame */}
-              <SideMenu isOpen={isMenuOpen} onClose={closeMenu} />
+                    <BottomNav />
+                    <SideMenu isOpen={isMenuOpen} onClose={closeMenu} />
+                  </>
+                } />
+              </Routes>
 
             </div>
           </HashRouter>

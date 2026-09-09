@@ -193,6 +193,149 @@ const YourCards: React.FC = () => {
         return acc;
     }, []) || [];
 
+    const handleExportCards = () => {
+        if (!cards || cards.length === 0) {
+            showToast('Nenhum cartão para exportar.', 'warning');
+            return;
+        }
+
+        try {
+            // @ts-ignore
+            const jsPDF = window.jspdf?.jsPDF || window.jsPDF;
+            if (!jsPDF) {
+                showToast('Biblioteca PDF não encontrada.', 'error');
+                return;
+            }
+
+            const doc = new jsPDF();
+
+            // --- HEADER ---
+            doc.setFillColor(17, 24, 20); // Dark background #111814
+            doc.rect(0, 0, 210, 32, 'F'); 
+
+            doc.setFillColor(34, 139, 59); // Primary green border #228b3b
+            doc.rect(0, 32, 210, 2, 'F');
+
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Meu Dindin', 14, 16);
+
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 196 - doc.getTextWidth(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`), 14);
+
+            doc.setFontSize(8);
+            doc.setTextColor(200, 200, 200);
+            doc.text('SEUS CARTÕES • Relatório Completo', 14, 24);
+
+            // --- RESUMO SECTION ---
+            doc.setFillColor(34, 139, 59);
+            doc.rect(14, 45, 3, 6, 'F'); // Green vertical bar
+
+            doc.setTextColor(30, 30, 30);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Resumo dos Cartões', 20, 50);
+
+            // Card 1: TOTAL DE CARTÕES
+            doc.setFillColor(240, 253, 244); // Light green background
+            doc.roundedRect(14, 58, 88, 20, 2, 2, 'F');
+
+            doc.setFontSize(8);
+            doc.setTextColor(34, 139, 59); // Dark green text
+            doc.setFont('helvetica', 'bold');
+            doc.text('TOTAL DE CARTÕES', 18, 65);
+
+            doc.setFontSize(14);
+            doc.text(`${cards.length}`, 18, 73);
+
+            // Card 2: LIMITE TOTAL
+            doc.setFillColor(240, 253, 244); // Light green background
+            doc.roundedRect(108, 58, 88, 20, 2, 2, 'F');
+
+            doc.setFontSize(8);
+            doc.setTextColor(34, 139, 59);
+            doc.text('LIMITE TOTAL', 112, 65);
+
+            doc.setFontSize(14);
+            doc.text(`${formatCurrency(totalLimit)}`, 112, 73);
+
+            // --- LISTA SECTION ---
+            doc.setFillColor(34, 139, 59);
+            doc.rect(14, 90, 3, 6, 'F'); // Green vertical bar
+
+            doc.setTextColor(30, 30, 30);
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text('Cartões Cadastrados', 20, 95);
+
+            // Table
+            const tableData = sortedAndFilteredCards.map(card => [
+                card.name,
+                card.brand || 'Outros',
+                formatCurrency(card.limit),
+                `Dia ${card.due_day}`,
+                card.is_annual_fee_exempt ? 'Isenta' : formatCurrency(card.annual_fee || 0),
+                `${card.usage_rating}%`,
+            ]);
+
+            // @ts-ignore
+            doc.autoTable({
+                startY: 102,
+                head: [['Nome', 'Bandeira', 'Limite', 'Vencimento', 'Anuidade', 'Uso']],
+                body: tableData,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [17, 24, 20], // Matches header dark background
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold',
+                    fontSize: 9,
+                },
+                bodyStyles: {
+                    fontSize: 8,
+                    textColor: [30, 30, 30],
+                },
+                alternateRowStyles: {
+                    fillColor: [248, 250, 252], // Very light blue/gray
+                },
+                styles: {
+                    cellPadding: 4,
+                    lineColor: [226, 232, 240], // Light gray borders
+                    lineWidth: 0.1,
+                },
+                columnStyles: {
+                    2: { halign: 'right' },
+                    3: { halign: 'center' },
+                    4: { halign: 'right' },
+                    5: { halign: 'center' },
+                },
+            });
+
+            // Footer
+            const pageHeight = doc.internal.pageSize.height;
+            const pageCount = doc.internal.getNumberOfPages();
+            
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setDrawColor(226, 232, 240);
+                doc.line(14, pageHeight - 15, 196, pageHeight - 15);
+                
+                doc.setFontSize(8);
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(150, 150, 150);
+                doc.text('Documento gerado automaticamente pelo Meu Dindin', 14, pageHeight - 10);
+                doc.text(`Página ${i} de ${pageCount}`, 196 - doc.getTextWidth(`Página ${i} de ${pageCount}`), pageHeight - 10);
+            }
+
+            doc.save(`meus_cartoes_${new Date().toISOString().split('T')[0]}.pdf`);
+            showToast('Relatório exportado com sucesso!', 'success');
+        } catch (err: any) {
+            console.error('Export error:', err);
+            showToast('Erro ao exportar: ' + (err?.message || 'Tente novamente'), 'error');
+        }
+    };
+
     return (
         <div className="min-h-screen bg-background-light dark:bg-background-dark transition-colors duration-300 pb-24">
             <header className="sticky top-0 z-10 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
@@ -202,12 +345,23 @@ const YourCards: React.FC = () => {
                     </button>
                     <h1 className="text-xl font-bold text-[#111814] dark:text-white">Seus Cartões</h1>
                 </div>
-                <button
-                    onClick={() => openModal()}
-                    className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white shadow-lg hover:scale-110 active:scale-95 transition-all"
-                >
-                    <span className="material-symbols-outlined font-bold">add</span>
-                </button>
+                <div className="flex items-center gap-2">
+                    {cards && cards.length > 0 && (
+                        <button
+                            onClick={handleExportCards}
+                            className="flex items-center justify-center w-10 h-10 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:scale-110 active:scale-95 transition-all shadow-sm"
+                            title="Exportar cartões como PDF"
+                        >
+                            <span className="material-symbols-outlined text-xl">download</span>
+                        </button>
+                    )}
+                    <button
+                        onClick={() => openModal()}
+                        className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-white shadow-lg hover:scale-110 active:scale-95 transition-all"
+                    >
+                        <span className="material-symbols-outlined font-bold">add</span>
+                    </button>
+                </div>
             </header>
 
 
