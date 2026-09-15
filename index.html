@@ -138,6 +138,16 @@
       animation: slideDownAndFade 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
       transform-origin: top center;
     }
+
+    /* Select elements dark mode fix — Tailwind bg classes need help in dark mode */
+    .dark select {
+      background-color: #102217;
+      color: white;
+      color-scheme: dark;
+    }
+    select {
+      color-scheme: light;
+    }
   </style>
   <script type="importmap">
 {

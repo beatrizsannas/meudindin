@@ -1,5 +1,5 @@
-import React, { useState, createContext } from 'react';
-import { HashRouter, Routes, Route, useLocation, Link, Navigate } from 'react-router-dom';
+import React, { useState, useEffect, createContext } from 'react';
+import { HashRouter, Routes, Route, useLocation, Link, Navigate, useNavigate } from 'react-router-dom';
 import Dashboard from './components/Dashboard';
 import ThirdPartyCards from './components/ThirdPartyCards';
 import RegisterCost from './components/RegisterCost';
@@ -23,6 +23,7 @@ import Notifications from './components/Notifications';
 import Imoveis from './components/Imoveis';
 import ImovelDetail from './components/ImovelDetail';
 import Commitments from './components/Commitments';
+import MonthlyBackupReminderModal from './components/MonthlyBackupReminderModal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Create Context for Menu Control
@@ -92,8 +93,73 @@ const BottomNav = () => {
 };
 
 import { ToastProvider } from './contexts/ToastContext';
+import ExportDataModal from './components/ExportDataModal';
 
-// ... (existing imports)
+// Monthly backup reminder — shows once per month on first visit
+const MonthlyBackupChecker: React.FC = () => {
+  const { session } = useAuth();
+  const location = useLocation();
+
+  const STORAGE_KEY = 'meudindin_backup_reminder_month';
+
+  const [showReminder, setShowReminder] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [prevMonthLabel, setPrevMonthLabel] = useState('');
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    // Only check on protected pages (not login/signup/etc)
+    const publicPaths = ['/login', '/signup', '/forgot-password', '/reset-confirmation'];
+    if (publicPaths.includes(location.pathname)) return;
+
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const storedKey = localStorage.getItem(STORAGE_KEY);
+
+    if (storedKey !== currentMonthKey) {
+      // Compute previous month label in Portuguese
+      const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const label = prevDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      // Capitalize first letter
+      setPrevMonthLabel(label.charAt(0).toUpperCase() + label.slice(1));
+      // Small delay so the app has time to fully render before the modal pops up
+      const timer = setTimeout(() => setShowReminder(true), 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [session, location.pathname]);
+
+  const handleClose = () => {
+    // Mark this month as seen
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    localStorage.setItem(STORAGE_KEY, currentMonthKey);
+    setShowReminder(false);
+  };
+
+  const handleGenerateReport = () => {
+    handleClose();
+    // Small delay then open export modal
+    setTimeout(() => setShowExportModal(true), 300);
+  };
+
+  return (
+    <>
+      <MonthlyBackupReminderModal
+        isOpen={showReminder}
+        onClose={handleClose}
+        onGenerateReport={handleGenerateReport}
+        previousMonthLabel={prevMonthLabel}
+      />
+      <ExportDataModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        initialStep="filter"
+        initialPeriod="previous"
+      />
+    </>
+  );
+};
 
 const App: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -146,6 +212,7 @@ const App: React.FC = () => {
 
                     <BottomNav />
                     <SideMenu isOpen={isMenuOpen} onClose={closeMenu} />
+                    <MonthlyBackupChecker />
                   </>
                 } />
               </Routes>

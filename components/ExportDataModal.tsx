@@ -6,9 +6,13 @@ import { useToast } from '../contexts/ToastContext';
 interface ExportDataModalProps {
     isOpen: boolean;
     onClose: () => void;
+    /** If set, modal opens directly on this step instead of 'initial' */
+    initialStep?: 'initial' | 'filter' | 'preview';
+    /** If set, pre-selects this period when opening on the filter step */
+    initialPeriod?: 'current' | 'previous' | 'last_3';
 }
 
-const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) => {
+const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose, initialStep, initialPeriod }) => {
     const { session } = useAuth();
     const { showToast } = useToast();
     const [isExporting, setIsExporting] = useState(false);
@@ -22,8 +26,8 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
     // Reset step when modal opens
     React.useEffect(() => {
         if (isOpen) {
-            setStep('initial');
-            setFilterPeriod('current');
+            setStep(initialStep || 'initial');
+            setFilterPeriod(initialPeriod || 'current');
             setProcessedData(null);
             fetchCategories();
         }
@@ -605,6 +609,21 @@ const ExportDataModal: React.FC<ExportDataModalProps> = ({ isOpen, onClose }) =>
                                     <span className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">Relatório para impressão (.pdf)</span>
                                 </div>
                                 <span className="material-symbols-outlined text-gray-300 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">download</span>
+                            </button>
+
+                            {/* Backup Mensal */}
+                            <button
+                                onClick={() => { setFilterPeriod('previous'); setStep('filter'); }}
+                                className="group relative flex items-center gap-4 p-5 w-full bg-background-light dark:bg-[#1c2e24] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 hover:border-[#228b3b] dark:hover:border-[#228b3b] transition-all duration-300 active:scale-[0.98]"
+                            >
+                                <div className="flex items-center justify-center rounded-xl bg-[#228b3b]/10 dark:bg-[#228b3b]/20 shrink-0 size-14 text-[#1b6d2f] dark:text-[#228b3b] group-hover:bg-[#228b3b] group-hover:text-white transition-colors duration-300">
+                                    <span className="material-symbols-outlined text-[28px]">backup</span>
+                                </div>
+                                <div className="flex flex-col items-start flex-1 text-left">
+                                    <span className="text-gray-900 dark:text-white text-lg font-bold group-hover:text-[#1b6d2f] dark:group-hover:text-[#228b3b] transition-colors">Gerar seu Backup Mensal</span>
+                                    <span className="text-gray-500 dark:text-gray-400 text-sm mt-0.5">Exporta o mês anterior completo (.pdf)</span>
+                                </div>
+                                <span className="material-symbols-outlined text-gray-300 group-hover:text-[#228b3b] transition-colors">cloud_download</span>
                             </button>
                         </div>
                     </main>

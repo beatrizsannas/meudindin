@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from './Button';
 import { supabase } from '../lib/supabaseClient';
@@ -11,6 +12,126 @@ interface Category {
   name: string;
   type: string;
 }
+
+// ── Custom category dropdown (matches app design, avoids native select arrow duplication) ──
+interface CategoryDropdownProps {
+  categoryId: string;
+  onChange: (id: string) => void;
+  options: Category[];
+  transactionType: 'expense' | 'income';
+}
+
+const CategoryDropdown: React.FC<CategoryDropdownProps> = ({ categoryId, onChange, options, transactionType }) => {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight: number; showAbove: boolean }>({
+    left: 0, top: 0, width: 0, maxHeight: 240, showAbove: false,
+  });
+
+  const selectedLabel = options.find(o => o.id === categoryId)?.name ?? '';
+  const accentColor = transactionType === 'expense' ? '#c0392b' : '#228b3b';
+  const ringClass = transactionType === 'expense' ? 'focus:ring-[#c0392b]/40' : 'focus:ring-primary/40';
+
+  const updatePosition = () => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    const showAbove = spaceBelow < 200 && spaceAbove > spaceBelow;
+    const maxH = Math.min(260, Math.max(120, showAbove ? spaceAbove : spaceBelow));
+    if (showAbove) {
+      setCoords({ left: rect.left, bottom: window.innerHeight - rect.top + 4, width: rect.width, maxHeight: maxH, showAbove: true });
+    } else {
+      setCoords({ left: rect.left, top: rect.bottom + 4, width: rect.width, maxHeight: maxH, showAbove: false });
+    }
+  };
+
+  useEffect(() => {
+    if (open) {
+      updatePosition();
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+    }
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        containerRef.current && !containerRef.current.contains(e.target as Node) &&
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node)
+      ) setOpen(false);
+    };
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={containerRef} className="relative w-full">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`flex items-center gap-2 w-full h-12 bg-background-light dark:bg-background-dark border border-gray-200 dark:border-white/10 rounded-xl px-4 text-sm font-medium text-left shadow-sm focus:outline-none focus:ring-2 ${ringClass} transition-all`}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className={`flex-1 truncate ${selectedLabel ? 'text-[#111814] dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+          {selectedLabel || 'Selecione uma categoria...'}
+        </span>
+        <span
+          className="material-symbols-outlined text-gray-400 dark:text-gray-500 text-[22px] shrink-0 transition-transform duration-200"
+          style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+        >
+          expand_more
+        </span>
+      </button>
+
+      {open && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={dropdownRef}
+          style={{
+            position: 'fixed',
+            ...(coords.showAbove ? { bottom: coords.bottom } : { top: coords.top }),
+            left: coords.left,
+            width: coords.width,
+            maxHeight: `${coords.maxHeight}px`,
+            zIndex: 9999,
+          }}
+          className="bg-background-light dark:bg-surface-dark border border-gray-200 dark:border-white/10 rounded-2xl shadow-xl overflow-y-auto custom-scrollbar animate-dropdown py-1"
+          role="listbox"
+        >
+          {options.length === 0 && (
+            <p className="px-4 py-3 text-sm text-gray-400">Carregando categorias...</p>
+          )}
+          {options.map(cat => {
+            const isSelected = cat.id === categoryId;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => { onChange(cat.id); setOpen(false); }}
+                className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-left transition-colors hover:bg-gray-50 dark:hover:bg-white/5"
+                style={isSelected ? { color: accentColor, fontWeight: 700, backgroundColor: `${accentColor}10` } : { color: undefined }}
+              >
+                <span>{cat.name}</span>
+                {isSelected && (
+                  <span className="material-symbols-outlined text-[18px]" style={{ color: accentColor }}>check</span>
+                )}
+              </button>
+            );
+          })}
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
 
 const RegisterCost: React.FC = () => {
   const navigate = useNavigate();
@@ -48,6 +169,7 @@ const RegisterCost: React.FC = () => {
 
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -103,7 +225,17 @@ const RegisterCost: React.FC = () => {
   };
 
   // Filter categories by current transaction type
-  const availableCategories = categories.filter(c => c.type === transactionType);
+  const availableCategories = categories
+    .filter(c => c.type === transactionType)
+    .sort((a, b) => {
+      const aName = a.name.toLowerCase();
+      const bName = b.name.toLowerCase();
+      if (aName === 'avulsas') return -1;
+      if (bName === 'avulsas') return 1;
+      if (aName === 'outros') return 1;
+      if (bName === 'outros') return -1;
+      return a.name.localeCompare(b.name, 'pt-BR');
+    });
 
   // Detect if selected category is "Compras"
   // No longer auto-detect Compras
@@ -133,6 +265,7 @@ const RegisterCost: React.FC = () => {
         setDate(t.date);
         setTransactionType(t.type || 'expense');
         setCategoryId(t.category_id);
+        setPaymentMethod(t.payment_method || '');
         // ✅ Preserve exclude_from_global so it doesn't get reset to false on save
         setExcludeFromGlobal(t.exclude_from_global ?? false);
         // Preserve is_fixed on edit (readonly — cannot change fixed status when editing)
@@ -213,6 +346,7 @@ const RegisterCost: React.FC = () => {
             category_id: finalCategoryId,
             date,
             account: 'Conta Corrente',
+            payment_method: paymentMethod || null,
             // ✅ CRITICAL: preserve this field — if missing, defaults to false
             // which wrongly includes previously excluded transactions in global totals
             exclude_from_global: excludeFromGlobal
@@ -252,7 +386,8 @@ const RegisterCost: React.FC = () => {
               type: transactionType,
               category_id: finalCategoryId,
               date: isoDate,
-              account: 'Conta Corrente'
+              account: 'Conta Corrente',
+              payment_method: paymentMethod || null,
             });
           }
 
@@ -280,6 +415,7 @@ const RegisterCost: React.FC = () => {
               account: 'Conta Corrente',
               is_fixed: true,
               fixed_group_id: groupId,
+              payment_method: paymentMethod || null,
             });
           }
 
@@ -296,7 +432,8 @@ const RegisterCost: React.FC = () => {
               type: transactionType,
               category_id: finalCategoryId,
               date,
-              account: 'Conta Corrente'
+              account: 'Conta Corrente',
+              payment_method: paymentMethod || null,
             });
           if (error) throw error;
         }
@@ -406,32 +543,34 @@ const RegisterCost: React.FC = () => {
             </label>
           </div>
 
-          {/* Category Selection */}
+          {/* Category Selection — Custom Dropdown */}
           <div className="flex flex-col gap-2">
             <span className="text-gray-500 dark:text-gray-400 text-sm font-medium">
               Categoria
               <span className="text-red-500 ml-1" title="Campo obrigatório">*</span>
             </span>
-            <div className="flex flex-wrap gap-2 pb-1">
-              {availableCategories.length === 0 ? (
-                <p className="text-sm text-gray-400">Carregando categorias...</p>
-              ) : (
-                availableCategories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setCategoryId(cat.id)}
-                    className={`px-4 py-2 shrink-0 rounded-full border text-sm font-medium transition-colors ${
-                      categoryId === cat.id
-                        ? transactionType === 'expense'
-                          ? 'bg-[#c0392b] text-white border-[#c0392b] font-bold'
-                          : 'bg-primary text-white border-primary font-bold'
-                        : 'border-gray-200 dark:border-white/5 bg-background-light dark:bg-background-dark text-gray-600 dark:text-gray-400'
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                ))
-              )}
+            <CategoryDropdown
+              categoryId={categoryId}
+              onChange={setCategoryId}
+              options={availableCategories}
+              transactionType={transactionType}
+            />
+          </div>
+
+          {/* Payment Method */}
+          <div className="flex flex-col gap-2">
+            <label className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+              Método de Pagamento
+            </label>
+            <div className="relative flex items-center">
+              <span className="material-symbols-outlined absolute left-3 text-gray-400 dark:text-gray-500 text-[20px] pointer-events-none">payments</span>
+              <input
+                className="w-full bg-background-light dark:bg-background-dark rounded-lg h-12 pl-10 pr-4 text-sm font-normal text-[#111814] dark:text-white border-none focus:ring-1 focus:ring-gray-300 dark:focus:ring-white/20 placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none transition-all"
+                placeholder={transactionType === 'income' ? 'Ex: Crédito em conta' : 'Ex: Pix do Banco Santander'}
+                value={paymentMethod}
+                maxLength={60}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+              />
             </div>
           </div>
 
