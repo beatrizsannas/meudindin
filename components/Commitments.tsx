@@ -188,7 +188,7 @@ const Commitments: React.FC = () => {
   }, []);
 
   const currentMonthCount = useMemo(() => {
-    return commitments.filter(c => c.date.startsWith(currentMonthStr)).length;
+    return commitments.filter(c => c.date.startsWith(currentMonthStr) && c.status === 'pending').length;
   }, [commitments, currentMonthStr]);
 
   const currentMonthName = useMemo(() => {

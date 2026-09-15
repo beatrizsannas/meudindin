@@ -322,9 +322,10 @@ const Dashboard: React.FC = () => {
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
+          {/* md:hidden: hamburger is replaced by the desktop sidebar */}
           <button
             onClick={openMenu}
-            className="p-1 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+            className="md:hidden p-1 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
           >
             <span className="material-symbols-outlined text-[#111814] dark:text-white text-3xl">menu</span>
           </button>

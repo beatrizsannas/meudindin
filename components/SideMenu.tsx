@@ -71,7 +71,8 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
 
   return (
     <>
-      <div className={`absolute inset-0 z-[60] h-full w-full pointer-events-none overflow-hidden`}>
+      {/* md:hidden: on desktop the DesktopSidebar replaces this drawer */}
+      <div className={`md:hidden absolute inset-0 z-[60] h-full w-full pointer-events-none overflow-hidden`}>
         {/* Backdrop */}
         <div
           className={`absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}

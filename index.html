@@ -71,6 +71,16 @@
       touch-action: none;
     }
 
+    /* Desktop override: allow normal scroll and layout */
+    @media (min-width: 768px) {
+      html, body, #root {
+        overflow: auto;
+        touch-action: auto;
+        overscroll-behavior: auto;
+        height: 100%;
+      }
+    }
+
     body {
       margin: 0;
       background-color: #f5f8f7;

@@ -314,7 +314,7 @@ const ViewExpenses: React.FC = () => {
           </button>
           <button
             onClick={openMenu}
-            className="cursor-pointer flex items-center justify-center rounded-full size-10 hover:bg-surface-variant-light dark:hover:bg-surface-variant-dark transition-colors relative"
+            className="md:hidden cursor-pointer flex items-center justify-center rounded-full size-10 hover:bg-surface-variant-light dark:hover:bg-surface-variant-dark transition-colors relative"
           >
             <span className="material-symbols-outlined text-gray-700 dark:text-gray-200">menu</span>
           </button>
