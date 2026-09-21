@@ -21,6 +21,7 @@ export interface RescheduleHistoryItem {
 export interface Commitment {
   id: string;
   user_id?: string;
+  name: string | null;
   type: string;
   date: string; // YYYY-MM-DD
   time: string; // HH:mm
@@ -100,6 +101,7 @@ const Commitments: React.FC = () => {
   const [editTarget, setEditTarget] = useState<Commitment | null>(null);
   const [type, setType] = useState('Médico');
   const [customType, setCustomType] = useState('');
+  const [commitmentName, setCommitmentName] = useState('');
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState('09:00');
   const [location, setLocation] = useState('');
@@ -226,6 +228,7 @@ const Commitments: React.FC = () => {
 
   const openAddModal = () => {
     setEditTarget(null);
+    setCommitmentName('');
     setType('Médico');
     setCustomType('');
     setDate(new Date().toISOString().split('T')[0]);
@@ -237,6 +240,7 @@ const Commitments: React.FC = () => {
 
   const openEditModal = (item: Commitment) => {
     setEditTarget(item);
+    setCommitmentName(item.name || '');
     const known = APPOINTMENT_TYPES.some(t => t.value.toLowerCase() === item.type.toLowerCase() && t.value !== 'Outro');
     if (known) {
       setType(item.type);
@@ -275,6 +279,7 @@ const Commitments: React.FC = () => {
 
     const payload = {
       user_id: session?.user?.id || userId,
+      name: commitmentName.trim() || null,
       type: finalType,
       date,
       time,
@@ -294,7 +299,7 @@ const Commitments: React.FC = () => {
             .update(payload)
             .eq('id', editTarget.id);
           if (error && error.code !== 'PGRST205') {
-            // Se der erro de coluna não existente, tenta sem as colunas novas
+            // Fallback sem colunas novas
             await supabase
               .from('commitments')
               .update({
@@ -315,6 +320,7 @@ const Commitments: React.FC = () => {
               .from('commitments')
               .insert([{
                 user_id: session.user.id,
+                name: commitmentName.trim() || null,
                 type: finalType,
                 date,
                 time,
@@ -793,9 +799,11 @@ const Commitments: React.FC = () => {
                               </span>
                             )}
                           </div>
+                          {/* Nome do compromisso */}
                           <h4 className="text-base font-bold text-[#111814] dark:text-white leading-tight">
-                            {formatDateDisplay(item.date)} às {item.time}
+                            {item.name ? item.name : <span className="italic text-gray-400 dark:text-gray-500 font-normal">Sem nome</span>}
                           </h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDateDisplay(item.date)} às {item.time}</p>
                           {item.location && (
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-1 truncate">
                               <span className="material-symbols-outlined text-sm shrink-0">location_on</span>
@@ -976,9 +984,11 @@ const Commitments: React.FC = () => {
                               </span>
                             )}
                           </div>
+                          {/* Nome do compromisso */}
                           <h4 className="text-base font-bold text-[#111814] dark:text-white leading-tight mt-0.5">
-                            {formatDateDisplay(item.date)} às {item.time}
+                            {item.name ? item.name : <span className="italic text-gray-400 dark:text-gray-500 font-normal">Sem nome</span>}
                           </h4>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{formatDateDisplay(item.date)} às {item.time}</p>
                           {item.location && (
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1 truncate">
                               <span className="material-symbols-outlined text-sm shrink-0">location_on</span>
@@ -1293,6 +1303,20 @@ const Commitments: React.FC = () => {
             </div>
 
             <form onSubmit={handleSave} className="flex flex-col gap-4">
+              {/* Nome do Compromisso */}
+              <div>
+                <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 block">
+                  Nome do Compromisso
+                </label>
+                <input
+                  type="text"
+                  value={commitmentName}
+                  onChange={e => setCommitmentName(e.target.value)}
+                  placeholder="Ex: Consulta Dr. Silva, Vistoria do carro..."
+                  className="w-full h-11 px-3.5 rounded-xl border border-gray-200 dark:border-white/10 bg-background-light dark:bg-surface-dark text-sm font-medium text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/50 focus:outline-none"
+                />
+              </div>
+
               {/* Tipo */}
               <div>
                 <label className="text-xs font-bold text-gray-700 dark:text-gray-300 mb-1.5 block">

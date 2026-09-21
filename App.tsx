@@ -244,25 +244,23 @@ const App: React.FC = () => {
             <div className="
               min-h-screen w-full
               md:flex md:flex-row
-              md:bg-[#e8f0ea] dark:md:bg-[#0b1a10]
+              md:bg-background-light dark:md:bg-background-dark
             ">
               {/* Persistent desktop sidebar */}
               <DesktopSidebar />
 
-              {/* Right area: centers the app container */}
-              <div className="md:flex-1 md:flex md:items-start md:justify-center md:py-6 md:px-6 md:min-h-screen">
+              {/* Right area: fills available space beside sidebar */}
+              <div className="md:flex-1 md:flex md:flex-col md:min-h-screen md:overflow-hidden">
 
                 {/* App shell
-                    Mobile:  h-[100dvh], w-full, max-w-md, no border-radius
-                    Desktop: h-[calc(100vh-48px)], max-w-[500px], rounded card with shadow
+                    Mobile:  h-[100dvh], w-full, max-w-md centered
+                    Desktop: fills full width, full height, no card styling
                 */}
                 <div className="
                   relative flex flex-col overflow-hidden
                   bg-background-light dark:bg-background-dark
                   h-[100dvh] w-full max-w-md mx-auto
-                  md:h-[calc(100vh-48px)] md:max-w-[500px] md:mx-0 md:w-full
-                  md:rounded-2xl md:shadow-2xl md:shadow-black/15
-                  md:border md:border-gray-200/70 dark:md:border-white/10
+                  md:h-screen md:max-w-none md:mx-0 md:w-full md:rounded-none md:shadow-none md:border-none
                 ">
                   <Routes>
                     {/* Public routes */}

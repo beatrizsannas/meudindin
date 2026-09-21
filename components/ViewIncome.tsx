@@ -284,50 +284,63 @@ const ViewIncome: React.FC = () => {
               transactions.map(transaction => {
                 const style = getCategoryStyle(transaction.category?.name);
                 return (
-                  <div key={transaction.id} className="relative group flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm">
-                    <div className={`flex items-center justify-center size-12 rounded-full ${style.bgClass} ${style.colorClass} shrink-0`}>
-                      <span className="material-symbols-outlined icon-filled">{style.icon}</span>
+                  <div key={transaction.id} className="relative group flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-surface-light dark:bg-surface-dark border border-gray-100 dark:border-white/5 hover:border-primary/30 transition-all shadow-sm">
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className={`flex items-center justify-center size-11 rounded-2xl ${style.bgClass} ${style.colorClass} shrink-0`}>
+                        <span className="material-symbols-outlined text-2xl icon-filled">{style.icon}</span>
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className={`text-[15px] font-bold text-[#111814] dark:text-white truncate ${isSelectionMode && isInstallment(transaction.description) ? 'opacity-50' : ''}`}>
+                          {transaction.description}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(transaction.date)}</span>
+                          <span className="text-gray-300 dark:text-gray-600">•</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold border border-gray-200/50 dark:border-gray-700">
+                            {transaction.category?.name}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
+                    <div className="flex items-center gap-3 shrink-0">
+                      <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">
+                        + {formatCurrency(transaction.amount)}
+                      </p>
 
-
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-base font-bold text-[#111814] dark:text-white truncate ${isSelectionMode && isInstallment(transaction.description) ? 'opacity-50' : ''}`}>{transaction.description}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(transaction.date)}</p>
-                    </div>
-                    <div className="text-right">
-                      {/* WCAG: emerald-700 sobre white = ~5.8:1 ✅ */}
-                      <p className="text-base font-bold text-emerald-700 dark:text-emerald-400">+ {formatCurrency(transaction.amount)}</p>
-                      {/* WCAG: text-gray-500 = ~4.6:1 ✅ */}
-                      <p className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{transaction.category?.name}</p>
-                    </div>
-
-                    {/* Action Buttons (Visible on hover/tap) */}
-                    <div className={`absolute right-2 top-0 bottom-0 flex items-center gap-1 ${isSelectionMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity bg-surface-light/90 dark:bg-surface-dark/90 px-2 rounded-r-xl`}>
-                      {isSelectionMode && (
-                        <button
-                          onClick={() => !isInstallment(transaction.description) && toggleSelect(transaction.id)}
-                          disabled={isInstallment(transaction.description)}
-                          className={`size-[30px] flex items-center justify-center rounded-full transition-colors border ${selectedIds.has(transaction.id)
-                            ? 'bg-primary border-primary text-white'
-                            : 'bg-transparent border-gray-300 dark:border-gray-600 text-transparent'
-                            } disabled:opacity-30 disabled:cursor-not-allowed`}
-                        >
-                          {selectedIds.has(transaction.id) && <span className="material-symbols-outlined text-[18px]">check</span>}
-                        </button>
-                      )}
-                      <button
-                        onClick={() => navigate('/register', { state: { transaction, type: 'income' } })}
-                        className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-300"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">edit</span>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(transaction.id)}
-                        className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">delete</span>
-                      </button>
+                      {/* Action Buttons */}
+                      <div className="flex items-center gap-0.5">
+                        {isSelectionMode ? (
+                          <button
+                            onClick={() => !isInstallment(transaction.description) && toggleSelect(transaction.id)}
+                            disabled={isInstallment(transaction.description)}
+                            className={`size-7 flex items-center justify-center rounded-full transition-colors border ${selectedIds.has(transaction.id)
+                              ? 'bg-primary border-primary text-white'
+                              : 'bg-transparent border-gray-300 dark:border-gray-600 text-transparent'
+                              } disabled:opacity-30 disabled:cursor-not-allowed`}
+                          >
+                            {selectedIds.has(transaction.id) && <span className="material-symbols-outlined text-[16px]">check</span>}
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => navigate('/register', { state: { transaction, type: 'income' } })}
+                              className="size-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 hover:text-primary transition-colors"
+                              title="Editar"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleDelete(transaction.id)}
+                              className="size-8 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors"
+                              title="Excluir"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

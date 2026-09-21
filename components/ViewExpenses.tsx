@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MenuContext } from '../App';
 import { supabase } from '../lib/supabaseClient';
@@ -24,6 +24,150 @@ interface Transaction {
   is_fixed?: boolean;
   fixed_group_id?: string | null;
 }
+
+// ── Donut Chart by Category ──────────────────────────────────────────────────
+const CHART_COLORS = [
+  '#228b3b', // green (primary)
+  '#ef4444', // red
+  '#f59e0b', // amber
+  '#3b82f6', // blue
+  '#8b5cf6', // purple
+  '#ec4899', // pink
+  '#06b6d4', // cyan
+  '#84cc16', // lime
+];
+
+interface DonutSlice {
+  name: string;
+  amount: number;
+  color: string;
+  percent: number;
+}
+
+interface CategoryDonutChartProps {
+  transactions: Array<{ amount: number; category: { name: string } | null }>;
+  formatCurrency: (v: number) => string;
+}
+
+const CategoryDonutChart: React.FC<CategoryDonutChartProps> = ({ transactions, formatCurrency }) => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+
+  const slices: DonutSlice[] = useMemo(() => {
+    if (transactions.length === 0) return [];
+
+    // Aggregate by category
+    const map: Record<string, number> = {};
+    for (const t of transactions) {
+      const name = t.category?.name || 'Sem categoria';
+      map[name] = (map[name] || 0) + t.amount;
+    }
+
+    const total = Object.values(map).reduce((a, b) => a + b, 0);
+    if (total === 0) return [];
+
+    // Sort descending, keep top 6
+    const sorted = Object.entries(map)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 7);
+
+    return sorted.map(([name, amount], i) => ({
+      name,
+      amount,
+      color: CHART_COLORS[i % CHART_COLORS.length],
+      percent: (amount / total) * 100,
+    }));
+  }, [transactions]);
+
+  if (slices.length === 0) return null;
+
+  // SVG donut
+  const R = 52;  // outer radius
+  const r = 32;  // inner radius (hole)
+  const cx = 68;
+  const cy = 68;
+  const circumference = 2 * Math.PI * ((R + r) / 2);
+  const strokeWidth = R - r;
+  const rMid = (R + r) / 2;
+
+  let cumulative = 0;
+  const arcs = slices.map((slice) => {
+    const dashArray = (slice.percent / 100) * circumference;
+    const dashOffset = -cumulative * circumference / 100;
+    cumulative += slice.percent;
+    return { dashArray, dashOffset };
+  });
+
+  const totalAmount = slices.reduce((s, sl) => s + sl.amount, 0);
+  const hovered = hoveredIndex !== null ? slices[hoveredIndex] : null;
+
+  return (
+    <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-white/5 mb-5">
+      <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Gastos por categoria</p>
+
+      <div className="flex items-center gap-4">
+        {/* SVG Donut */}
+        <div className="relative shrink-0">
+          <svg width={136} height={136} viewBox="0 0 136 136">
+            <circle
+              cx={cx} cy={cy} r={rMid}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={strokeWidth}
+              className="text-gray-100 dark:text-gray-800"
+            />
+            {arcs.map((arc, i) => (
+              <circle
+                key={i}
+                cx={cx} cy={cy} r={rMid}
+                fill="none"
+                stroke={slices[i].color}
+                strokeWidth={hoveredIndex === i ? strokeWidth + 3 : strokeWidth}
+                strokeDasharray={`${arc.dashArray} ${circumference}`}
+                strokeDashoffset={arc.dashOffset}
+                strokeLinecap="round"
+                transform={`rotate(-90 ${cx} ${cy})`}
+                style={{ transition: 'stroke-width 0.2s ease', cursor: 'pointer' }}
+                onMouseEnter={() => setHoveredIndex(i)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              />
+            ))}
+          </svg>
+          {/* Center: only shows on hover */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            {hovered ? (
+              <>
+                <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 text-center leading-tight px-1 truncate max-w-[72px]">{hovered.name}</p>
+                <p className="text-base font-extrabold leading-tight" style={{ color: hovered.color }}>{hovered.percent.toFixed(0)}%</p>
+              </>
+            ) : (
+              <span className="material-symbols-outlined text-2xl text-gray-200 dark:text-gray-700">donut_large</span>
+            )}
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+          {slices.map((slice, i) => (
+            <div
+              key={i}
+              className={`flex items-center gap-2 cursor-pointer rounded-lg px-1.5 py-0.5 transition-colors ${
+                hoveredIndex === i ? 'bg-gray-100 dark:bg-white/5' : 'hover:bg-gray-50 dark:hover:bg-white/5'
+              }`}
+              onMouseEnter={() => setHoveredIndex(i)}
+              onMouseLeave={() => setHoveredIndex(null)}
+            >
+              <span className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: slice.color }} />
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate flex-1">{slice.name}</span>
+              <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 shrink-0 tabular-nums w-[72px] text-right">{formatCurrency(slice.amount)}</span>
+              <span className="text-xs font-bold text-gray-900 dark:text-white shrink-0 tabular-nums w-[34px] text-right">{slice.percent.toFixed(0)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface Category {
   id: string;
@@ -391,6 +535,9 @@ const ViewExpenses: React.FC = () => {
           <div className="w-1"></div>
         </div>
 
+        {/* Category Distribution Chart */}
+        <CategoryDonutChart transactions={transactions} formatCurrency={formatCurrency} />
+
         {/* List Section */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between mb-2">
@@ -422,63 +569,71 @@ const ViewExpenses: React.FC = () => {
                     <div
                       key={transaction.id}
                       onClick={() => !isSelectionMode && setSelectedExpense(transaction as Transaction)}
-                      className={`relative group flex items-center gap-4 p-3 rounded-xl bg-surface-light dark:bg-surface-dark border border-transparent hover:border-gray-200 dark:hover:border-gray-700 transition-all shadow-sm ${!isSelectionMode ? 'cursor-pointer active:scale-[0.98]' : ''}`}
+                      className={`relative group flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-surface-light dark:bg-surface-dark border border-gray-100 dark:border-white/5 hover:border-primary/30 transition-all shadow-sm ${!isSelectionMode ? 'cursor-pointer active:scale-[0.98]' : ''}`}
                     >
-                      <div className={`flex items-center justify-center size-12 rounded-full ${style.bgClass} ${style.colorClass} shrink-0`}>
-                        <span className="material-symbols-outlined">{style.icon}</span>
-                      </div>
-
-
-
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-base font-bold text-[#111814] dark:text-white truncate ${isSelectionMode && isInstallment(transaction.description) ? 'opacity-50' : ''}`}>
-                          {transaction.description}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{transaction.account || 'Conta'}</p>
-                      </div>
-                      <div className="text-right flex flex-col items-end">
-                        <p className="text-base font-bold text-red-600 dark:text-red-400">- {formatCurrency(transaction.amount)}</p>
-                        <div className="flex items-center gap-1 flex-wrap justify-end">
-                          <span className="text-[11px] px-1.5 py-0.5 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold">
-                            {transaction.category?.name}
-                          </span>
-                          {(transaction as Transaction).is_fixed && (
-                            <span className="text-[11px] px-1.5 py-0.5 rounded-lg bg-primary/15 text-emerald-800 dark:text-primary font-bold flex items-center gap-0.5">
-                              <span className="material-symbols-outlined" style={{ fontSize: '10px' }}>repeat</span>
-                              Fixa
-                            </span>
-                          )}
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className={`flex items-center justify-center size-11 rounded-2xl ${style.bgClass} ${style.colorClass} shrink-0`}>
+                          <span className="material-symbols-outlined text-2xl">{style.icon}</span>
                         </div>
 
-                        {/* Action Buttons (Below Category) */}
-                        <div className="flex items-center gap-1 mt-2">
-                          {isSelectionMode && (
+                        <div className="min-w-0">
+                          <p className={`text-[15px] font-bold text-[#111814] dark:text-white truncate ${isSelectionMode && isInstallment(transaction.description) ? 'opacity-50' : ''}`}>
+                            {transaction.description}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{transaction.account || 'Conta'}</span>
+                            <span className="text-gray-300 dark:text-gray-600">•</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold border border-gray-200/50 dark:border-gray-700">
+                              {transaction.category?.name}
+                            </span>
+                            {(transaction as Transaction).is_fixed && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-primary/10 text-emerald-700 dark:text-primary font-bold flex items-center gap-0.5 border border-primary/20">
+                                <span className="material-symbols-outlined" style={{ fontSize: '10px' }}>repeat</span>
+                                Fixa
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <p className="text-sm font-bold text-red-600 dark:text-red-400 whitespace-nowrap">
+                          - {formatCurrency(transaction.amount)}
+                        </p>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-0.5">
+                          {isSelectionMode ? (
                             <button
-                              onClick={() => !isInstallment(transaction.description) && toggleSelect(transaction.id)}
+                              onClick={(e) => { e.stopPropagation(); !isInstallment(transaction.description) && toggleSelect(transaction.id); }}
                               disabled={isInstallment(transaction.description)}
-                              className={`size-[30px] flex items-center justify-center rounded-full transition-colors border ${selectedIds.has(transaction.id)
+                              className={`size-7 flex items-center justify-center rounded-full transition-colors border ${selectedIds.has(transaction.id)
                                 ? 'bg-primary border-primary text-white'
                                 : 'bg-transparent border-gray-300 dark:border-gray-600 text-transparent'
                                 } disabled:opacity-30 disabled:cursor-not-allowed`}
                             >
-                              {selectedIds.has(transaction.id) && <span className="material-symbols-outlined text-[18px]">check</span>}
+                              {selectedIds.has(transaction.id) && <span className="material-symbols-outlined text-[16px]">check</span>}
                             </button>
+                          ) : (
+                            <>
+                              <Link
+                                to="/register"
+                                state={{ transaction, type: 'expense' }}
+                                onClick={(e) => e.stopPropagation()}
+                                className="size-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 hover:text-primary transition-colors"
+                                title="Editar"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">edit</span>
+                              </Link>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDeleteClick(transaction as Transaction); }}
+                                className="size-8 flex items-center justify-center rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-400 hover:text-red-500 transition-colors"
+                                title="Excluir"
+                              >
+                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                              </button>
+                            </>
                           )}
-
-                          <Link
-                            to="/register"
-                            state={{ transaction, type: 'expense' }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="p-1.5 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-300 transition-colors"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">edit</span>
-                          </Link>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDeleteClick(transaction as Transaction); }}
-                            className="p-1.5 rounded-full hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500 transition-colors"
-                          >
-                            <span className="material-symbols-outlined text-[18px]">delete</span>
-                          </button>
                         </div>
                       </div>
                     </div>
