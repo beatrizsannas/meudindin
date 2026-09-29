@@ -13,6 +13,7 @@ export interface Purchase {
     purchase_date: string;
     avatar_url?: string;
     user_id?: string;
+    is_recurring?: boolean;  // if true, shows every month in the debtors list
 }
 
 export const useThirdPartyPurchases = () => {

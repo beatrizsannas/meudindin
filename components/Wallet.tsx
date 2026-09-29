@@ -34,6 +34,11 @@ const Wallet: React.FC = () => {
   const [historyData, setHistoryData] = useState<any[] | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Delete modal for recurring purchases
+  const [deleteTarget, setDeleteTarget] = useState<Purchase | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   // Fixed lists for selectors
   const months = [
     "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -81,24 +86,75 @@ const Wallet: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja apagar?")) return;
+  const handleDeleteClick = (purchase: Purchase) => {
+    if (purchase.is_recurring) {
+      setDeleteTarget(purchase);
+      setShowDeleteModal(true);
+    } else {
+      // Non-recurring: straight delete with simple confirm
+      if (!window.confirm("Tem certeza que deseja apagar esta compra?")) return;
+      handleDeletePermanent(purchase.id);
+    }
+  };
+
+  const handleDeletePermanent = async (id: string) => {
+    setDeleteLoading(true);
     try {
       const { error } = await supabase.from('third_party_purchases').delete().eq('id', id);
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ['third-party-purchases'] });
-      showToast("Compra apagada com sucesso!", "success");
+      showToast("Cobrança cancelada definitivamente.", "success");
     } catch (e) {
       console.error(e);
       showToast("Erro ao apagar", "error");
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
     }
   };
+
+  // "Skip this month": for recurring, mark it as paid so it disappears from current month
+  const handleSkipThisMonth = async (id: string) => {
+    setDeleteLoading(true);
+    try {
+      const { error } = await supabase
+        .from('third_party_purchases')
+        .update({ installments_paid: 1 })
+        .eq('id', id);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ['third-party-purchases'] });
+      showToast("Removido deste mês. Voltará no próximo.", "success");
+    } catch (e) {
+      console.error(e);
+      showToast("Erro ao atualizar", "error");
+    } finally {
+      setDeleteLoading(false);
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
+    }
+  };
+
 
   const handleEdit = (purchase: Purchase) => {
     navigate('/wallet/register', { state: { purchase } });
   };
 
   const getInstallmentDetails = (purchase: Purchase) => {
+    // Recurring purchases are always valid — they show every month
+    if (purchase.is_recurring) {
+      const installmentValue = purchase.amount;
+      const isPaidThisMonth = purchase.installments_paid >= 1;
+      return {
+        isValid: true,
+        installmentNumber: 1,
+        isPaidThisMonth,
+        isFullyPaid: false, // recurring never fully paid
+        installmentValue,
+        progressPercent: isPaidThisMonth ? 100 : 0,
+      };
+    }
+
     const [y, m] = purchase.start_payment_date.split('-');
     const startYear = parseInt(y);
     const startMonth = parseInt(m) - 1;
@@ -536,7 +592,14 @@ const Wallet: React.FC = () => {
                       <div className="overflow-hidden">
                         <h4 className="text-base font-bold text-[#111814] dark:text-white leading-tight truncate">{item.person_name}</h4>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{item.item_name}</p>
-                    <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-0.5">Total: {formatCurrency(item.amount)}</p>
+                        {item.is_recurring ? (
+                          <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full inline-flex items-center gap-0.5 mt-0.5">
+                            <span className="material-symbols-outlined text-[11px]">autorenew</span>
+                            Recorrente
+                          </span>
+                        ) : (
+                          <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mt-0.5">Total: {formatCurrency(item.amount)}</p>
+                        )}
                       </div>
                       <div className="text-right shrink-0 ml-2">
                         {/* WCAG: emerald-700 sobre white = ~5.8:1 ✅ */}
@@ -555,14 +618,21 @@ const Wallet: React.FC = () => {
                 <div className="bg-background-light dark:bg-black/20 rounded-xl p-3 flex flex-col gap-2">
                   <div className="flex justify-between items-end text-sm">
                     <div className="flex flex-col w-full pr-4">
-                      <span className="text-[11px] text-gray-500 dark:text-gray-400 font-semibold mb-1">Parcelas ({item.installments_paid}/{item.installments_total})</span>
+                      {item.is_recurring ? (
+                        <span className="text-[11px] text-primary dark:text-primary font-semibold mb-1 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[13px]">autorenew</span>
+                          Mensal · Recorrente
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-gray-500 dark:text-gray-400 font-semibold mb-1">Parcelas ({item.installments_paid}/{item.installments_total})</span>
+                      )}
                       <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                         <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(item.progressPercent, 100)}%` }}></div>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
                       <span className="text-xs font-medium text-[#111814] dark:text-gray-200">
-                        {item.installmentNumber}/{item.installments_total}
+                        {item.is_recurring ? '∞' : `${item.installmentNumber}/${item.installments_total}`}
                       </span>
                     </div>
                   </div>
@@ -595,7 +665,7 @@ const Wallet: React.FC = () => {
                         <span className="hidden sm:inline">Editar</span>
                       </button>
                       <button
-                        onClick={() => handleDelete(item.id)}
+                        onClick={() => handleDeleteClick(item)}
                         className="flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-600 transition-colors"
                       >
                         <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -609,6 +679,67 @@ const Wallet: React.FC = () => {
           )}
         </section>
       </main>
+
+      {/* ═══ RECURRING DELETE MODAL ═══ */}
+      {showDeleteModal && deleteTarget && (
+        <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center px-4 pb-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowDeleteModal(false); setDeleteTarget(null); }} />
+          <div className="relative w-full max-w-md bg-background-light dark:bg-surface-dark rounded-3xl p-6 shadow-2xl border border-gray-100 dark:border-white/5 animate-in fade-in slide-in-from-bottom-4 duration-200">
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="flex items-center justify-center size-14 rounded-2xl bg-red-100 dark:bg-red-900/20 text-red-500 mb-3">
+                <span className="material-symbols-outlined text-3xl">autorenew</span>
+              </div>
+              <h3 className="text-lg font-bold text-[#111814] dark:text-white">Cobrança Recorrente</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <span className="font-semibold text-[#111814] dark:text-white">{deleteTarget.person_name}</span> · {deleteTarget.item_name}
+              </p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">O que deseja fazer com esta cobrança?</p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <button
+                disabled={deleteLoading}
+                onClick={() => handleSkipThisMonth(deleteTarget.id)}
+                className="w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 hover:border-amber-400 dark:hover:border-amber-500/60 transition-all text-left"
+              >
+                <div className="flex items-center justify-center size-10 rounded-xl bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                  <span className="material-symbols-outlined text-[20px]">event_busy</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#111814] dark:text-white">Remover deste mês</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Volta automaticamente no próximo mês</p>
+                </div>
+              </button>
+
+              <button
+                disabled={deleteLoading}
+                onClick={() => handleDeletePermanent(deleteTarget.id)}
+                className="w-full flex items-center gap-3 p-4 rounded-2xl border-2 border-red-200 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 hover:border-red-400 dark:hover:border-red-500/60 transition-all text-left"
+              >
+                <div className="flex items-center justify-center size-10 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-500 shrink-0">
+                  <span className="material-symbols-outlined text-[20px]">cancel</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-red-600 dark:text-red-400">Cancelar cobrança definitivamente</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Remove para sempre, sem mais cobranças</p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeleteTarget(null); }}
+                className="w-full py-3 text-sm font-semibold text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+            {deleteLoading && (
+              <div className="absolute inset-0 bg-white/50 dark:bg-black/50 rounded-3xl flex items-center justify-center">
+                <span className="material-symbols-outlined animate-spin text-primary text-3xl">progress_activity</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ═══ HISTORY REPORT MODAL ═══ */}
       {isHistoryOpen && (

@@ -24,6 +24,7 @@ const RegisterPurchase: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [isRecurring, setIsRecurring] = useState(false);
 
   useEffect(() => {
     if (location.state?.purchase) {
@@ -37,6 +38,7 @@ const RegisterPurchase: React.FC = () => {
       setDate(p.purchase_date);
       setPaymentStart(p.start_payment_date);
       setInstallments(p.installments_total);
+      setIsRecurring(p.is_recurring ?? false);
     }
   }, [location.state]);
 
@@ -68,9 +70,10 @@ const RegisterPurchase: React.FC = () => {
             person_name: personName,
             item_name: finalItemName,
             amount: totalAmount,
-            installments_total: installments,
+            installments_total: isRecurring ? 1 : installments,
             purchase_date: date,
             start_payment_date: paymentStart,
+            is_recurring: isRecurring,
             // We usually don't reset installments_paid on simple edit unless requested
           })
           .eq('id', editId);
@@ -85,11 +88,12 @@ const RegisterPurchase: React.FC = () => {
             person_name: personName,
             item_name: finalItemName,
             amount: totalAmount,
-            installments_total: installments,
+            installments_total: isRecurring ? 1 : installments,
             installments_paid: 0,
             purchase_date: date,
             start_payment_date: paymentStart,
-            is_paid: false
+            is_paid: false,
+            is_recurring: isRecurring,
           });
 
         if (error) throw error;
@@ -213,6 +217,50 @@ const RegisterPurchase: React.FC = () => {
             </div>
           </div>
 
+          {/* Recurring Toggle */}
+          <div className="space-y-1.5">
+            <button
+              type="button"
+              onClick={() => setIsRecurring(prev => !prev)}
+              className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
+                isRecurring
+                  ? 'border-primary bg-primary/5 dark:bg-primary/10'
+                  : 'border-gray-200 dark:border-white/10 bg-background-light dark:bg-surface-dark hover:border-primary/50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`flex items-center justify-center size-10 rounded-xl transition-colors ${
+                  isRecurring ? 'bg-primary text-white' : 'bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400'
+                }`}>
+                  <span className="material-symbols-outlined text-[20px]">autorenew</span>
+                </div>
+                <div className="text-left">
+                  <p className={`text-sm font-bold ${isRecurring ? 'text-primary dark:text-primary' : 'text-[#111814] dark:text-white'}`}>
+                    Recorrente?
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {isRecurring ? 'Aparece todo mês na lista de devedores' : 'Ex: streaming, assinatura compartilhada...'}
+                  </p>
+                </div>
+              </div>
+              <div className={`relative w-12 h-6 rounded-full transition-colors ${
+                isRecurring ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
+              }`}>
+                <div className={`absolute top-0.5 size-5 bg-white rounded-full shadow transition-transform ${
+                  isRecurring ? 'translate-x-6' : 'translate-x-0.5'
+                }`} />
+              </div>
+            </button>
+            {isRecurring && (
+              <p className="text-xs text-primary font-medium ml-1 flex items-center gap-1">
+                <span className="material-symbols-outlined text-[14px]">info</span>
+                Ao excluir, você poderá cancelar definitivamente ou apenas remover este mês.
+              </p>
+            )}
+          </div>
+
+          {/* Installments — hidden when recurring */}
+          {!isRecurring && (
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Quantidade de Parcelas</label>
             <div className="bg-background-light dark:bg-surface-dark ring-1 ring-inset ring-gray-200 dark:ring-white/10 rounded-xl p-1.5 flex items-center justify-between shadow-sm px-2">
@@ -245,6 +293,7 @@ const RegisterPurchase: React.FC = () => {
               </button>
             </div>
           </div>
+          )}
 
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-[#111814] dark:text-gray-300 ml-1">Cartão Utilizado</label>
