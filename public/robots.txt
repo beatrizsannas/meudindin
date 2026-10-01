@@ -1,0 +1,11 @@
+# Meu Dindin — App pessoal de finanças
+# Bloqueia indexação por todos os motores de busca
+User-agent: *
+Disallow: /
+
+# Bloqueia especificamente o Google
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Googlebot-Image
+Disallow: /

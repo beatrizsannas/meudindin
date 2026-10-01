@@ -491,6 +491,188 @@ const Wallet: React.FC = () => {
     }
   };
 
+  // ── DEBTOR REPORT (per-person, current month) ─────────────────────────────────
+  const handleDebtorReport = () => {
+    if (!searchQuery.trim()) return;
+    const personItems = activePurchases.filter(p =>
+      p.person_name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    if (personItems.length === 0) {
+      showToast('Nenhuma compra encontrada para esta pessoa neste mês.', 'warning');
+      return;
+    }
+
+    try {
+      // @ts-ignore
+      let jsPDF = window.jspdf?.jsPDF || window.jsPDF;
+      if (!jsPDF) { showToast('PDF lib missing', 'error'); return; }
+
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 14;
+      const contentWidth = pageWidth - margin * 2;
+
+      const colors = {
+        brandDark:  [16, 34, 23]  as [number, number, number],
+        brandAccent:[13, 191, 86] as [number, number, number],
+        textPrimary:[30, 30, 30]  as [number, number, number],
+        textSec:    [100,100,100] as [number, number, number],
+        white:      [255,255,255] as [number, number, number],
+        greenDark:  [16, 85, 45]  as [number, number, number],
+        bgRow:      [245,247,250] as [number, number, number],
+        border:     [210,218,226] as [number, number, number],
+      };
+
+      const fmt = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      const personName = personItems[0].person_name;
+      const monthLabel = months[selectedMonth];
+      const totalDue = personItems
+        .filter(p => !p.isPaidThisMonth && !p.isFullyPaid)
+        .reduce((a, c) => a + c.installmentValue, 0);
+      const totalAll = personItems.reduce((a, c) => a + c.installmentValue, 0);
+
+      // ── HEADER BAND ──
+      doc.setFillColor(...colors.brandDark);
+      doc.rect(0, 0, pageWidth, 30, 'F');
+      doc.setFillColor(...colors.brandAccent);
+      doc.rect(0, 30, pageWidth, 1.5, 'F');
+
+      doc.setFontSize(17);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...colors.white);
+      doc.text('Meu Dindin', margin, 13);
+
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(180, 220, 200);
+      doc.text(`FATURA DO DEVEDOR  ·  ${monthLabel.toUpperCase()} ${selectedYear}`, margin, 21);
+
+      doc.setFontSize(7.5);
+      doc.setTextColor(...colors.white);
+      doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, pageWidth - margin, 13, { align: 'right' });
+
+      let y = 42;
+
+      // ── PERSON CARD ──
+      doc.setFillColor(236, 253, 245);
+      doc.roundedRect(margin, y, contentWidth, 22, 2.5, 2.5, 'F');
+      doc.setFillColor(...colors.brandAccent);
+      doc.roundedRect(margin, y, 4, 22, 2, 2, 'F');
+
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...colors.textSec);
+      doc.text('DEVEDOR', margin + 8, y + 7);
+
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...colors.brandDark);
+      doc.text(personName, margin + 8, y + 16);
+
+      // right side: total due
+      doc.setFontSize(7);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...colors.textSec);
+      doc.text('A PAGAR ESTE MÊS', pageWidth - margin - 2, y + 7, { align: 'right' });
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(21, 128, 61);
+      doc.text(fmt(totalDue), pageWidth - margin - 2, y + 17, { align: 'right' });
+
+      y += 30;
+
+      // ── TABLE LABEL ──
+      doc.setFillColor(...colors.brandAccent);
+      doc.rect(margin, y, 2.5, 5.5, 'F');
+      doc.setFontSize(8.5);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...colors.brandDark);
+      doc.text('Detalhamento das Cobranças', margin + 5, y + 3.5);
+      y += 9;
+
+      // ── TABLE ──
+      // @ts-ignore
+      doc.autoTable({
+        startY: y,
+        head: [['Item / Descrição', 'Parcela', 'Vlr. Parcela', 'Status']],
+        body: personItems.map((p) => [
+          p.item_name || '-',
+          p.is_recurring ? 'Recorrente' : `${p.installmentNumber}/${p.installments_total}`,
+          fmt(p.installmentValue),
+          p.isPaidThisMonth || p.isFullyPaid ? 'Pago' : 'Pendente',
+        ]),
+        styles: {
+          fontSize: 8,
+          cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 },
+          lineColor: colors.border,
+          lineWidth: 0.15,
+          textColor: colors.textPrimary,
+          font: 'helvetica',
+        },
+        headStyles: {
+          fillColor: colors.brandDark,
+          textColor: colors.white,
+          fontStyle: 'bold' as const,
+          fontSize: 7,
+          halign: 'left' as const,
+          cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+        },
+        columnStyles: {
+          0: { cellWidth: 'auto' },
+          1: { halign: 'center', cellWidth: 28 },
+          2: { halign: 'right', fontStyle: 'bold', cellWidth: 32 },
+          3: { halign: 'center', cellWidth: 24 },
+        },
+        alternateRowStyles: { fillColor: colors.bgRow },
+        foot: [['', 'TOTAL', fmt(totalAll), '']],
+        footStyles: {
+          fillColor: [232, 236, 241] as [number, number, number],
+          textColor: colors.brandDark,
+          fontStyle: 'bold' as const,
+          fontSize: 8,
+          cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+          halign: 'right' as const,
+        },
+        theme: 'striped' as const,
+        margin: { left: margin, right: margin },
+        didParseCell: (data: any) => {
+          if (data.section === 'body' && data.column.index === 3) {
+            if (data.cell.raw === 'Pago') {
+              data.cell.styles.textColor = [21, 128, 61];
+              data.cell.styles.fontStyle = 'bold';
+            } else {
+              data.cell.styles.textColor = [161, 98, 7];
+              data.cell.styles.fontStyle = 'bold';
+            }
+          }
+        },
+      });
+
+      // ── FOOTER ──
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        const fy = doc.internal.pageSize.getHeight() - 10;
+        doc.setDrawColor(...colors.border);
+        doc.setLineWidth(0.3);
+        doc.line(margin, fy - 4, pageWidth - margin, fy - 4);
+        doc.setFontSize(7.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...colors.textSec);
+        doc.text('Documento gerado automaticamente pelo Meu Dindin', margin, fy);
+        doc.text(`Página ${i} de ${pageCount}`, pageWidth - margin, fy, { align: 'right' });
+      }
+
+      const safeName = personName.replace(/\s+/g, '_');
+      doc.save(`MeuDindin_Fatura_${safeName}_${monthLabel}_${selectedYear}.pdf`);
+      showToast('PDF gerado com sucesso!', 'success');
+    } catch (err: any) {
+      console.error(err);
+      showToast('Erro ao gerar PDF', 'error');
+    }
+  };
+  // ──────────────────────────────────────────────────────────────────────────
+
   return (
     <div className="flex flex-col min-h-full">
 
@@ -552,8 +734,8 @@ const Wallet: React.FC = () => {
           </div>
         </section>
 
-        {/* Search */}
-        <section>
+        {/* Search + Debtor Export */}
+        <section className="flex flex-col gap-2">
           <div className="group flex w-full items-center rounded-xl bg-background-light dark:bg-surface-dark border border-transparent focus-within:border-primary/50 shadow-sm transition-all h-12">
             <div className="pl-4 flex items-center justify-center text-gray-400">
               <span className="material-symbols-outlined text-[22px]">search</span>
@@ -565,7 +747,26 @@ const Wallet: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {searchQuery.trim() && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            )}
           </div>
+
+          {/* Debtor export button — only visible when searching */}
+          {searchQuery.trim() && (
+            <button
+              onClick={handleDebtorReport}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/30 hover:border-primary/60 text-primary font-bold text-sm transition-all active:scale-[0.98]"
+            >
+              <span className="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+              Exportar fatura de {searchQuery.trim()} — {months[selectedMonth]} {selectedYear}
+            </button>
+          )}
         </section>
 
         {/* List */}
