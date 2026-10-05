@@ -19,6 +19,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
   const { showToast } = useToast();
   const [profile, setProfile] = useState<{ full_name: string | null, avatar_url: string | null }>({ full_name: '', avatar_url: null });
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const giroEnabled = localStorage.getItem('giro_contas_enabled') === 'true';
 
   useEffect(() => {
     if (session?.user && isOpen) {
@@ -64,6 +65,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
     { path: '/wallet', icon: 'account_balance_wallet', label: 'Terceiros' },
     { path: '/credit-cards', icon: 'credit_card', label: 'Seus cartões' },
     { path: '/imoveis', icon: 'apartment', label: 'Imóveis', color: 'text-blue-500' },
+    ...(giroEnabled ? [{ path: '/giro-contas', icon: 'sync_alt', label: 'Giro de Contas', color: 'text-emerald-600 dark:text-emerald-400' }] : []),
     { path: '/settings', icon: 'settings', label: 'Ajustes' },
   ];
 

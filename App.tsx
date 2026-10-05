@@ -23,6 +23,7 @@ import Notifications from './components/Notifications';
 import Imoveis from './components/Imoveis';
 import ImovelDetail from './components/ImovelDetail';
 import Commitments from './components/Commitments';
+import GiroContas from './components/GiroContas';
 import MonthlyBackupReminderModal from './components/MonthlyBackupReminderModal';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
@@ -91,6 +92,7 @@ const BottomNav = () => {
 const DesktopSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const giroEnabled = localStorage.getItem('giro_contas_enabled') === 'true';
 
   const hideNavPaths = ['/login', '/signup', '/forgot-password', '/reset-confirmation'];
   if (hideNavPaths.includes(location.pathname)) return null;
@@ -108,6 +110,7 @@ const DesktopSidebar = () => {
     { path: '/wallet', icon: 'account_balance_wallet', label: 'Terceiros' },
     { path: '/credit-cards', icon: 'credit_card', label: 'Cartões' },
     { path: '/imoveis', icon: 'apartment', label: 'Imóveis', color: 'text-blue-500' },
+    ...(giroEnabled ? [{ path: '/giro-contas', icon: 'sync_alt', label: 'Giro de Contas', color: 'text-emerald-600 dark:text-emerald-400' }] : []),
     { divider: true },
     { path: '/settings', icon: 'settings', label: 'Ajustes' },
   ];
@@ -292,6 +295,7 @@ const App: React.FC = () => {
                             <Route path="/imoveis" element={<ProtectedRoute><Imoveis /></ProtectedRoute>} />
                             <Route path="/imoveis/:id" element={<ProtectedRoute><ImovelDetail /></ProtectedRoute>} />
                             <Route path="/commitments" element={<ProtectedRoute><Commitments /></ProtectedRoute>} />
+                            <Route path="/giro-contas" element={<ProtectedRoute><GiroContas /></ProtectedRoute>} />
                           </Routes>
                         </div>
 
