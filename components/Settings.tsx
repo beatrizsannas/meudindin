@@ -33,6 +33,21 @@ const Settings: React.FC = () => {
   // Terms Modal State
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
+  // Giro de Contas flag
+  const [giroContasEnabled, setGiroContasEnabled] = useState(
+    () => localStorage.getItem('giro_contas_enabled') === 'true'
+  );
+
+  const handleGiroContasToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.checked;
+    setGiroContasEnabled(val);
+    localStorage.setItem('giro_contas_enabled', val ? 'true' : 'false');
+    showToast(
+      val ? 'Giro de Contas ativado! Aparece no menu.' : 'Giro de Contas desativado.',
+      'info'
+    );
+  };
+
   // Abre o modal de exportação automaticamente se vier do Dashboard
   const location = useLocation();
   useEffect(() => {
@@ -203,7 +218,7 @@ const Settings: React.FC = () => {
           <h3 className="text-gray-400 dark:text-gray-500 text-[10px] font-bold uppercase tracking-widest pl-2">Preferências</h3>
         </div>
         <div className="mx-6 flex flex-col overflow-hidden rounded-2xl bg-background-light dark:bg-surface-dark shadow-card">
-          {/* Toggle Item 1 */}
+          {/* Toggle Item 1 - Notificações */}
           <div className="flex items-center gap-4 px-5 py-4 w-full border-b border-gray-50 dark:border-gray-800 last:border-0 group">
             <div className="flex items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-800 shrink-0 size-10 text-gray-500 dark:text-gray-400 group-hover:scale-110 transition-transform">
               <span className="material-symbols-outlined icon-filled text-[20px]">notifications</span>
@@ -215,7 +230,25 @@ const Settings: React.FC = () => {
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-background-light after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 toggle-label transition-colors"></div>
             </label>
           </div>
-          {/* Toggle Item 2 */}
+          {/* Toggle Item 2 - Giro de Contas */}
+          <div className="flex items-center gap-4 px-5 py-4 w-full border-b border-gray-50 dark:border-gray-800 last:border-0 group">
+            <div className="flex items-center justify-center rounded-xl shrink-0 size-10 group-hover:scale-110 transition-transform" style={{ background: giroContasEnabled ? 'rgba(34,139,59,0.12)' : undefined }} >
+              <span className="material-symbols-outlined icon-filled text-[20px]" style={{ color: giroContasEnabled ? '#228b3b' : undefined }}>sync_alt</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-gray-900 dark:text-white text-sm font-bold">Giro de Contas</p>
+              <p className="text-gray-400 dark:text-gray-500 text-xs mt-0.5">Registro paralelo, não soma nos relatórios</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                className="sr-only peer toggle-checkbox"
+                checked={giroContasEnabled}
+                onChange={handleGiroContasToggle}
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-background-light after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 toggle-label transition-colors"></div>
+            </label>
+          </div>
 
         </div>
 
